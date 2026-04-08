@@ -1,0 +1,13 @@
+Dockerfile
+.dockerignore
+node_modules
+.next
+.git
+.gitignore
+*.md
+personas
+vps_credentials.txt
+.env
+.env.local
+.env.prod
+.env.prod.local

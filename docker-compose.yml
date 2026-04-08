@@ -1,0 +1,47 @@
+services:
+  hexis-v2-app:
+    image: harbor.ludovic-huguenot.fr/library/hexis-v2:latest
+    container_name: hexis-v2-app
+    restart: unless-stopped
+    env_file:
+      - .env.prod
+    depends_on:
+      hexis-v2-postgres:
+        condition: service_healthy
+    networks:
+      - proxy
+      - hexis-v2-internal
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.hexis-v2.rule=Host(`hexis-app.ludovic-huguenot.fr`)"
+      - "traefik.http.routers.hexis-v2.entrypoints=websecure"
+      - "traefik.http.routers.hexis-v2.tls.certresolver=letsencrypt"
+      - "traefik.http.services.hexis-v2.loadbalancer.server.port=3000"
+      - "traefik.docker.network=proxy"
+
+  hexis-v2-postgres:
+    image: postgres:17-alpine
+    container_name: hexis-v2-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-hexis_v2}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-hexis_v2}
+      POSTGRES_DB: ${POSTGRES_DB:-hexis_v2}
+    volumes:
+      - hexis-v2-pgdata:/var/lib/postgresql/data
+    networks:
+      - hexis-v2-internal
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-hexis_v2}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  hexis-v2-pgdata:
+
+networks:
+  proxy:
+    external: true
+  hexis-v2-internal:
+    driver: bridge
