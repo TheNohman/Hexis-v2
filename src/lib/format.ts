@@ -21,11 +21,23 @@ export function formatDuration(totalSeconds: number | null | undefined): string 
 }
 
 /**
- * Parse a duration string ("45", "2m30", "1h15", "90s") into seconds.
- * Returns null on invalid input.
+ * Parse a duration string into seconds. Returns null on invalid input.
+ *
+ * Accepted forms (case-insensitive):
+ *   "45"        => 45s  (plain number)
+ *   "45s"       => 45s
+ *   "45m"       => 45min
+ *   "45min"     => 45min
+ *   "1h"        => 1h
+ *   "2m30"      => 2m 30s   (trailing digits inferred as next-smaller unit)
+ *   "2m30s"     => 2m 30s
+ *   "1h15"      => 1h 15min
+ *   "1h15m"     => 1h 15min
+ *   "1h15m30"   => 1h 15m 30s
+ *   "1h15m30s"  => 1h 15m 30s
  */
 export function parseDuration(input: string): number | null {
-  const str = input.trim().toLowerCase();
+  let str = input.trim().toLowerCase();
   if (!str) return null;
 
   // Plain number => seconds
@@ -33,7 +45,20 @@ export function parseDuration(input: string): number | null {
     return Math.round(parseFloat(str));
   }
 
-  // h/m/s composite, e.g. "1h30", "2m15", "90s", "1h15m30s"
+  // Normalise "min" aliases to "m" before processing
+  str = str.replace(/min/g, "m");
+
+  // Trailing digits with no unit: infer the next-smaller unit from the
+  // last-seen unit letter. e.g. "2m30" -> "2m30s", "1h15" -> "1h15m".
+  if (/\d$/.test(str)) {
+    const letters = str.match(/[hms]/g);
+    const lastUnit = letters ? letters[letters.length - 1] : null;
+    if (lastUnit === "h") str += "m";
+    else if (lastUnit === "m") str += "s";
+    // No unit at all is already handled by the plain-number branch above.
+  }
+
+  // h/m/s composite
   const match = str.match(/^(?:(\d+)h)?(?:(\d+)m)?(?:(\d+)s)?$/);
   if (match) {
     const [, h, m, s] = match;
