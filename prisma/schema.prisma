@@ -7,6 +7,8 @@ datasource db {
   provider = "postgresql"
 }
 
+// ---------- Auth (NextAuth) ----------
+
 model User {
   id            String    @id @default(cuid())
   name          String?
@@ -15,8 +17,13 @@ model User {
   image         String?
   accounts      Account[]
   sessions      Session[]
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+
+  // Hexis domain relations
+  workouts  Workout[]
+  exercises Exercise[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Account {
@@ -52,4 +59,142 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
+}
+
+// ---------- Hexis domain ----------
+
+enum ExerciseType {
+  STRENGTH // musculation avec charge
+  BODYWEIGHT // poids de corps
+  CARDIO // course, vélo, natation, rameur
+  MOBILITY // étirements, mobilité
+  REST // repos entre séries/intervalles
+}
+
+enum KpiDataType {
+  INTEGER
+  DECIMAL
+  DURATION // stocké en secondes
+  TEXT
+}
+
+/// Référentiel de KPIs (poids, reps, durée, distance, allure, %VMA, etc.)
+model KpiDefinition {
+  id       String      @id @default(cuid())
+  slug     String      @unique
+  name     String
+  unit     String?
+  dataType KpiDataType
+
+  exerciseKpis ExerciseKpi[]
+  entryValues  EntryKpiValue[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+/// Exercice de référence (catalogue système ou custom utilisateur)
+model Exercise {
+  id          String       @id @default(cuid())
+  slug        String
+  name        String
+  description String?      @db.Text
+  type        ExerciseType
+  isSystem    Boolean      @default(false)
+  userId      String? // null => exercice système du catalogue
+
+  user         User?          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  exerciseKpis ExerciseKpi[]
+  entries      WorkoutEntry[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, slug])
+  @@index([userId])
+  @@index([type])
+  @@index([isSystem])
+}
+
+/// Liaison Exercise <-> KpiDefinition : quels KPIs sont pertinents pour cet exercice
+model ExerciseKpi {
+  id              String  @id @default(cuid())
+  exerciseId      String
+  kpiDefinitionId String
+  isRequired      Boolean @default(true)
+  displayOrder    Int     @default(0)
+
+  exercise      Exercise      @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
+  kpiDefinition KpiDefinition @relation(fields: [kpiDefinitionId], references: [id], onDelete: Cascade)
+
+  @@unique([exerciseId, kpiDefinitionId])
+  @@index([exerciseId])
+}
+
+/// Une séance d'entraînement
+model Workout {
+  id         String    @id @default(cuid())
+  userId     String
+  name       String
+  startedAt  DateTime  @default(now())
+  finishedAt DateTime?
+  notes      String?   @db.Text
+
+  user   User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  blocks WorkoutBlock[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([startedAt])
+}
+
+/// Un bloc dans une séance (ex: "Haut du corps", "Fractionné 10K")
+model WorkoutBlock {
+  id           String @id @default(cuid())
+  workoutId    String
+  name         String
+  displayOrder Int    @default(0)
+
+  workout Workout        @relation(fields: [workoutId], references: [id], onDelete: Cascade)
+  entries WorkoutEntry[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([workoutId])
+}
+
+/// Une entrée dans un bloc = une ligne (série de muscu, intervalle de course, repos...)
+model WorkoutEntry {
+  id           String @id @default(cuid())
+  blockId      String
+  exerciseId   String
+  displayOrder Int    @default(0)
+
+  block    WorkoutBlock    @relation(fields: [blockId], references: [id], onDelete: Cascade)
+  exercise Exercise        @relation(fields: [exerciseId], references: [id], onDelete: Restrict)
+  values   EntryKpiValue[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([blockId])
+  @@index([exerciseId])
+}
+
+/// La valeur d'un KPI pour une entrée donnée (ex: 80kg, 10 reps, 120s)
+model EntryKpiValue {
+  id              String  @id @default(cuid())
+  entryId         String
+  kpiDefinitionId String
+  valueNumeric    Float?
+  valueText       String?
+
+  entry         WorkoutEntry  @relation(fields: [entryId], references: [id], onDelete: Cascade)
+  kpiDefinition KpiDefinition @relation(fields: [kpiDefinitionId], references: [id], onDelete: Restrict)
+
+  @@unique([entryId, kpiDefinitionId])
+  @@index([entryId])
 }
