@@ -1,6 +1,6 @@
 "use client";
 
-import { formatDuration, parseDuration } from "@/lib/format";
+import { secondsToTimeString, timeStringToSeconds } from "@/lib/format";
 import type { ExerciseListItem } from "@/lib/workouts/types";
 
 type Kpi = ExerciseListItem["kpis"][number];
@@ -21,7 +21,6 @@ type Props = {
  */
 export function KpiInput({ kpi, valueNumeric, valueText, onChange, autoFocus }: Props) {
   if (kpi.dataType === "DURATION") {
-    const display = valueNumeric != null ? formatDuration(valueNumeric) : "";
     return (
       <label className="flex flex-col gap-1 min-w-0">
         <span className="text-[10px] uppercase tracking-wide text-foreground/50">
@@ -29,18 +28,16 @@ export function KpiInput({ kpi, valueNumeric, valueText, onChange, autoFocus }: 
           {kpi.isRequired ? "" : " ·"}
         </span>
         <input
-          type="text"
-          inputMode="numeric"
-          defaultValue={display}
+          type="time"
+          step={1}
+          value={secondsToTimeString(valueNumeric)}
           autoFocus={autoFocus}
-          placeholder="2m30"
-          onBlur={(e) => {
-            const parsed = parseDuration(e.target.value);
-            onChange({ valueNumeric: parsed, valueText: null });
-            if (parsed != null) {
-              e.target.value = formatDuration(parsed);
-            }
-          }}
+          onChange={(e) =>
+            onChange({
+              valueNumeric: timeStringToSeconds(e.target.value),
+              valueText: null,
+            })
+          }
           className="rounded-lg bg-foreground/5 border border-foreground/10 px-3 py-2 text-sm focus:outline-none focus:border-foreground/40"
         />
       </label>
