@@ -1,7 +1,11 @@
 import { auth } from "@/auth";
 
 export default auth((req) => {
-  if (!req.auth && req.nextUrl.pathname.startsWith("/dashboard")) {
+  const { pathname } = req.nextUrl;
+  const isProtected =
+    pathname.startsWith("/dashboard") || pathname.startsWith("/sessions");
+
+  if (!req.auth && isProtected) {
     const newUrl = new URL("/api/auth/signin", req.nextUrl.origin);
     newUrl.searchParams.set("callbackUrl", req.nextUrl.href);
     return Response.redirect(newUrl);
@@ -9,5 +13,5 @@ export default auth((req) => {
 });
 
 export const config = {
-  matcher: ["/dashboard/:path*"],
+  matcher: ["/dashboard/:path*", "/sessions/:path*"],
 };
