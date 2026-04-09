@@ -1,9 +1,14 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useMemo, useRef, useState, useTransition } from "react";
 import { formatExerciseType } from "@/lib/format";
 import type { ExerciseListItem } from "@/lib/workouts/types";
 import { KpiInput } from "./kpi-input";
+
+type KpiValueState = Record<
+  string,
+  { valueNumeric: number | null; valueText: string | null }
+>;
 
 type Props = {
   open: boolean;
@@ -26,11 +31,21 @@ type Props = {
 export function ExercisePicker({ open, onClose, exercises, onPick }: Props) {
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState<ExerciseListItem | null>(null);
-  const [values, setValues] = useState<
-    Record<string, { valueNumeric: number | null; valueText: string | null }>
-  >({});
+  const [values, setValues] = useState<KpiValueState>({});
+  // Mirror of `values` updated synchronously so that handleSubmit can read
+  // the freshest data even when a blur-triggered onChange hasn't been
+  // committed to React state yet (blur → click race).
+  const valuesRef = useRef<KpiValueState>({});
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+
+  function updateValue(
+    kpiDefinitionId: string,
+    next: { valueNumeric: number | null; valueText: string | null },
+  ) {
+    valuesRef.current = { ...valuesRef.current, [kpiDefinitionId]: next };
+    setValues(valuesRef.current);
+  }
 
   const filtered = useMemo(() => {
     if (!query.trim()) return exercises;
@@ -43,16 +58,18 @@ export function ExercisePicker({ open, onClose, exercises, onPick }: Props) {
   function handleSelectExercise(ex: ExerciseListItem) {
     setSelected(ex);
     // Initialise empty values for each KPI
-    const init: typeof values = {};
+    const init: KpiValueState = {};
     for (const k of ex.kpis) {
       init[k.kpiDefinitionId] = { valueNumeric: null, valueText: null };
     }
+    valuesRef.current = init;
     setValues(init);
     setError(null);
   }
 
   function handleBack() {
     setSelected(null);
+    valuesRef.current = {};
     setValues({});
     setError(null);
   }
@@ -60,6 +77,7 @@ export function ExercisePicker({ open, onClose, exercises, onPick }: Props) {
   function handleClose() {
     setQuery("");
     setSelected(null);
+    valuesRef.current = {};
     setValues({});
     setError(null);
     onClose();
@@ -67,10 +85,17 @@ export function ExercisePicker({ open, onClose, exercises, onPick }: Props) {
 
   function handleSubmit() {
     if (!selected) return;
+    // Force any currently-focused input to blur so its onBlur handler runs
+    // and commits its value through updateValue() before we read valuesRef.
+    if (typeof document !== "undefined") {
+      const active = document.activeElement;
+      if (active instanceof HTMLElement) active.blur();
+    }
+    const current = valuesRef.current;
     // Validate required KPIs
     for (const kpi of selected.kpis) {
       if (!kpi.isRequired) continue;
-      const v = values[kpi.kpiDefinitionId];
+      const v = current[kpi.kpiDefinitionId];
       const hasValue =
         v && (v.valueNumeric != null || (v.valueText && v.valueText.trim() !== ""));
       if (!hasValue) {
@@ -85,8 +110,8 @@ export function ExercisePicker({ open, onClose, exercises, onPick }: Props) {
           selected,
           selected.kpis.map((k) => ({
             kpiDefinitionId: k.kpiDefinitionId,
-            valueNumeric: values[k.kpiDefinitionId]?.valueNumeric ?? null,
-            valueText: values[k.kpiDefinitionId]?.valueText ?? null,
+            valueNumeric: current[k.kpiDefinitionId]?.valueNumeric ?? null,
+            valueText: current[k.kpiDefinitionId]?.valueText ?? null,
           })),
         );
         handleClose();
@@ -163,12 +188,7 @@ export function ExercisePicker({ open, onClose, exercises, onPick }: Props) {
                   valueNumeric={values[kpi.kpiDefinitionId]?.valueNumeric ?? null}
                   valueText={values[kpi.kpiDefinitionId]?.valueText ?? null}
                   autoFocus={idx === 0}
-                  onChange={(next) =>
-                    setValues((prev) => ({
-                      ...prev,
-                      [kpi.kpiDefinitionId]: next,
-                    }))
-                  }
+                  onChange={(next) => updateValue(kpi.kpiDefinitionId, next)}
                 />
               ))}
             </div>
