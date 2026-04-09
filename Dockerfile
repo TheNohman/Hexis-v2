@@ -16,6 +16,10 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
+# Regenerate the Prisma client after COPY . . since the generator outputs
+# into src/generated/prisma (inside the source tree), which would otherwise
+# be overwritten by the bind copy above.
+RUN npx prisma generate
 RUN npm run build
 
 # Production image
