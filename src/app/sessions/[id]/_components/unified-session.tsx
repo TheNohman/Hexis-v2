@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useCallback, useEffect, useState, useTransition } from "react";
 import Link from "next/link";
 import {
   DndContext,
   closestCenter,
   PointerSensor,
   KeyboardSensor,
+  TouchSensor,
   useSensor,
   useSensors,
   type DragEndEvent,
@@ -24,18 +25,24 @@ import {
   renameWorkoutAction,
   reorderBlocksAction,
 } from "@/app/sessions/actions";
-import { BlockCard } from "./block-card";
+import { BlockSection } from "./block-section";
+import { CompactRestTimer } from "./compact-rest-timer";
+
+type Entry = WorkoutDetail["blocks"][number]["entries"][number];
 
 type Props = {
   workout: WorkoutDetail;
   exercises: ExerciseListItem[];
 };
 
-export function WorkoutEditor({ workout, exercises }: Props) {
+export function UnifiedSession({ workout, exercises }: Props) {
   const [isEditingName, setIsEditingName] = useState(false);
   const [newBlockName, setNewBlockName] = useState("");
   const [showNewBlockInput, setShowNewBlockInput] = useState(false);
   const [isPending, startTransition] = useTransition();
+  const [restTimer, setRestTimer] = useState<{
+    durationSecs: number;
+  } | null>(null);
 
   // Optimistic block ordering
   const [optimisticBlocks, setOptimisticBlocks] = useState(workout.blocks);
@@ -43,8 +50,20 @@ export function WorkoutEditor({ workout, exercises }: Props) {
     setOptimisticBlocks(workout.blocks);
   }, [workout.blocks]);
 
+  // Progress tracking for template-based sessions
+  const allEntries = workout.blocks.flatMap((b) => b.entries);
+  const hasPlanned = allEntries.some((e) => e.status === "PLANNED");
+  const completedCount = allEntries.filter(
+    (e) => e.status === "DONE" || e.status === "SKIPPED",
+  ).length;
+  const totalCount = allEntries.length;
+  const progress = totalCount > 0 ? completedCount / totalCount : 0;
+
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(PointerSensor, { activationConstraint: { distance: 10 } }),
+    useSensor(TouchSensor, {
+      activationConstraint: { delay: 200, tolerance: 5 },
+    }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     }),
@@ -77,15 +96,35 @@ export function WorkoutEditor({ workout, exercises }: Props) {
   }
 
   function handleFinish() {
-    if (workout.blocks.length === 0) {
+    const remaining = allEntries.filter((e) => e.status === "PLANNED").length;
+    if (remaining > 0) {
+      if (
+        !confirm(`Il reste ${remaining} entrée(s) non validée(s). Terminer ?`)
+      )
+        return;
+    } else if (allEntries.length === 0) {
       if (!confirm("Cette séance est vide. Terminer quand même ?")) return;
     }
     startTransition(() => finishWorkoutAction(workout.id));
   }
 
+  const handleEntryValidated = useCallback((entry: Entry) => {
+    if (entry.restDurationSecs && entry.restDurationSecs > 0) {
+      setRestTimer({ durationSecs: entry.restDurationSecs });
+    }
+  }, []);
+
+  const handleRestComplete = useCallback(() => {
+    setRestTimer(null);
+  }, []);
+
   return (
     <main className="flex-1 flex flex-col px-4 py-6">
-      <div className="max-w-2xl w-full mx-auto space-y-5">
+      <div
+        className="max-w-2xl w-full mx-auto space-y-5"
+        style={{ paddingBottom: restTimer ? 72 : 0 }}
+      >
+        {/* Header */}
         <header className="flex items-start justify-between gap-3">
           {isEditingName ? (
             <input
@@ -118,13 +157,29 @@ export function WorkoutEditor({ workout, exercises }: Props) {
           )}
           <Link
             href="/dashboard"
-            className="text-xs text-foreground/60 hover:text-foreground whitespace-nowrap"
+            className="text-xs text-foreground/60 hover:text-foreground whitespace-nowrap p-2 -mr-2"
           >
             ← Dashboard
           </Link>
         </header>
 
-        <div className="space-y-3">
+        {/* Progress bar for template-based sessions */}
+        {hasPlanned && totalCount > 0 && (
+          <div className="space-y-1">
+            <div className="w-full h-2 bg-foreground/10 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-green-500 rounded-full transition-all duration-300"
+                style={{ width: `${progress * 100}%` }}
+              />
+            </div>
+            <p className="text-xs text-foreground/40 text-right">
+              {completedCount} / {totalCount}
+            </p>
+          </div>
+        )}
+
+        {/* Blocks */}
+        <div className="space-y-4">
           <DndContext
             sensors={sensors}
             collisionDetection={closestCenter}
@@ -135,11 +190,12 @@ export function WorkoutEditor({ workout, exercises }: Props) {
               strategy={verticalListSortingStrategy}
             >
               {optimisticBlocks.map((block) => (
-                <BlockCard
+                <BlockSection
                   key={block.id}
                   workoutId={workout.id}
                   block={block}
                   exercises={exercises}
+                  onEntryValidated={handleEntryValidated}
                 />
               ))}
             </SortableContext>
@@ -190,6 +246,7 @@ export function WorkoutEditor({ workout, exercises }: Props) {
           )}
         </div>
 
+        {/* Finish button */}
         <div className="pt-4">
           <button
             type="button"
@@ -201,6 +258,14 @@ export function WorkoutEditor({ workout, exercises }: Props) {
           </button>
         </div>
       </div>
+
+      {/* Compact rest timer */}
+      {restTimer && (
+        <CompactRestTimer
+          durationSecs={restTimer.durationSecs}
+          onComplete={handleRestComplete}
+        />
+      )}
     </main>
   );
 }

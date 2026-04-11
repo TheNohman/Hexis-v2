@@ -330,6 +330,130 @@ export async function skipEntry(entryId: string, userId: string) {
   });
 }
 
+/**
+ * Update KPI values of an entry without changing its status.
+ * Used for inline editing of values in the unified session view.
+ */
+export async function updateEntryValues(
+  entryId: string,
+  userId: string,
+  values: KpiValueInput[],
+) {
+  const entry = await prisma.workoutEntry.findUnique({
+    where: { id: entryId },
+    include: {
+      block: { include: { workout: { select: { userId: true } } } },
+    },
+  });
+  if (!entry) throw new Error("Not found");
+  if (entry.block.workout.userId !== userId) throw new Error("Forbidden");
+
+  if (values.length > 0) {
+    await prisma.$transaction(
+      values.map((v) =>
+        prisma.entryKpiValue.upsert({
+          where: {
+            entryId_kpiDefinitionId: {
+              entryId,
+              kpiDefinitionId: v.kpiDefinitionId,
+            },
+          },
+          update: {
+            valueNumeric: v.valueNumeric ?? null,
+            valueText: v.valueText ?? null,
+          },
+          create: {
+            entryId,
+            kpiDefinitionId: v.kpiDefinitionId,
+            valueNumeric: v.valueNumeric ?? null,
+            valueText: v.valueText ?? null,
+          },
+        }),
+      ),
+    );
+  }
+}
+
+/**
+ * Add a new set (entry) after a specific entry in the same block,
+ * keeping series of the same exercise contiguous.
+ * Copies KPI values from the reference entry if no values provided.
+ */
+export async function addSetAfter(
+  blockId: string,
+  userId: string,
+  data: {
+    exerciseId: string;
+    afterEntryId: string;
+    values?: KpiValueInput[];
+  },
+) {
+  const block = await prisma.workoutBlock.findUnique({
+    where: { id: blockId },
+    include: {
+      workout: { select: { userId: true } },
+      entries: {
+        orderBy: { displayOrder: "asc" },
+        select: { id: true, displayOrder: true },
+      },
+    },
+  });
+  if (!block) throw new Error("Not found");
+  if (block.workout.userId !== userId) throw new Error("Forbidden");
+
+  const refIndex = block.entries.findIndex((e) => e.id === data.afterEntryId);
+  if (refIndex === -1) throw new Error("Reference entry not found");
+
+  const insertOrder = block.entries[refIndex].displayOrder + 1;
+
+  // Shift all entries after the insertion point
+  const entriesToShift = block.entries.filter(
+    (e) => e.displayOrder >= insertOrder,
+  );
+  if (entriesToShift.length > 0) {
+    await prisma.$transaction(
+      entriesToShift.map((e) =>
+        prisma.workoutEntry.update({
+          where: { id: e.id },
+          data: { displayOrder: e.displayOrder + 1 },
+        }),
+      ),
+    );
+  }
+
+  // If no values provided, copy from the reference entry
+  let kpiValues = data.values;
+  if (!kpiValues) {
+    const refEntry = await prisma.workoutEntry.findUnique({
+      where: { id: data.afterEntryId },
+      include: { values: true },
+    });
+    if (refEntry) {
+      kpiValues = refEntry.values.map((v) => ({
+        kpiDefinitionId: v.kpiDefinitionId,
+        valueNumeric: v.valueNumeric,
+        valueText: v.valueText,
+      }));
+    }
+  }
+
+  return prisma.workoutEntry.create({
+    data: {
+      blockId,
+      exerciseId: data.exerciseId,
+      displayOrder: insertOrder,
+      values: {
+        create: (kpiValues ?? []).map((v) => ({
+          kpiDefinitionId: v.kpiDefinitionId,
+          valueNumeric: v.valueNumeric ?? null,
+          valueText: v.valueText ?? null,
+        })),
+      },
+    },
+    include: { values: true },
+  });
+}
+
 export async function deleteEntry(entryId: string, userId: string) {
   const entry = await prisma.workoutEntry.findUnique({
     where: { id: entryId },

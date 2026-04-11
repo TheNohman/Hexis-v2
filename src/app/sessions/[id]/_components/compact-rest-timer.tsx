@@ -8,7 +8,7 @@ type Props = {
   onComplete: () => void;
 };
 
-export function RestTimer({ durationSecs, onComplete }: Props) {
+export function CompactRestTimer({ durationSecs, onComplete }: Props) {
   const [remaining, setRemaining] = useState(durationSecs);
   const intervalRef = useRef<ReturnType<typeof setInterval>>(undefined);
 
@@ -41,26 +41,29 @@ export function RestTimer({ durationSecs, onComplete }: Props) {
   const progress = 1 - remaining / durationSecs;
 
   return (
-    <div className="rounded-xl border border-blue-500/30 bg-blue-500/5 p-4 text-center space-y-3">
-      <p className="text-xs text-blue-400 uppercase tracking-wide font-medium">
-        Repos
-      </p>
-      <p className="text-3xl font-bold tabular-nums">
-        {formatDuration(remaining)}
-      </p>
-      <div className="w-full h-1.5 bg-foreground/10 rounded-full overflow-hidden">
+    <div className="fixed bottom-0 left-0 right-0 z-50">
+      {/* Progress bar */}
+      <div className="h-1 bg-foreground/10">
         <div
-          className="h-full bg-blue-500 rounded-full transition-all duration-1000 ease-linear"
+          className="h-full bg-blue-500 transition-all duration-1000 ease-linear"
           style={{ width: `${progress * 100}%` }}
         />
       </div>
-      <button
-        type="button"
-        onClick={skip}
-        className="text-xs text-foreground/50 hover:text-foreground cursor-pointer"
-      >
-        Passer le repos
-      </button>
+
+      {/* Timer bar */}
+      <div className="flex items-center justify-between px-4 h-14 bg-blue-600 text-white">
+        <span className="text-sm font-medium">Repos</span>
+        <span className="text-xl font-bold tabular-nums">
+          {formatDuration(remaining)}
+        </span>
+        <button
+          type="button"
+          onClick={skip}
+          className="min-h-[44px] min-w-[44px] flex items-center justify-center text-sm text-white/70 hover:text-white cursor-pointer transition-colors"
+        >
+          Passer
+        </button>
+      </div>
     </div>
   );
 }

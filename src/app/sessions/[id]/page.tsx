@@ -4,8 +4,7 @@ import {
   getWorkoutById,
   listExercisesForUser,
 } from "@/lib/workouts/queries";
-import { SessionExecutor } from "./_components/session-executor";
-import { WorkoutEditor } from "./_components/workout-editor";
+import { UnifiedSession } from "./_components/unified-session";
 import { WorkoutReadonly } from "./_components/workout-readonly";
 
 export const dynamic = "force-dynamic";
@@ -28,15 +27,7 @@ export default async function SessionPage({
     return <WorkoutReadonly workout={workout} />;
   }
 
-  // Template-based workouts with PLANNED entries use live execution mode.
-  const hasPlannedEntries = workout.blocks.some((b) =>
-    b.entries.some((e) => e.status === "PLANNED"),
-  );
-  if (workout.templateId && hasPlannedEntries) {
-    return <SessionExecutor workout={workout} />;
-  }
-
-  // Free-form workouts use the editor.
+  // All active workouts (free-form and template-based) use the unified session.
   const exercises = await listExercisesForUser(userId);
-  return <WorkoutEditor workout={workout} exercises={exercises} />;
+  return <UnifiedSession workout={workout} exercises={exercises} />;
 }

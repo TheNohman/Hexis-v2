@@ -14,6 +14,8 @@ type Props = {
   open: boolean;
   onClose: () => void;
   exercises: ExerciseListItem[];
+  /** If true, shows a set count stepper (default 3) and creates N entries */
+  multiSet?: boolean;
   onPick: (
     exercise: ExerciseListItem,
     values: {
@@ -21,6 +23,7 @@ type Props = {
       valueNumeric: number | null;
       valueText: string | null;
     }[],
+    setCount?: number,
   ) => Promise<void>;
 };
 
@@ -28,7 +31,7 @@ type Props = {
  * Two-step drawer: first pick an exercise, then enter its KPI values.
  * The drawer stays mounted so the "values" phase can use fresh DOM state.
  */
-export function ExercisePicker({ open, onClose, exercises, onPick }: Props) {
+export function ExercisePicker({ open, onClose, exercises, multiSet, onPick }: Props) {
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState<ExerciseListItem | null>(null);
   const [values, setValues] = useState<KpiValueState>({});
@@ -38,6 +41,7 @@ export function ExercisePicker({ open, onClose, exercises, onPick }: Props) {
   const valuesRef = useRef<KpiValueState>({});
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [setCount, setSetCount] = useState(3);
 
   function updateValue(
     kpiDefinitionId: string,
@@ -64,6 +68,7 @@ export function ExercisePicker({ open, onClose, exercises, onPick }: Props) {
     }
     valuesRef.current = init;
     setValues(init);
+    setSetCount(3);
     setError(null);
   }
 
@@ -113,8 +118,10 @@ export function ExercisePicker({ open, onClose, exercises, onPick }: Props) {
             valueNumeric: current[k.kpiDefinitionId]?.valueNumeric ?? null,
             valueText: current[k.kpiDefinitionId]?.valueText ?? null,
           })),
+          multiSet ? setCount : undefined,
         );
-        handleClose();
+        // Don't auto-close — user may want to add another exercise
+        handleBack();
       } catch (e) {
         setError(e instanceof Error ? e.message : "Erreur");
       }
@@ -192,6 +199,30 @@ export function ExercisePicker({ open, onClose, exercises, onPick }: Props) {
                 />
               ))}
             </div>
+            {multiSet && (
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-foreground/70">Nombre de séries</span>
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setSetCount((c) => Math.max(1, c - 1))}
+                    className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg border border-foreground/20 text-lg font-medium cursor-pointer hover:bg-foreground/5"
+                  >
+                    −
+                  </button>
+                  <span className="text-lg font-semibold tabular-nums w-6 text-center">
+                    {setCount}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setSetCount((c) => Math.min(10, c + 1))}
+                    className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg border border-foreground/20 text-lg font-medium cursor-pointer hover:bg-foreground/5"
+                  >
+                    +
+                  </button>
+                </div>
+              </div>
+            )}
             {error && (
               <p className="text-sm text-red-500">{error}</p>
             )}

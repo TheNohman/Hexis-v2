@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
 import {
   DndContext,
   closestCenter,
   PointerSensor,
+  TouchSensor,
   KeyboardSensor,
   useSensor,
   useSensors,
@@ -13,7 +14,6 @@ import {
 import {
   SortableContext,
   verticalListSortingStrategy,
-  arrayMove,
   useSortable,
   sortableKeyboardCoordinates,
 } from "@dnd-kit/sortable";
@@ -22,28 +22,32 @@ import type { ExerciseListItem, WorkoutDetail } from "@/lib/workouts/types";
 import {
   addEntryAction,
   deleteBlockAction,
-  deleteEntryAction,
-  duplicateEntryAction,
   renameBlockAction,
-  reorderEntriesAction,
 } from "@/app/sessions/actions";
+import { groupEntriesByExercise } from "./group-entries";
+import { ExerciseCard } from "./exercise-card";
 import { ExercisePicker } from "./exercise-picker";
-import { EntryRow } from "./entry-row";
 
 type Block = WorkoutDetail["blocks"][number];
+type Entry = Block["entries"][number];
 
 type Props = {
   workoutId: string;
   block: Block;
   exercises: ExerciseListItem[];
+  onEntryValidated?: (entry: Entry) => void;
 };
 
-export function BlockCard({ workoutId, block, exercises }: Props) {
+export function BlockSection({
+  workoutId,
+  block,
+  exercises,
+  onEntryValidated,
+}: Props) {
   const [pickerOpen, setPickerOpen] = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
   const [isPending, startTransition] = useTransition();
 
-  // Sortable block (for reordering blocks within workout)
   const {
     attributes,
     listeners,
@@ -59,48 +63,34 @@ export function BlockCard({ workoutId, block, exercises }: Props) {
     opacity: isDragging ? 0.5 : 1,
   };
 
-  // Optimistic entry ordering
-  const [optimisticEntries, setOptimisticEntries] = useState(block.entries);
-  useEffect(() => {
-    setOptimisticEntries(block.entries);
-  }, [block.entries]);
+  const groups = groupEntriesByExercise(block.entries);
 
-  const entrySensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+  // For DnD, we use the first entry ID of each group as the sortable item ID
+  const groupIds = groups.map((g) => g.sets[0].id);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 10 } }),
+    useSensor(TouchSensor, {
+      activationConstraint: { delay: 200, tolerance: 5 },
+    }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     }),
   );
 
-  function handleEntryDragEnd(event: DragEndEvent) {
-    const { active, over } = event;
-    if (!over || active.id === over.id) return;
-
-    const oldIndex = optimisticEntries.findIndex((e) => e.id === active.id);
-    const newIndex = optimisticEntries.findIndex((e) => e.id === over.id);
-    const reordered = arrayMove(optimisticEntries, oldIndex, newIndex);
-
-    setOptimisticEntries(reordered);
-    startTransition(() =>
-      reorderEntriesAction(
-        workoutId,
-        block.id,
-        reordered.map((e) => e.id),
-      ),
-    );
+  function handleExerciseDragEnd(_event: DragEndEvent) {
+    // TODO: implement exercise group reordering
+    // This requires moving all entries of a group together
   }
 
   return (
-    <section
-      ref={setNodeRef}
-      style={style}
-      className="rounded-xl border border-foreground/10 overflow-hidden"
-    >
-      <header className="flex items-center justify-between p-3 border-b border-foreground/10 bg-foreground/[0.02]">
+    <section ref={setNodeRef} style={style} className="space-y-3">
+      {/* Block header */}
+      <div className="flex items-center justify-between">
         <div className="flex items-center gap-2 min-w-0 flex-1">
           <button
             type="button"
-            className="cursor-grab touch-none text-foreground/30 hover:text-foreground/60 shrink-0"
+            className="cursor-grab touch-none text-foreground/30 hover:text-foreground/60 shrink-0 p-3 -ml-3"
             {...attributes}
             {...listeners}
           >
@@ -144,58 +134,61 @@ export function BlockCard({ workoutId, block, exercises }: Props) {
               startTransition(() => deleteBlockAction(workoutId, block.id));
             }
           }}
-          className="text-xs text-foreground/50 hover:text-red-500 cursor-pointer disabled:opacity-50"
+          className="text-xs text-foreground/50 hover:text-red-500 cursor-pointer disabled:opacity-50 p-2 -mr-2"
         >
           Supprimer
         </button>
-      </header>
+      </div>
 
+      {/* Exercise cards */}
       <DndContext
-        sensors={entrySensors}
+        sensors={sensors}
         collisionDetection={closestCenter}
-        onDragEnd={handleEntryDragEnd}
+        onDragEnd={handleExerciseDragEnd}
       >
         <SortableContext
-          items={optimisticEntries.map((e) => e.id)}
+          items={groupIds}
           strategy={verticalListSortingStrategy}
         >
-          <ul className="p-2">
-            {optimisticEntries.length === 0 ? (
-              <li className="px-3 py-4 text-center text-xs text-foreground/40">
-                Aucune entrée — ajoute ton premier exercice
-              </li>
+          <div className="space-y-3">
+            {groups.length === 0 ? (
+              <div className="rounded-xl border border-dashed border-foreground/20 px-3 py-4 text-center text-xs text-foreground/40">
+                Aucun exercice — ajoute ton premier exercice
+              </div>
             ) : (
-              optimisticEntries.map((entry) => (
-                <EntryRow
-                  key={entry.id}
-                  entry={entry}
-                  onDuplicate={async () => {
-                    await duplicateEntryAction(workoutId, entry.id);
-                  }}
-                  onDelete={async () => {
-                    await deleteEntryAction(workoutId, entry.id);
-                  }}
+              groups.map((group) => (
+                <ExerciseCard
+                  key={`${group.exerciseId}-${group.sets[0].id}`}
+                  workoutId={workoutId}
+                  blockId={block.id}
+                  group={group}
+                  onEntryValidated={onEntryValidated}
                 />
               ))
             )}
-          </ul>
+          </div>
         </SortableContext>
       </DndContext>
 
+      {/* Add exercise button */}
       <button
         type="button"
         onClick={() => setPickerOpen(true)}
-        className="w-full px-3 py-2.5 text-sm text-foreground/70 hover:bg-foreground/5 border-t border-foreground/10 cursor-pointer transition-colors"
+        className="w-full rounded-xl border border-dashed border-foreground/20 px-4 py-3 text-sm text-foreground/60 hover:bg-foreground/5 cursor-pointer transition-colors"
       >
-        + Ajouter une entrée
+        + Ajouter un exercice
       </button>
 
       <ExercisePicker
         open={pickerOpen}
         onClose={() => setPickerOpen(false)}
         exercises={exercises}
-        onPick={async (exercise, values) => {
-          await addEntryAction(workoutId, block.id, exercise.id, values);
+        multiSet
+        onPick={async (exercise, values, setCount) => {
+          const count = setCount ?? 1;
+          for (let i = 0; i < count; i++) {
+            await addEntryAction(workoutId, block.id, exercise.id, values);
+          }
         }}
       />
     </section>

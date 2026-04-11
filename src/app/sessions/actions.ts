@@ -6,6 +6,7 @@ import { getCurrentUserId } from "@/lib/auth-helpers";
 import {
   addBlock,
   addEntry,
+  addSetAfter,
   createWorkout,
   deleteBlock,
   deleteEntry,
@@ -15,6 +16,7 @@ import {
   reorderBlocks,
   reorderEntries,
   skipEntry,
+  updateEntryValues,
   updateWorkoutName,
   validateEntry,
 } from "@/lib/workouts/mutations";
@@ -112,6 +114,32 @@ export async function validateEntryAction(
 export async function skipEntryAction(workoutId: string, entryId: string) {
   const userId = await getCurrentUserId();
   await skipEntry(entryId, userId);
+  revalidatePath(`/sessions/${workoutId}`);
+}
+
+export async function updateEntryValuesAction(
+  workoutId: string,
+  entryId: string,
+  values: KpiValueInput[],
+) {
+  const userId = await getCurrentUserId();
+  await updateEntryValues(entryId, userId, values);
+  revalidatePath(`/sessions/${workoutId}`);
+}
+
+export async function addSetAction(
+  workoutId: string,
+  blockId: string,
+  exerciseId: string,
+  afterEntryId: string,
+  values?: KpiValueInput[],
+) {
+  const userId = await getCurrentUserId();
+  await addSetAfter(blockId, userId, {
+    exerciseId,
+    afterEntryId,
+    values,
+  });
   revalidatePath(`/sessions/${workoutId}`);
 }
 
