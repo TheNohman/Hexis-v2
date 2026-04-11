@@ -1,13 +1,6 @@
 import { prisma } from "@/lib/prisma";
+import { assertOwnership } from "@/lib/ownership";
 import type { KpiValueInput } from "@/lib/workouts/types";
-
-function assertTemplateOwnership<T extends { userId: string }>(
-  entity: T | null,
-  userId: string,
-): asserts entity is T {
-  if (!entity) throw new Error("Not found");
-  if (entity.userId !== userId) throw new Error("Forbidden");
-}
 
 export async function createTemplate(userId: string, name?: string) {
   return prisma.workoutTemplate.create({
@@ -22,7 +15,7 @@ export async function deleteTemplate(templateId: string, userId: string) {
   const template = await prisma.workoutTemplate.findUnique({
     where: { id: templateId },
   });
-  assertTemplateOwnership(template, userId);
+  assertOwnership(template, userId);
   return prisma.workoutTemplate.delete({ where: { id: templateId } });
 }
 
@@ -34,7 +27,7 @@ export async function renameTemplate(
   const template = await prisma.workoutTemplate.findUnique({
     where: { id: templateId },
   });
-  assertTemplateOwnership(template, userId);
+  assertOwnership(template, userId);
   return prisma.workoutTemplate.update({
     where: { id: templateId },
     data: { name: name.trim() },
@@ -50,7 +43,7 @@ export async function addTemplateBlock(
     where: { id: templateId },
     include: { blocks: { select: { displayOrder: true } } },
   });
-  assertTemplateOwnership(template, userId);
+  assertOwnership(template, userId);
 
   const nextOrder =
     template.blocks.length === 0
@@ -104,7 +97,7 @@ export async function reorderTemplateBlocks(
     where: { id: templateId },
     include: { blocks: { select: { id: true } } },
   });
-  assertTemplateOwnership(template, userId);
+  assertOwnership(template, userId);
 
   const actualIds = new Set(template.blocks.map((b) => b.id));
   if (
@@ -302,7 +295,7 @@ export async function createWorkoutFromTemplate(
       },
     },
   });
-  assertTemplateOwnership(template, userId);
+  assertOwnership(template, userId);
 
   const now = new Date();
   const defaultName = now.toLocaleDateString("fr-FR", {

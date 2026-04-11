@@ -18,6 +18,7 @@ import {
   skipEntry,
   updateEntryValues,
   updateWorkoutName,
+  updateWorkoutNotes,
   validateEntry,
 } from "@/lib/workouts/mutations";
 import type { KpiValueInput } from "@/lib/workouts/types";
@@ -140,6 +141,12 @@ export async function addSetAction(
     afterEntryId,
     values,
   });
+  revalidatePath(`/sessions/${workoutId}`);
+}
+
+export async function updateNotesAction(workoutId: string, notes: string) {
+  const userId = await getCurrentUserId();
+  await updateWorkoutNotes(workoutId, userId, notes || null);
   revalidatePath(`/sessions/${workoutId}`);
 }
 

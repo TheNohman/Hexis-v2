@@ -91,6 +91,7 @@ export function BlockSection({
           <button
             type="button"
             className="cursor-grab touch-none text-foreground/30 hover:text-foreground/60 shrink-0 p-3 -ml-3"
+            aria-label="Réorganiser le bloc"
             {...attributes}
             {...listeners}
           >
@@ -186,6 +187,7 @@ export function BlockSection({
         multiSet
         onPick={async (exercise, values, setCount) => {
           const count = setCount ?? 1;
+          // Sequential to preserve displayOrder
           for (let i = 0; i < count; i++) {
             await addEntryAction(workoutId, block.id, exercise.id, values);
           }

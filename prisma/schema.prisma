@@ -123,6 +123,7 @@ model Exercise {
   @@index([userId])
   @@index([type])
   @@index([isSystem])
+  @@index([isSystem, userId])
 }
 
 /// Liaison Exercise <-> KpiDefinition : quels KPIs sont pertinents pour cet exercice

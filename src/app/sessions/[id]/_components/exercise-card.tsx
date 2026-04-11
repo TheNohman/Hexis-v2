@@ -9,6 +9,7 @@ import {
   deleteEntryAction,
 } from "@/app/sessions/actions";
 import { SetRow } from "./set-row";
+import { ConfirmDialog } from "@/app/_components/confirm-dialog";
 
 type Props = {
   workoutId: string;
@@ -25,10 +26,12 @@ export function ExerciseCard({
 }: Props) {
   const [isPending, startTransition] = useTransition();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
-  const lastSet = group.sets[group.sets.length - 1];
+  const lastSet = group.sets[group.sets.length - 1] ?? null;
 
   function handleAddSet() {
+    if (!lastSet) return;
     startTransition(() =>
       addSetAction(
         workoutId,
@@ -40,18 +43,13 @@ export function ExerciseCard({
   }
 
   function handleDeleteAll() {
-    if (
-      !confirm(
-        `Supprimer toutes les séries de "${group.exerciseName}" ?`,
-      )
-    )
-      return;
     startTransition(async () => {
-      for (const set of group.sets) {
-        await deleteEntryAction(workoutId, set.id);
-      }
+      await Promise.all(
+        group.sets.map((set) => deleteEntryAction(workoutId, set.id)),
+      );
+      setMenuOpen(false);
+      setConfirmDelete(false);
     });
-    setMenuOpen(false);
   }
 
   return (
@@ -73,6 +71,7 @@ export function ExerciseCard({
             type="button"
             onClick={() => setMenuOpen(!menuOpen)}
             className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg text-foreground/40 hover:text-foreground/70 hover:bg-foreground/5 cursor-pointer transition-colors"
+            aria-label="Options de l'exercice"
           >
             ···
           </button>
@@ -86,7 +85,10 @@ export function ExerciseCard({
                 <button
                   type="button"
                   disabled={isPending}
-                  onClick={handleDeleteAll}
+                  onClick={() => {
+                    setMenuOpen(false);
+                    setConfirmDelete(true);
+                  }}
                   className="w-full px-4 py-2.5 text-left text-sm text-red-500 hover:bg-red-500/10 cursor-pointer disabled:opacity-50"
                 >
                   Supprimer l'exercice
@@ -126,6 +128,16 @@ export function ExerciseCard({
           Repos : {formatDuration(group.restDurationSecs)}
         </div>
       )}
+
+      <ConfirmDialog
+        open={confirmDelete}
+        title="Supprimer l'exercice"
+        message={`Supprimer toutes les séries de "${group.exerciseName}" ?`}
+        confirmLabel="Supprimer"
+        destructive
+        onConfirm={handleDeleteAll}
+        onCancel={() => setConfirmDelete(false)}
+      />
     </div>
   );
 }

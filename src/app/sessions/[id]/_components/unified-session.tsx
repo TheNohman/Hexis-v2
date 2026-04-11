@@ -24,9 +24,11 @@ import {
   finishWorkoutAction,
   renameWorkoutAction,
   reorderBlocksAction,
+  updateNotesAction,
 } from "@/app/sessions/actions";
 import { BlockSection } from "./block-section";
 import { CompactRestTimer } from "./compact-rest-timer";
+import { ConfirmDialog } from "@/app/_components/confirm-dialog";
 
 type Entry = WorkoutDetail["blocks"][number]["entries"][number];
 
@@ -39,6 +41,7 @@ export function UnifiedSession({ workout, exercises }: Props) {
   const [isEditingName, setIsEditingName] = useState(false);
   const [newBlockName, setNewBlockName] = useState("");
   const [showNewBlockInput, setShowNewBlockInput] = useState(false);
+  const [showNotes, setShowNotes] = useState(!!workout.notes);
   const [isPending, startTransition] = useTransition();
   const [restTimer, setRestTimer] = useState<{
     durationSecs: number;
@@ -95,16 +98,19 @@ export function UnifiedSession({ workout, exercises }: Props) {
     });
   }
 
-  function handleFinish() {
+  const [confirmFinish, setConfirmFinish] = useState(false);
+
+  function handleFinishClick() {
     const remaining = allEntries.filter((e) => e.status === "PLANNED").length;
-    if (remaining > 0) {
-      if (
-        !confirm(`Il reste ${remaining} entrée(s) non validée(s). Terminer ?`)
-      )
-        return;
-    } else if (allEntries.length === 0) {
-      if (!confirm("Cette séance est vide. Terminer quand même ?")) return;
+    if (remaining > 0 || allEntries.length === 0) {
+      setConfirmFinish(true);
+    } else {
+      startTransition(() => finishWorkoutAction(workout.id));
     }
+  }
+
+  function handleFinishConfirmed() {
+    setConfirmFinish(false);
     startTransition(() => finishWorkoutAction(workout.id));
   }
 
@@ -176,6 +182,30 @@ export function UnifiedSession({ workout, exercises }: Props) {
               {completedCount} / {totalCount}
             </p>
           </div>
+        )}
+
+        {/* Notes */}
+        {showNotes ? (
+          <textarea
+            defaultValue={workout.notes ?? ""}
+            placeholder="Notes sur cette séance..."
+            rows={2}
+            onBlur={(e) => {
+              const val = e.target.value.trim();
+              if (val !== (workout.notes ?? "")) {
+                startTransition(() => updateNotesAction(workout.id, val));
+              }
+            }}
+            className="w-full rounded-xl border border-foreground/10 bg-foreground/[0.02] px-4 py-3 text-sm resize-none focus:outline-none focus:border-foreground/30"
+          />
+        ) : (
+          <button
+            type="button"
+            onClick={() => setShowNotes(true)}
+            className="text-xs text-foreground/40 hover:text-foreground/70 cursor-pointer transition-colors"
+          >
+            + Ajouter des notes
+          </button>
         )}
 
         {/* Blocks */}
@@ -250,7 +280,7 @@ export function UnifiedSession({ workout, exercises }: Props) {
         <div className="pt-4">
           <button
             type="button"
-            onClick={handleFinish}
+            onClick={handleFinishClick}
             disabled={isPending}
             className="w-full rounded-xl bg-green-600 text-white py-3 font-semibold hover:opacity-90 transition-opacity cursor-pointer disabled:opacity-50"
           >
@@ -266,6 +296,19 @@ export function UnifiedSession({ workout, exercises }: Props) {
           onComplete={handleRestComplete}
         />
       )}
+
+      <ConfirmDialog
+        open={confirmFinish}
+        title="Terminer la séance"
+        message={
+          allEntries.length === 0
+            ? "Cette séance est vide. Terminer quand même ?"
+            : `Il reste ${allEntries.filter((e) => e.status === "PLANNED").length} entrée(s) non validée(s). Terminer ?`
+        }
+        confirmLabel="Terminer"
+        onConfirm={handleFinishConfirmed}
+        onCancel={() => setConfirmFinish(false)}
+      />
     </main>
   );
 }

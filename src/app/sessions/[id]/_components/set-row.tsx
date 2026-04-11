@@ -113,7 +113,7 @@ export function SetRow({ workoutId, entry, setNumber, onValidated }: Props) {
             disabled={isPending}
             onClick={handleSkip}
             className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg text-foreground/30 hover:text-foreground/60 hover:bg-foreground/5 cursor-pointer disabled:opacity-50 transition-colors"
-            title="Passer"
+            aria-label="Passer cette série"
           >
             <span className="text-sm">✕</span>
           </button>
@@ -122,7 +122,7 @@ export function SetRow({ workoutId, entry, setNumber, onValidated }: Props) {
             disabled={isPending}
             onClick={handleValidate}
             className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg text-green-500 hover:bg-green-500/10 cursor-pointer disabled:opacity-50 transition-colors"
-            title="Valider"
+            aria-label="Valider cette série"
           >
             <span className="text-lg font-bold">✓</span>
           </button>
