@@ -19,8 +19,9 @@ model User {
   sessions      Session[]
 
   // Hexis domain relations
-  workouts  Workout[]
-  exercises Exercise[]
+  workouts         Workout[]
+  exercises        Exercise[]
+  workoutTemplates WorkoutTemplate[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -78,6 +79,12 @@ enum KpiDataType {
   TEXT
 }
 
+enum EntryStatus {
+  PLANNED // entrée prévue (créée depuis un template)
+  DONE // validée par l'utilisateur
+  SKIPPED // sautée
+}
+
 /// Référentiel de KPIs (poids, reps, durée, distance, allure, %VMA, etc.)
 model KpiDefinition {
   id       String      @id @default(cuid())
@@ -86,8 +93,9 @@ model KpiDefinition {
   unit     String?
   dataType KpiDataType
 
-  exerciseKpis ExerciseKpi[]
-  entryValues  EntryKpiValue[]
+  exerciseKpis        ExerciseKpi[]
+  entryValues         EntryKpiValue[]
+  templateEntryValues TemplateEntryKpiValue[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -103,9 +111,10 @@ model Exercise {
   isSystem    Boolean      @default(false)
   userId      String? // null => exercice système du catalogue
 
-  user         User?          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  exerciseKpis ExerciseKpi[]
-  entries      WorkoutEntry[]
+  user            User?                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  exerciseKpis    ExerciseKpi[]
+  entries         WorkoutEntry[]
+  templateEntries WorkoutTemplateEntry[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -139,15 +148,18 @@ model Workout {
   startedAt  DateTime  @default(now())
   finishedAt DateTime?
   notes      String?   @db.Text
+  templateId String? // si créée depuis un template
 
-  user   User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  blocks WorkoutBlock[]
+  user     User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  template WorkoutTemplate? @relation(fields: [templateId], references: [id], onDelete: SetNull)
+  blocks   WorkoutBlock[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([userId])
   @@index([startedAt])
+  @@index([templateId])
 }
 
 /// Un bloc dans une séance (ex: "Haut du corps", "Fractionné 10K")
@@ -168,10 +180,13 @@ model WorkoutBlock {
 
 /// Une entrée dans un bloc = une ligne (série de muscu, intervalle de course, repos...)
 model WorkoutEntry {
-  id           String @id @default(cuid())
-  blockId      String
-  exerciseId   String
-  displayOrder Int    @default(0)
+  id               String      @id @default(cuid())
+  blockId          String
+  exerciseId       String
+  displayOrder     Int         @default(0)
+  status           EntryStatus @default(DONE)
+  completedAt      DateTime?
+  restDurationSecs Int? // repos prévu après cette entrée (hérité du template)
 
   block    WorkoutBlock    @relation(fields: [blockId], references: [id], onDelete: Cascade)
   exercise Exercise        @relation(fields: [exerciseId], references: [id], onDelete: Restrict)
@@ -191,9 +206,79 @@ model EntryKpiValue {
   kpiDefinitionId String
   valueNumeric    Float?
   valueText       String?
+  plannedNumeric  Float? // valeur prévue par le template
+  plannedText     String? // valeur prévue par le template
 
   entry         WorkoutEntry  @relation(fields: [entryId], references: [id], onDelete: Cascade)
   kpiDefinition KpiDefinition @relation(fields: [kpiDefinitionId], references: [id], onDelete: Restrict)
+
+  @@unique([entryId, kpiDefinitionId])
+  @@index([entryId])
+}
+
+// ---------- Templates ----------
+
+/// Template de séance réutilisable
+model WorkoutTemplate {
+  id     String @id @default(cuid())
+  userId String
+  name   String
+
+  user     User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  blocks   WorkoutTemplateBlock[]
+  workouts Workout[] // séances créées à partir de ce template
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+}
+
+/// Bloc dans un template
+model WorkoutTemplateBlock {
+  id           String @id @default(cuid())
+  templateId   String
+  name         String
+  displayOrder Int    @default(0)
+
+  template WorkoutTemplate        @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  entries  WorkoutTemplateEntry[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([templateId])
+}
+
+/// Entrée dans un bloc de template
+model WorkoutTemplateEntry {
+  id               String @id @default(cuid())
+  blockId          String
+  exerciseId       String
+  displayOrder     Int    @default(0)
+  restDurationSecs Int? // repos suggéré après cette entrée
+
+  block    WorkoutTemplateBlock      @relation(fields: [blockId], references: [id], onDelete: Cascade)
+  exercise Exercise                  @relation(fields: [exerciseId], references: [id], onDelete: Restrict)
+  values   TemplateEntryKpiValue[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([blockId])
+  @@index([exerciseId])
+}
+
+/// Valeur KPI prévue dans un template
+model TemplateEntryKpiValue {
+  id              String  @id @default(cuid())
+  entryId         String
+  kpiDefinitionId String
+  valueNumeric    Float?
+  valueText       String?
+
+  entry         WorkoutTemplateEntry @relation(fields: [entryId], references: [id], onDelete: Cascade)
+  kpiDefinition KpiDefinition        @relation(fields: [kpiDefinitionId], references: [id], onDelete: Restrict)
 
   @@unique([entryId, kpiDefinitionId])
   @@index([entryId])

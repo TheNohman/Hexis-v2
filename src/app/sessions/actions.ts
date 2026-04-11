@@ -14,7 +14,9 @@ import {
   renameBlock,
   reorderBlocks,
   reorderEntries,
+  skipEntry,
   updateWorkoutName,
+  validateEntry,
 } from "@/lib/workouts/mutations";
 import type { KpiValueInput } from "@/lib/workouts/types";
 
@@ -94,6 +96,22 @@ export async function reorderEntriesAction(
 ) {
   const userId = await getCurrentUserId();
   await reorderEntries(blockId, userId, orderedEntryIds);
+  revalidatePath(`/sessions/${workoutId}`);
+}
+
+export async function validateEntryAction(
+  workoutId: string,
+  entryId: string,
+  values?: KpiValueInput[],
+) {
+  const userId = await getCurrentUserId();
+  await validateEntry(entryId, userId, values);
+  revalidatePath(`/sessions/${workoutId}`);
+}
+
+export async function skipEntryAction(workoutId: string, entryId: string) {
+  const userId = await getCurrentUserId();
+  await skipEntry(entryId, userId);
   revalidatePath(`/sessions/${workoutId}`);
 }
 

@@ -70,10 +70,10 @@ export function WorkoutReadonly({ workout }: Props) {
                     return (
                       <li
                         key={entry.id}
-                        className="flex items-start justify-between py-2 px-3"
+                        className={`flex items-start justify-between py-2 px-3 ${entry.status === "SKIPPED" ? "opacity-40" : ""}`}
                       >
                         <div className="min-w-0 flex-1">
-                          <p className="text-sm font-medium truncate">
+                          <p className={`text-sm font-medium truncate ${entry.status === "SKIPPED" ? "line-through" : ""}`}>
                             {entry.exercise.name}
                           </p>
                           {values && (
@@ -82,6 +82,9 @@ export function WorkoutReadonly({ workout }: Props) {
                             </p>
                           )}
                         </div>
+                        {entry.status === "SKIPPED" && (
+                          <span className="text-xs text-foreground/40 ml-2">passée</span>
+                        )}
                       </li>
                     );
                   })}

@@ -267,6 +267,69 @@ export async function reorderEntries(
   );
 }
 
+export async function validateEntry(
+  entryId: string,
+  userId: string,
+  values?: KpiValueInput[],
+) {
+  const entry = await prisma.workoutEntry.findUnique({
+    where: { id: entryId },
+    include: {
+      block: { include: { workout: { select: { userId: true } } } },
+      values: true,
+    },
+  });
+  if (!entry) throw new Error("Not found");
+  if (entry.block.workout.userId !== userId) throw new Error("Forbidden");
+
+  // Update KPI values if provided (user adjusted them)
+  if (values && values.length > 0) {
+    await prisma.$transaction(
+      values.map((v) =>
+        prisma.entryKpiValue.upsert({
+          where: {
+            entryId_kpiDefinitionId: {
+              entryId,
+              kpiDefinitionId: v.kpiDefinitionId,
+            },
+          },
+          update: {
+            valueNumeric: v.valueNumeric ?? null,
+            valueText: v.valueText ?? null,
+          },
+          create: {
+            entryId,
+            kpiDefinitionId: v.kpiDefinitionId,
+            valueNumeric: v.valueNumeric ?? null,
+            valueText: v.valueText ?? null,
+          },
+        }),
+      ),
+    );
+  }
+
+  return prisma.workoutEntry.update({
+    where: { id: entryId },
+    data: { status: "DONE", completedAt: new Date() },
+  });
+}
+
+export async function skipEntry(entryId: string, userId: string) {
+  const entry = await prisma.workoutEntry.findUnique({
+    where: { id: entryId },
+    include: {
+      block: { include: { workout: { select: { userId: true } } } },
+    },
+  });
+  if (!entry) throw new Error("Not found");
+  if (entry.block.workout.userId !== userId) throw new Error("Forbidden");
+
+  return prisma.workoutEntry.update({
+    where: { id: entryId },
+    data: { status: "SKIPPED", completedAt: new Date() },
+  });
+}
+
 export async function deleteEntry(entryId: string, userId: string) {
   const entry = await prisma.workoutEntry.findUnique({
     where: { id: entryId },

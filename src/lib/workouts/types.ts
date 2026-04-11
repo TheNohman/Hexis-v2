@@ -1,4 +1,8 @@
-import type { ExerciseType, KpiDataType } from "@/generated/prisma/enums";
+import type {
+  EntryStatus,
+  ExerciseType,
+  KpiDataType,
+} from "@/generated/prisma/enums";
 
 export type KpiValueInput = {
   kpiDefinitionId: string;
@@ -41,6 +45,7 @@ export type WorkoutDetail = {
   startedAt: Date;
   finishedAt: Date | null;
   notes: string | null;
+  templateId: string | null;
   blocks: {
     id: string;
     name: string;
@@ -48,6 +53,9 @@ export type WorkoutDetail = {
     entries: {
       id: string;
       displayOrder: number;
+      status: EntryStatus;
+      completedAt: Date | null;
+      restDurationSecs: number | null;
       exercise: {
         id: string;
         slug: string;
@@ -62,6 +70,8 @@ export type WorkoutDetail = {
         dataType: KpiDataType;
         valueNumeric: number | null;
         valueText: string | null;
+        plannedNumeric: number | null;
+        plannedText: string | null;
       }[];
     }[];
   }[];

@@ -36,14 +36,22 @@ export default async function Dashboard() {
           </form>
         </header>
 
-        <form action={createWorkoutAction}>
-          <button
-            type="submit"
-            className="w-full rounded-xl bg-foreground text-background py-4 text-lg font-semibold hover:opacity-90 transition-opacity cursor-pointer"
+        <div className="space-y-3">
+          <form action={createWorkoutAction}>
+            <button
+              type="submit"
+              className="w-full rounded-xl bg-foreground text-background py-4 text-lg font-semibold hover:opacity-90 transition-opacity cursor-pointer"
+            >
+              + Nouvelle séance
+            </button>
+          </form>
+          <Link
+            href="/templates"
+            className="block w-full rounded-xl border border-foreground/20 py-3 text-center text-sm font-medium text-foreground/70 hover:bg-foreground/5 transition-colors"
           >
-            + Nouvelle séance
-          </button>
-        </form>
+            Mes templates
+          </Link>
+        </div>
 
         <section className="space-y-3">
           <h2 className="text-sm font-semibold text-foreground/60 uppercase tracking-wide">

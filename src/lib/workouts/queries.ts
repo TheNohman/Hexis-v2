@@ -110,6 +110,7 @@ export async function getWorkoutById(
     startedAt: workout.startedAt,
     finishedAt: workout.finishedAt,
     notes: workout.notes,
+    templateId: workout.templateId,
     blocks: workout.blocks.map((b) => ({
       id: b.id,
       name: b.name,
@@ -117,6 +118,9 @@ export async function getWorkoutById(
       entries: b.entries.map((e) => ({
         id: e.id,
         displayOrder: e.displayOrder,
+        status: e.status,
+        completedAt: e.completedAt,
+        restDurationSecs: e.restDurationSecs,
         exercise: {
           id: e.exercise.id,
           slug: e.exercise.slug,
@@ -131,6 +135,8 @@ export async function getWorkoutById(
           dataType: v.kpiDefinition.dataType,
           valueNumeric: v.valueNumeric,
           valueText: v.valueText,
+          plannedNumeric: v.plannedNumeric,
+          plannedText: v.plannedText,
         })),
       })),
     })),
