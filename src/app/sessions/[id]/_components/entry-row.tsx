@@ -1,6 +1,8 @@
 "use client";
 
 import { useTransition } from "react";
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { formatDuration } from "@/lib/format";
 import type { WorkoutDetail } from "@/lib/workouts/types";
 
@@ -14,6 +16,20 @@ type Props = {
 
 export function EntryRow({ entry, onDuplicate, onDelete }: Props) {
   const [isPending, startTransition] = useTransition();
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: entry.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
 
   const values = entry.values
     .map((v) => {
@@ -31,7 +47,19 @@ export function EntryRow({ entry, onDuplicate, onDelete }: Props) {
     .join(" · ");
 
   return (
-    <li className="flex items-center justify-between py-2 px-3 rounded-lg hover:bg-foreground/5 transition-colors group">
+    <li
+      ref={setNodeRef}
+      style={style}
+      className="flex items-center justify-between py-2 px-3 rounded-lg hover:bg-foreground/5 transition-colors group"
+    >
+      <button
+        type="button"
+        className="cursor-grab touch-none text-foreground/30 hover:text-foreground/60 pr-2"
+        {...attributes}
+        {...listeners}
+      >
+        ⠿
+      </button>
       <div className="min-w-0 flex-1">
         <p className="text-sm font-medium truncate">{entry.exercise.name}</p>
         {values && (

@@ -12,6 +12,8 @@ import {
   duplicateEntry,
   finishWorkout,
   renameBlock,
+  reorderBlocks,
+  reorderEntries,
   updateWorkoutName,
 } from "@/lib/workouts/mutations";
 import type { KpiValueInput } from "@/lib/workouts/types";
@@ -73,6 +75,25 @@ export async function duplicateEntryAction(
 export async function deleteEntryAction(workoutId: string, entryId: string) {
   const userId = await getCurrentUserId();
   await deleteEntry(entryId, userId);
+  revalidatePath(`/sessions/${workoutId}`);
+}
+
+export async function reorderBlocksAction(
+  workoutId: string,
+  orderedBlockIds: string[],
+) {
+  const userId = await getCurrentUserId();
+  await reorderBlocks(workoutId, userId, orderedBlockIds);
+  revalidatePath(`/sessions/${workoutId}`);
+}
+
+export async function reorderEntriesAction(
+  workoutId: string,
+  blockId: string,
+  orderedEntryIds: string[],
+) {
+  const userId = await getCurrentUserId();
+  await reorderEntries(blockId, userId, orderedEntryIds);
   revalidatePath(`/sessions/${workoutId}`);
 }
 

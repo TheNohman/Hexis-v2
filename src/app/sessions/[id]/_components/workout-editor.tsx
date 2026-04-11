@@ -1,12 +1,28 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import Link from "next/link";
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  KeyboardSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+  arrayMove,
+  sortableKeyboardCoordinates,
+} from "@dnd-kit/sortable";
 import type { ExerciseListItem, WorkoutDetail } from "@/lib/workouts/types";
 import {
   addBlockAction,
   finishWorkoutAction,
   renameWorkoutAction,
+  reorderBlocksAction,
 } from "@/app/sessions/actions";
 import { BlockCard } from "./block-card";
 
@@ -20,6 +36,36 @@ export function WorkoutEditor({ workout, exercises }: Props) {
   const [newBlockName, setNewBlockName] = useState("");
   const [showNewBlockInput, setShowNewBlockInput] = useState(false);
   const [isPending, startTransition] = useTransition();
+
+  // Optimistic block ordering
+  const [optimisticBlocks, setOptimisticBlocks] = useState(workout.blocks);
+  useEffect(() => {
+    setOptimisticBlocks(workout.blocks);
+  }, [workout.blocks]);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    }),
+  );
+
+  function handleBlockDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const oldIndex = optimisticBlocks.findIndex((b) => b.id === active.id);
+    const newIndex = optimisticBlocks.findIndex((b) => b.id === over.id);
+    const reordered = arrayMove(optimisticBlocks, oldIndex, newIndex);
+
+    setOptimisticBlocks(reordered);
+    startTransition(() =>
+      reorderBlocksAction(
+        workout.id,
+        reordered.map((b) => b.id),
+      ),
+    );
+  }
 
   function handleAddBlock() {
     const name = newBlockName.trim() || "Nouveau bloc";
@@ -79,16 +125,27 @@ export function WorkoutEditor({ workout, exercises }: Props) {
         </header>
 
         <div className="space-y-3">
-          {workout.blocks.map((block) => (
-            <BlockCard
-              key={block.id}
-              workoutId={workout.id}
-              block={block}
-              exercises={exercises}
-            />
-          ))}
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleBlockDragEnd}
+          >
+            <SortableContext
+              items={optimisticBlocks.map((b) => b.id)}
+              strategy={verticalListSortingStrategy}
+            >
+              {optimisticBlocks.map((block) => (
+                <BlockCard
+                  key={block.id}
+                  workoutId={workout.id}
+                  block={block}
+                  exercises={exercises}
+                />
+              ))}
+            </SortableContext>
+          </DndContext>
 
-          {workout.blocks.length === 0 && !showNewBlockInput && (
+          {optimisticBlocks.length === 0 && !showNewBlockInput && (
             <div className="rounded-xl border border-dashed border-foreground/20 p-6 text-center">
               <p className="text-sm text-foreground/60">
                 Commence en ajoutant un premier bloc.

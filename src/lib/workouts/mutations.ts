@@ -205,6 +205,68 @@ export async function duplicateEntry(entryId: string, userId: string) {
   });
 }
 
+export async function reorderBlocks(
+  workoutId: string,
+  userId: string,
+  orderedBlockIds: string[],
+) {
+  const workout = await prisma.workout.findUnique({
+    where: { id: workoutId },
+    include: { blocks: { select: { id: true } } },
+  });
+  assertOwnership(workout, userId);
+
+  const actualIds = new Set(workout.blocks.map((b) => b.id));
+  if (
+    orderedBlockIds.length !== actualIds.size ||
+    !orderedBlockIds.every((id) => actualIds.has(id))
+  ) {
+    throw new Error("Block ID mismatch");
+  }
+
+  await prisma.$transaction(
+    orderedBlockIds.map((id, index) =>
+      prisma.workoutBlock.update({
+        where: { id },
+        data: { displayOrder: index },
+      }),
+    ),
+  );
+}
+
+export async function reorderEntries(
+  blockId: string,
+  userId: string,
+  orderedEntryIds: string[],
+) {
+  const block = await prisma.workoutBlock.findUnique({
+    where: { id: blockId },
+    include: {
+      workout: { select: { userId: true } },
+      entries: { select: { id: true } },
+    },
+  });
+  if (!block) throw new Error("Not found");
+  if (block.workout.userId !== userId) throw new Error("Forbidden");
+
+  const actualIds = new Set(block.entries.map((e) => e.id));
+  if (
+    orderedEntryIds.length !== actualIds.size ||
+    !orderedEntryIds.every((id) => actualIds.has(id))
+  ) {
+    throw new Error("Entry ID mismatch");
+  }
+
+  await prisma.$transaction(
+    orderedEntryIds.map((id, index) =>
+      prisma.workoutEntry.update({
+        where: { id },
+        data: { displayOrder: index },
+      }),
+    ),
+  );
+}
+
 export async function deleteEntry(entryId: string, userId: string) {
   const entry = await prisma.workoutEntry.findUnique({
     where: { id: entryId },
