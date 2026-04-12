@@ -15,7 +15,7 @@ export default async function BienEtrePage() {
         <header className="flex items-start justify-between gap-3">
           <div>
             <h1 className="text-2xl font-display font-bold tracking-tight">
-              Bien-etre
+              Bien-être
             </h1>
             <p className="text-xs text-muted mt-1">
               90 derniers jours

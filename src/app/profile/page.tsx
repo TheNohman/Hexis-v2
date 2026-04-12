@@ -103,14 +103,14 @@ export default async function ProfilePage() {
                 </div>
               ))}
               {rows.length === 0 && (
-                <p className="text-xs text-subtle text-center py-1">Aucune mesure enregistree</p>
+                <p className="text-xs text-subtle text-center py-1">Aucune mesure enregistrée</p>
               )}
             </div>
           </HubCard>
 
           <HubCard
             href="/profile/bien-etre"
-            title="Bien-etre"
+            title="Bien-être"
             icon={
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M8 14s-5.5-3.5-5.5-7A3.5 3.5 0 018 4a3.5 3.5 0 015.5 3c0 3.5-5.5 7-5.5 7z" />
@@ -121,13 +121,13 @@ export default async function ProfilePage() {
               {avgMood != null ? `${MOOD_EMOJI[Math.round(avgMood)]} ${ENERGY_EMOJI[Math.round(avgEnergy ?? 3)]}` : "\u2014"}
             </p>
             <p className="text-xs text-subtle mt-1">
-              {wellnessLogs.length > 0 ? `${wellnessLogs.length} jour${wellnessLogs.length !== 1 ? "s" : ""}` : "Aucune donnee"}
+              {wellnessLogs.length > 0 ? `${wellnessLogs.length} jour${wellnessLogs.length !== 1 ? "s" : ""}` : "Aucune donnée"}
             </p>
           </HubCard>
 
           <HubCard
             href="/stats"
-            title="Activite"
+            title="Activité"
             icon={
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M4 2v12M12 2v12M2 6h4M10 6h4M2 10h4M10 10h4" />
@@ -135,10 +135,10 @@ export default async function ProfilePage() {
             }
           >
             <p className="text-xl font-display font-bold tabular-nums">
-              {stats.totalWorkouts} seance{stats.totalWorkouts !== 1 ? "s" : ""}
+              {stats.totalWorkouts} séance{stats.totalWorkouts !== 1 ? "s" : ""}
             </p>
             <p className="text-xs text-subtle mt-1">
-              {stats.avgDurationMins != null ? `Moy. ${formatDuration(stats.avgDurationMins * 60)}` : "Aucune seance"}
+              {stats.avgDurationMins != null ? `Moy. ${formatDuration(stats.avgDurationMins * 60)}` : "Aucune séance"}
             </p>
           </HubCard>
         </div>

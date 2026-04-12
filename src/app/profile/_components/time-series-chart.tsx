@@ -1,6 +1,6 @@
 "use client";
 
-const dateFmt = new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "short" });
+import { dateFmt } from "@/lib/date-utils";
 
 type DataPoint = {
   id: string;

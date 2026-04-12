@@ -89,5 +89,5 @@ export async function deleteMeasurementTypeAction(slug: string) {
 export async function reorderMeasurementTypesAction(slugs: string[]) {
   const userId = await getCurrentUserId();
   await reorderTypeConfigs(userId, slugs);
-  revalidatePath("/profile/mesures");
+  revalidateAll();
 }

@@ -78,7 +78,7 @@ export function TypeManager({ configs, onClose }: Props) {
   return (
     <div className="rounded-xl border border-border bg-surface p-4 space-y-3">
       <div className="flex items-center justify-between">
-        <p className="text-sm font-medium">Gerer les types</p>
+        <p className="text-sm font-medium">Gérer les types</p>
         <button
           type="button"
           onClick={onClose}
@@ -90,7 +90,7 @@ export function TypeManager({ configs, onClose }: Props) {
 
       {items.length === 0 && (
         <p className="text-xs text-muted text-center py-2">
-          Aucun type configure.
+          Aucun type configuré.
         </p>
       )}
 

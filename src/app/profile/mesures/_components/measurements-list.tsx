@@ -1,46 +1,17 @@
 "use client";
 
-import { useState, useTransition, useMemo } from "react";
+import { useState, useTransition, useMemo, useCallback } from "react";
 import { addMeasurementAction, deleteMeasurementAction } from "@/app/measurements/actions";
 import { TimeSeriesChart } from "@/app/profile/_components/time-series-chart";
+import { type Period, PERIODS, filterByPeriod, dateFmtFull } from "@/lib/date-utils";
 import type { MeasurementData, MeasurementTypeConfigData } from "@/lib/measurements/types";
+
+const HISTORY_PREVIEW_COUNT = 5;
 
 type Props = {
   entries: MeasurementData[];
   typeConfigs: MeasurementTypeConfigData[];
 };
-
-type Period = "1m" | "3m" | "6m" | "1y" | "all";
-
-const PERIODS: { key: Period; label: string }[] = [
-  { key: "1m", label: "1M" },
-  { key: "3m", label: "3M" },
-  { key: "6m", label: "6M" },
-  { key: "1y", label: "1A" },
-  { key: "all", label: "Tout" },
-];
-
-function monthsAgo(months: number): Date {
-  const d = new Date();
-  d.setMonth(d.getMonth() - months);
-  return d;
-}
-
-function filterByPeriod(entries: MeasurementData[], period: Period): MeasurementData[] {
-  if (period === "all") return entries;
-  const since =
-    period === "1m" ? monthsAgo(1) :
-    period === "3m" ? monthsAgo(3) :
-    period === "6m" ? monthsAgo(6) :
-    monthsAgo(12);
-  return entries.filter((e) => new Date(e.date) >= since);
-}
-
-const dateFmtFull = new Intl.DateTimeFormat("fr-FR", {
-  day: "numeric",
-  month: "short",
-  year: "numeric",
-});
 
 export function MeasurementsList({ entries, typeConfigs }: Props) {
   const [isPending, startTransition] = useTransition();
@@ -100,7 +71,7 @@ export function MeasurementsList({ entries, typeConfigs }: Props) {
 
       {typeConfigs.length === 0 && (
         <p className="text-sm text-muted text-center py-6">
-          Aucun type de mesure configure. Ajoutez-en un pour commencer le suivi.
+          Aucun type de mesure configuré. Ajoutez-en un pour commencer le suivi.
         </p>
       )}
     </div>
@@ -141,6 +112,13 @@ function MeasurementTypeSection({
   const latest = filtered.length > 0 ? filtered[0] : null;
   const chartData = sorted.slice(-30);
 
+  const [showAllHistory, setShowAllHistory] = useState(false);
+
+  const visibleEntries = useMemo(
+    () => showAllHistory ? filtered : filtered.slice(0, HISTORY_PREVIEW_COUNT),
+    [filtered, showAllHistory],
+  );
+
   return (
     <div className="rounded-xl border border-border bg-surface overflow-hidden">
       {/* Header */}
@@ -157,7 +135,7 @@ function MeasurementTypeSection({
             </span>
           )}
           {!latest && (
-            <span className="text-xs text-subtle">Aucune donnee</span>
+            <span className="text-xs text-subtle">Aucune donnée</span>
           )}
         </div>
         <svg
@@ -168,14 +146,18 @@ function MeasurementTypeSection({
           stroke="currentColor"
           strokeWidth="1.5"
           strokeLinecap="round"
-          className={`text-muted transition-transform ${isOpen ? "rotate-180" : ""}`}
+          className={`text-muted transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
         >
           <polyline points="4,6 8,10 12,6" />
         </svg>
       </button>
 
-      {/* Collapsible content */}
-      {isOpen && (
+      {/* Collapsible content with animation */}
+      <div
+        className="grid transition-[grid-template-rows] duration-200 ease-out"
+        style={{ gridTemplateRows: isOpen ? "1fr" : "0fr" }}
+      >
+        <div className="overflow-hidden">
         <div className="px-4 pb-4 space-y-3">
           {/* Period selector */}
           <div className="flex gap-1 rounded-lg bg-background p-1">
@@ -219,7 +201,7 @@ function MeasurementTypeSection({
 
           {chartData.length === 0 && (
             <p className="text-xs text-muted text-center py-2">
-              Aucune donnee sur cette periode.
+              Aucune donnée sur cette période.
             </p>
           )}
 
@@ -280,7 +262,7 @@ function MeasurementTypeSection({
           {/* History list with delta */}
           {filtered.length > 0 && (
             <ul className="space-y-1">
-              {filtered.map((entry, idx) => {
+              {visibleEntries.map((entry, idx) => {
                 const prev = filtered[idx + 1];
                 const delta = prev ? entry.value - prev.value : null;
                 return (
@@ -305,6 +287,9 @@ function MeasurementTypeSection({
                       <span className="text-xs text-muted shrink-0">
                         {dateFmtFull.format(new Date(entry.date))}
                       </span>
+                      {entry.notes && (
+                        <span className="text-xs text-subtle truncate">{entry.notes}</span>
+                      )}
                     </div>
                     <button
                       type="button"
@@ -322,8 +307,19 @@ function MeasurementTypeSection({
               })}
             </ul>
           )}
+
+          {filtered.length > HISTORY_PREVIEW_COUNT && (
+            <button
+              type="button"
+              onClick={() => setShowAllHistory(!showAllHistory)}
+              className="w-full text-xs text-muted hover:text-accent cursor-pointer transition-colors py-1"
+            >
+              {showAllHistory ? "Réduire" : `Voir tout (${filtered.length})`}
+            </button>
+          )}
         </div>
-      )}
+        </div>
+      </div>
     </div>
   );
 }

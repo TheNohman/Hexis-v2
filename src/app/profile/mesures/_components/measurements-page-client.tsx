@@ -45,7 +45,7 @@ export function MeasurementsPageClient({ typeConfigs, entries }: Props) {
             }}
             className="text-xs text-muted hover:text-foreground cursor-pointer transition-colors"
           >
-            Gerer les types
+            Gérer les types
           </button>
         )}
       </div>
