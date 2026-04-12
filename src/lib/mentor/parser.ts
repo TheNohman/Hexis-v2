@@ -1,67 +1,65 @@
-export type MentorAction =
-  | { type: "advice"; message: string }
-  | { type: "create_program"; program: ProgramProposal; message: string }
-  | { type: "adjust_program"; changes: AdjustChange[]; explanation: string; message: string };
-
-export type ProgramProposal = {
+export type GeneratedExercise = {
   name: string;
-  weekCount: number;
-  weeks: {
-    days: {
-      label: string;
-      exercises: {
-        name: string;
-        type: string;
-        sets: number;
-        reps?: number;
-        weight_kg?: number;
-        duration_secs?: number;
-      }[];
-    }[];
-  }[];
+  type: "STRENGTH" | "BODYWEIGHT" | "CARDIO" | "MOBILITY";
+  sets: number;
+  reps?: number;
+  weight_kg?: number;
+  duration_secs?: number;
+  distance_km?: number;
 };
 
-export type AdjustChange = {
-  description: string;
-  detail: string;
+export type GeneratedBlock = {
+  name: string;
+  exercises: GeneratedExercise[];
+};
+
+export type GeneratedSlot = {
+  cycle: number;
+  day: number;
+  startTime: string | null;
+  label: string | null;
+  template: {
+    name: string;
+    blocks: GeneratedBlock[];
+  };
+};
+
+export type GeneratedProgram = {
+  name: string;
+  cycleCount: number;
+  cycleDays: number;
+  slots: GeneratedSlot[];
 };
 
 /**
- * Parse mentor response to extract structured actions from JSON blocks.
+ * Parse AI response to extract a structured program JSON.
+ * Returns null if parsing fails.
  */
-export function parseMentorResponse(content: string): MentorAction {
+export function parseGeneratedProgram(content: string): GeneratedProgram | null {
   // Try to extract JSON block
   const jsonMatch = content.match(/```json\s*([\s\S]*?)```/);
-
-  if (!jsonMatch) {
-    return { type: "advice", message: content };
-  }
+  const jsonStr = jsonMatch ? jsonMatch[1].trim() : content.trim();
 
   try {
-    const parsed = JSON.parse(jsonMatch[1].trim());
+    const parsed = JSON.parse(jsonStr);
 
-    // Remove JSON block from the message for display
-    const cleanMessage = content.replace(/```json[\s\S]*?```/, "").trim();
-
-    if (parsed.action === "create_program" && parsed.program) {
-      return {
-        type: "create_program",
-        program: parsed.program as ProgramProposal,
-        message: cleanMessage || "Voici le programme que je te propose :",
-      };
+    if (!parsed.name || !parsed.slots || !Array.isArray(parsed.slots)) {
+      return null;
     }
 
-    if (parsed.action === "adjust_program" && parsed.changes) {
-      return {
-        type: "adjust_program",
-        changes: parsed.changes as AdjustChange[],
-        explanation: parsed.explanation ?? "",
-        message: cleanMessage || parsed.explanation || "Voici les ajustements proposés :",
-      };
-    }
-
-    return { type: "advice", message: content };
+    return {
+      name: parsed.name,
+      cycleCount: parsed.cycleCount ?? 1,
+      cycleDays: parsed.cycleDays ?? 7,
+      slots: parsed.slots.map((s: Record<string, unknown>) => ({
+        cycle: s.cycle ?? 0,
+        day: s.day ?? 0,
+        startTime: s.startTime ?? null,
+        label: s.label ?? null,
+        template: s.template as GeneratedSlot["template"],
+      })),
+    };
   } catch {
-    return { type: "advice", message: content };
+    return null;
   }
 }

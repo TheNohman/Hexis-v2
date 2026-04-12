@@ -4,6 +4,7 @@ import { listPrograms } from "@/lib/programs/queries";
 import { listTemplates } from "@/lib/templates/queries";
 import { createProgramAction } from "@/app/programs/actions";
 import { createTemplateAction } from "@/app/templates/actions";
+import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 
@@ -13,6 +14,11 @@ export default async function PlanningPage(props: Props) {
   const searchParams = await props.searchParams;
   const tab = searchParams.tab === "templates" ? "templates" : "programs";
   const userId = await getCurrentUserId();
+  const userSettings = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { mentorEnabled: true },
+  });
+  const mentorEnabled = userSettings?.mentorEnabled ?? false;
 
   return (
     <main className="flex-1 flex flex-col items-center px-4 py-8">
@@ -51,7 +57,7 @@ export default async function PlanningPage(props: Props) {
         </div>
 
         {tab === "programs" ? (
-          <ProgramsTab userId={userId} />
+          <ProgramsTab userId={userId} mentorEnabled={mentorEnabled} />
         ) : (
           <TemplatesTab userId={userId} />
         )}
@@ -60,19 +66,33 @@ export default async function PlanningPage(props: Props) {
   );
 }
 
-async function ProgramsTab({ userId }: { userId: string }) {
+async function ProgramsTab({ userId, mentorEnabled }: { userId: string; mentorEnabled: boolean }) {
   const programs = await listPrograms(userId);
 
   return (
     <div className="space-y-4">
-      <form action={createProgramAction}>
-        <button
-          type="submit"
-          className="w-full rounded-xl bg-accent text-white py-3.5 font-semibold hover:bg-accent-hover transition-colors cursor-pointer shadow-sm"
-        >
-          + Nouveau programme
-        </button>
-      </form>
+      <div className="flex gap-2">
+        <form action={createProgramAction} className="flex-1">
+          <button
+            type="submit"
+            className="w-full rounded-xl bg-accent text-white py-3.5 font-semibold hover:bg-accent-hover transition-colors cursor-pointer shadow-sm"
+          >
+            + Nouveau programme
+          </button>
+        </form>
+        {mentorEnabled && (
+          <Link
+            href="/programs/create-ai"
+            className="shrink-0 rounded-xl border border-accent/30 bg-accent/5 px-4 py-3.5 flex items-center gap-2 hover:bg-accent/10 transition-colors text-sm font-medium text-accent"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 2a7 7 0 017 7c0 3-2 5.5-4 7l-1 2H10l-1-2c-2-1.5-4-4-4-7a7 7 0 017-7z" />
+              <line x1="10" y1="22" x2="14" y2="22" />
+            </svg>
+            IA
+          </Link>
+        )}
+      </div>
 
       {programs.length === 0 ? (
         <div className="rounded-xl border border-dashed border-border p-8 text-center">

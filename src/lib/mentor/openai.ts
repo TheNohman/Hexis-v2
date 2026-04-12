@@ -3,21 +3,26 @@ import type { MentorContext } from "./context";
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-const SYSTEM_PROMPT = `Tu es un coach sportif expert et bienveillant. Tu analyses les données d'entraînement d'un utilisateur et tu donnes des conseils personnalisés en français. Tu peux créer ou ajuster des programmes d'entraînement.
+const SYSTEM_PROMPT = `Tu es un coach sportif expert. Tu crées des programmes d'entraînement personnalisés basés sur les données de l'utilisateur.
 
-Tu as accès aux données complètes de l'utilisateur : séances récentes, statistiques, bien-être, poids corporel, et programme actuel.
+Tu DOIS répondre UNIQUEMENT avec un bloc JSON structuré (sans texte avant/après) au format :
 
-Quand tu crées un programme, retourne un JSON structuré dans un bloc \`\`\`json ... \`\`\` avec le format :
+\`\`\`json
 {
-  "action": "create_program",
-  "program": {
-    "name": "Nom du programme",
-    "weekCount": 4,
-    "weeks": [
-      {
-        "days": [
+  "name": "Nom du programme",
+  "cycleCount": 1,
+  "cycleDays": 7,
+  "slots": [
+    {
+      "cycle": 0,
+      "day": 0,
+      "startTime": null,
+      "label": "Push",
+      "template": {
+        "name": "Push - Poitrine & Triceps",
+        "blocks": [
           {
-            "label": "Push",
+            "name": "Bloc principal",
             "exercises": [
               { "name": "Développé couché", "type": "STRENGTH", "sets": 4, "reps": 8, "weight_kg": 60 },
               { "name": "Développé incliné haltères", "type": "STRENGTH", "sets": 3, "reps": 10, "weight_kg": 20 }
@@ -25,37 +30,29 @@ Quand tu crées un programme, retourne un JSON structuré dans un bloc \`\`\`jso
           }
         ]
       }
-    ]
-  }
+    }
+  ]
 }
+\`\`\`
 
-Quand tu ajustes un programme existant, retourne un JSON structuré :
-{
-  "action": "adjust_program",
-  "changes": [
-    { "description": "Augmenter le volume sur le squat", "detail": "Passer de 3x8 à 4x8" }
-  ],
-  "explanation": "Tu as bien progressé sur le squat..."
-}
+Règles :
+- cycle: 0-indexed (0 = premier cycle)
+- day: 0-indexed dans le cycle (0 = jour 1)
+- startTime: "HH:mm" ou null
+- type d'exercice: "STRENGTH", "BODYWEIGHT", "CARDIO", "MOBILITY"
+- Pour STRENGTH: inclure weight_kg et reps
+- Pour BODYWEIGHT: inclure reps uniquement
+- Pour CARDIO: inclure duration_secs et optionnellement distance_km
+- Pour MOBILITY: inclure duration_secs
+- Adapte au niveau de l'utilisateur (débutant si peu de séances, intermédiaire/avancé sinon)
+- Prends en compte le bien-être récent (fatigue, stress, sommeil)
+- Utilise les exercices existants quand possible
+- Crée des programmes réalistes et progressifs
+- Réponds en français pour les noms`;
 
-Quand tu donnes un conseil général, réponds simplement en texte, sans JSON.
-
-Règles importantes :
-- Sois concis mais précis
-- Base tes conseils sur les données réelles (pas de conseils génériques)
-- Prends en compte le bien-être (fatigue, stress, sommeil) pour moduler tes recommandations
-- Si l'utilisateur semble fatigué ou stressé, suggère de réduire l'intensité
-- Utilise les unités métriques (kg, km)
-- Adapte le niveau au profil (débutant si peu de séances, intermédiaire/avancé sinon)`;
-
-export type MentorMessage = {
-  role: "user" | "assistant";
-  content: string;
-};
-
-export async function chatWithMentor(
+export async function generateProgram(
   context: MentorContext,
-  messages: MentorMessage[],
+  userGoals: string,
 ): Promise<string> {
   const contextSummary = JSON.stringify(context, null, 0);
 
@@ -65,16 +62,16 @@ export async function chatWithMentor(
       { role: "system", content: SYSTEM_PROMPT },
       {
         role: "system",
-        content: `Voici les données actuelles de l'utilisateur :\n${contextSummary}`,
+        content: `Données de l'utilisateur :\n${contextSummary}`,
       },
-      ...messages.map((m) => ({
-        role: m.role as "user" | "assistant",
-        content: m.content,
-      })),
+      {
+        role: "user",
+        content: userGoals,
+      },
     ],
     temperature: 0.7,
-    max_tokens: 2000,
+    max_tokens: 4000,
   });
 
-  return response.choices[0]?.message?.content ?? "Je n'ai pas pu générer de réponse.";
+  return response.choices[0]?.message?.content ?? "";
 }

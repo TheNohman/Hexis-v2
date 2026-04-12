@@ -16,6 +16,11 @@ import {
   createWorkoutFromProgramSlot,
   skipCurrentSlot,
 } from "@/lib/programs/mutations";
+import { buildMentorContext } from "@/lib/mentor/context";
+import { generateProgram } from "@/lib/mentor/openai";
+import { parseGeneratedProgram } from "@/lib/mentor/parser";
+import { materializeAIProgram } from "@/lib/programs/ai-create";
+import { prisma } from "@/lib/prisma";
 
 export async function createProgramAction() {
   const userId = await getCurrentUserId();
@@ -93,4 +98,41 @@ export async function skipSlotAction() {
   const userId = await getCurrentUserId();
   await skipCurrentSlot(userId);
   revalidatePath("/dashboard");
+}
+
+export async function generateAIProgramAction(goals: string): Promise<{ error?: string; preview?: string }> {
+  const userId = await getCurrentUserId();
+
+  // Check if user has mentor enabled (paid feature)
+  const user = await prisma.user.findUnique({ where: { id: userId }, select: { mentorEnabled: true } });
+  if (!user?.mentorEnabled) {
+    return { error: "L'IA n'est pas activée sur ton compte." };
+  }
+
+  const context = await buildMentorContext(userId);
+  const raw = await generateProgram(context, goals);
+
+  if (!raw) {
+    return { error: "L'IA n'a pas pu générer de programme." };
+  }
+
+  return { preview: raw };
+}
+
+export async function confirmAIProgramAction(rawJson: string): Promise<{ error?: string }> {
+  const userId = await getCurrentUserId();
+
+  const user = await prisma.user.findUnique({ where: { id: userId }, select: { mentorEnabled: true } });
+  if (!user?.mentorEnabled) {
+    return { error: "L'IA n'est pas activée sur ton compte." };
+  }
+
+  const parsed = parseGeneratedProgram(rawJson);
+  if (!parsed) {
+    return { error: "Impossible de lire le programme généré." };
+  }
+
+  const programId = await materializeAIProgram(userId, parsed);
+  revalidatePath("/planning");
+  redirect(`/programs/${programId}`);
 }
