@@ -7,7 +7,7 @@ const NAV_ITEMS = [
   { href: "/dashboard", label: "Accueil", icon: "home" },
   { href: "/planning", label: "Planification", icon: "calendar" },
   { href: "/exercises", label: "Exercices", icon: "target" },
-  { href: "/history", label: "Historique", icon: "clock" },
+  { href: "/profile", label: "Profil", icon: "user" },
   { href: "/stats", label: "Stats", icon: "chart" },
 ] as const;
 
@@ -53,6 +53,13 @@ function NavIcon({ name, active }: { name: string; active: boolean }) {
           <line x1="16" y1="2" x2="16" y2="6" />
           <line x1="8" y1="2" x2="8" y2="6" />
           <line x1="3" y1="10" x2="21" y2="10" />
+        </svg>
+      );
+    case "user":
+      return (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round">
+          <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
+          <circle cx="12" cy="7" r="4" />
         </svg>
       );
     case "chart":
