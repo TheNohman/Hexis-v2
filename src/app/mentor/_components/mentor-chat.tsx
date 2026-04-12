@@ -11,10 +11,10 @@ type Message = {
 };
 
 const QUICK_ACTIONS = [
-  { label: "Cr\u00e9e-moi un programme", prompt: "Cr\u00e9e-moi un programme d'entra\u00eenement adapt\u00e9 \u00e0 mon niveau et mes objectifs." },
-  { label: "Analyse ma progression", prompt: "Analyse ma progression r\u00e9cente et donne-moi des conseils pour m'am\u00e9liorer." },
-  { label: "Ajuste mon programme", prompt: "Analyse mon programme actuel et sugg\u00e8re des ajustements pour am\u00e9liorer mes r\u00e9sultats." },
-  { label: "Conseils r\u00e9cup\u00e9ration", prompt: "En fonction de mon bien-\u00eatre r\u00e9cent et de mes entra\u00eenements, que me recommandes-tu pour la r\u00e9cup\u00e9ration ?" },
+  { label: "Crée-moi un programme", prompt: "Crée-moi un programme d'entraînement adapté à mon niveau et mes objectifs." },
+  { label: "Analyse ma progression", prompt: "Analyse ma progression récente et donne-moi des conseils pour m'améliorer." },
+  { label: "Ajuste mon programme", prompt: "Analyse mon programme actuel et suggère des ajustements pour améliorer mes résultats." },
+  { label: "Conseils récupération", prompt: "En fonction de mon bien-être récent et de mes entraînements, que me recommandes-tu pour la récupération ?" },
 ];
 
 export function MentorChat() {
@@ -150,7 +150,7 @@ export function MentorChat() {
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Demande quelque chose \u00e0 ton mentor..."
+            placeholder="Demande quelque chose à ton mentor..."
             disabled={isPending}
             className="flex-1 rounded-xl border border-border bg-surface px-4 py-3 text-sm focus:outline-none focus:border-accent transition-colors disabled:opacity-50"
           />

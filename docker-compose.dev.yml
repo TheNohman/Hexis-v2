@@ -1,0 +1,21 @@
+services:
+  hexis-v2-postgres:
+    image: postgres:17-alpine
+    container_name: hexis-v2-postgres-dev
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: hexis_v2
+      POSTGRES_PASSWORD: hexis_v2
+      POSTGRES_DB: hexis_v2
+    ports:
+      - "5433:5432"
+    volumes:
+      - hexis-v2-pgdata-dev:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hexis_v2"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  hexis-v2-pgdata-dev:
