@@ -20,6 +20,7 @@ import { buildMentorContext } from "@/lib/mentor/context";
 import { generateProgram } from "@/lib/mentor/openai";
 import { parseGeneratedProgram } from "@/lib/mentor/parser";
 import { materializeAIProgram } from "@/lib/programs/ai-create";
+import { finishActiveWorkouts } from "@/lib/workouts/mutations";
 import { prisma } from "@/lib/prisma";
 
 export async function createProgramAction() {
@@ -89,6 +90,7 @@ export async function deleteSlotAction(slotId: string) {
 
 export async function startProgramWorkoutAction() {
   const userId = await getCurrentUserId();
+  await finishActiveWorkouts(userId);
   const workout = await createWorkoutFromProgramSlot(userId);
   revalidatePath("/dashboard");
   redirect(`/sessions/${workout.id}`);

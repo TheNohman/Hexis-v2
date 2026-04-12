@@ -38,14 +38,14 @@ export async function finishWorkout(workoutId: string, userId: string) {
   });
 }
 
-export async function finishStaleWorkouts(userId: string) {
-  const sixHoursAgo = new Date(Date.now() - 6 * 60 * 60 * 1000);
+/**
+ * Finish all active (unfinished) workouts for the given user.
+ * Called automatically when a new workout is started so there is
+ * at most one active workout at a time.
+ */
+export async function finishActiveWorkouts(userId: string) {
   return prisma.workout.updateMany({
-    where: {
-      userId,
-      finishedAt: null,
-      startedAt: { lt: sixHoursAgo },
-    },
+    where: { userId, finishedAt: null },
     data: { finishedAt: new Date() },
   });
 }

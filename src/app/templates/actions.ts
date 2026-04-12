@@ -19,6 +19,7 @@ import {
   updateTemplateEntryRest,
 } from "@/lib/templates/mutations";
 import { cloneTemplate } from "@/lib/templates/clone";
+import { finishActiveWorkouts } from "@/lib/workouts/mutations";
 import type { KpiValueInput } from "@/lib/workouts/types";
 
 export async function createTemplateAction() {
@@ -136,6 +137,7 @@ export async function updateTemplateEntryRestAction(
 
 export async function startSessionFromTemplateAction(templateId: string) {
   const userId = await getCurrentUserId();
+  await finishActiveWorkouts(userId);
   const workout = await createWorkoutFromTemplate(templateId, userId);
   redirect(`/sessions/${workout.id}`);
 }

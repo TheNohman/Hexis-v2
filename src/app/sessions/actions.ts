@@ -11,8 +11,8 @@ import {
   deleteBlock,
   deleteEntry,
   duplicateEntry,
+  finishActiveWorkouts,
   finishWorkout,
-  finishStaleWorkouts,
   renameBlock,
   reorderBlocks,
   reorderEntries,
@@ -29,14 +29,9 @@ import type { KpiValueInput } from "@/lib/workouts/types";
 
 export async function createWorkoutAction() {
   const userId = await getCurrentUserId();
+  await finishActiveWorkouts(userId);
   const workout = await createWorkout(userId);
   redirect(`/sessions/${workout.id}`);
-}
-
-export async function finishStaleWorkoutsAction() {
-  const userId = await getCurrentUserId();
-  await finishStaleWorkouts(userId);
-  revalidatePath("/dashboard");
 }
 
 export async function renameWorkoutAction(workoutId: string, name: string) {

@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { auth, signOut } from "@/auth";
 import { getCurrentUserId } from "@/lib/auth-helpers";
-import { listRecentWorkouts, listStaleWorkouts } from "@/lib/workouts/queries";
+import { listRecentWorkouts } from "@/lib/workouts/queries";
 import { getActiveProgram } from "@/lib/programs/queries";
 import { getTodayWellnessLog } from "@/lib/wellness/queries";
-import { createWorkoutAction, finishStaleWorkoutsAction } from "@/app/sessions/actions";
+import { createWorkoutAction } from "@/app/sessions/actions";
 import { formatDuration } from "@/lib/format";
 import { NextWorkoutCard } from "./_components/next-workout-card";
 import { WellnessCheckin } from "./_components/wellness-checkin";
@@ -14,11 +14,10 @@ export const dynamic = "force-dynamic";
 export default async function Dashboard() {
   const session = await auth();
   const userId = await getCurrentUserId();
-  const [workouts, activeProgram, todayWellness, staleWorkouts] = await Promise.all([
+  const [workouts, activeProgram, todayWellness] = await Promise.all([
     listRecentWorkouts(userId, 10),
     getActiveProgram(userId),
     getTodayWellnessLog(userId),
-    listStaleWorkouts(userId),
   ]);
 
   return (
@@ -55,28 +54,6 @@ export default async function Dashboard() {
             </form>
           </div>
         </header>
-
-        {/* Stale workouts banner */}
-        {staleWorkouts.length > 0 && (
-          <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 space-y-2">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <p className="text-sm font-medium text-amber-200">
-                  {staleWorkouts.length} s&eacute;ance{staleWorkouts.length > 1 ? "s" : ""} non termin&eacute;e{staleWorkouts.length > 1 ? "s" : ""}
-                </p>
-                <p className="text-xs text-amber-300/70 mt-0.5">
-                  {staleWorkouts.map((w) => w.name).slice(0, 3).join(", ")}
-                  {staleWorkouts.length > 3 ? ` et ${staleWorkouts.length - 3} autre(s)` : ""}
-                </p>
-              </div>
-              <form action={finishStaleWorkoutsAction}>
-                <button type="submit" className="shrink-0 rounded-lg bg-amber-500/20 border border-amber-500/30 px-3 py-1.5 text-xs font-medium text-amber-200 hover:bg-amber-500/30 transition-colors cursor-pointer">
-                  Tout cl&ocirc;turer
-                </button>
-              </form>
-            </div>
-          </div>
-        )}
 
         <WellnessCheckin existingLog={todayWellness} />
 
