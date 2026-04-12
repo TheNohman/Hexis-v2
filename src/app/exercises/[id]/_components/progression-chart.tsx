@@ -129,7 +129,7 @@ export function ExerciseProgressionChart({ data, exerciseType }: Props) {
       {/* Volume secondary chart if applicable */}
       {!isCardio && data.some((d) => d.volume != null && d.volume > 0) && (
         <div className="pt-2 border-t border-border/50">
-          <span className="text-xs text-muted">Volume (kg \u00d7 reps)</span>
+          <span className="text-xs text-muted">Volume (kg × reps)</span>
           <div className="flex items-end gap-1 h-16 mt-2">
             {data.map((d, i) => {
               const vol = d.volume ?? 0;

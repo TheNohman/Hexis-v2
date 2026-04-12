@@ -68,7 +68,7 @@ export function SetRow({ workoutId, entry, setNumber, onValidated }: Props) {
         <button
           type="button"
           onClick={handleToggleWarmup}
-          disabled={isDone || isSkipped || isPending}
+          disabled={isSkipped || isPending}
           title={isWarmup ? "\u00c9chauffement (clic pour d\u00e9sactiver)" : "Marquer comme \u00e9chauffement"}
           className={`text-[10px] w-6 text-center shrink-0 tabular-nums font-medium cursor-pointer transition-colors ${
             isWarmup ? "text-accent" : "text-muted hover:text-accent"
