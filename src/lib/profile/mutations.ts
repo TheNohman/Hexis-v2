@@ -6,6 +6,7 @@ export async function updateUserProfile(
     unitSystem?: string;
     defaultRestSecs?: number | null;
     bodyWeightKg?: number | null;
+    mentorEnabled?: boolean;
   },
 ): Promise<void> {
   await prisma.user.update({
@@ -18,6 +19,9 @@ export async function updateUserProfile(
       ...(data.bodyWeightKg !== undefined && {
         bodyWeightKg: data.bodyWeightKg,
       }),
+      ...(data.mentorEnabled !== undefined && {
+        mentorEnabled: data.mentorEnabled,
+      }),
     },
   });
 }
@@ -26,6 +30,7 @@ export async function getUserProfile(userId: string): Promise<{
   unitSystem: string;
   defaultRestSecs: number | null;
   bodyWeightKg: number | null;
+  mentorEnabled: boolean;
   email: string | null;
   name: string | null;
 }> {
@@ -35,6 +40,7 @@ export async function getUserProfile(userId: string): Promise<{
       unitSystem: true,
       defaultRestSecs: true,
       bodyWeightKg: true,
+      mentorEnabled: true,
       email: true,
       name: true,
     },
@@ -46,6 +52,7 @@ export async function getUserProfile(userId: string): Promise<{
     unitSystem: user.unitSystem,
     defaultRestSecs: user.defaultRestSecs,
     bodyWeightKg: user.bodyWeightKg,
+    mentorEnabled: user.mentorEnabled,
     email: user.email,
     name: user.name,
   };

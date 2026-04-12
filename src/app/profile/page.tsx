@@ -2,15 +2,24 @@ import Link from "next/link";
 import { getCurrentUserId } from "@/lib/auth-helpers";
 import { getUserProfile } from "@/lib/profile/mutations";
 import { listBodyWeightEntries } from "@/lib/bodyweight/queries";
+import { getRecentWellnessLogs } from "@/lib/wellness/queries";
+import { getWorkoutStats } from "@/lib/stats/queries";
+import { formatDuration } from "@/lib/format";
 import { ProfileForm } from "./_components/profile-form";
 import { BodyWeightSection } from "./_components/bodyweight-section";
+import { WellnessHistorySection } from "./_components/wellness-history";
+import { ActivitySummary } from "./_components/activity-summary";
 
 export const dynamic = "force-dynamic";
 
 export default async function ProfilePage() {
   const userId = await getCurrentUserId();
-  const profile = await getUserProfile(userId);
-  const bodyWeightEntries = await listBodyWeightEntries(userId, 6);
+  const [profile, bodyWeightEntries, wellnessLogs, stats] = await Promise.all([
+    getUserProfile(userId),
+    listBodyWeightEntries(userId, 6),
+    getRecentWellnessLogs(userId, 30),
+    getWorkoutStats(userId),
+  ]);
 
   return (
     <main className="flex-1 flex flex-col items-center px-4 py-8">
@@ -32,8 +41,12 @@ export default async function ProfilePage() {
           </Link>
         </header>
 
+        {/* Activity summary */}
+        <ActivitySummary stats={stats} />
+
         <ProfileForm profile={profile} />
         <BodyWeightSection entries={bodyWeightEntries} />
+        <WellnessHistorySection logs={wellnessLogs} />
       </div>
     </main>
   );

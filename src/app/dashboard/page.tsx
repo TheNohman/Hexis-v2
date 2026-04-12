@@ -2,15 +2,25 @@ import Link from "next/link";
 import { auth, signOut } from "@/auth";
 import { getCurrentUserId } from "@/lib/auth-helpers";
 import { listRecentWorkouts } from "@/lib/workouts/queries";
+import { getActiveProgram } from "@/lib/programs/queries";
+import { getTodayWellnessLog } from "@/lib/wellness/queries";
 import { createWorkoutAction } from "@/app/sessions/actions";
 import { formatDuration } from "@/lib/format";
+import { prisma } from "@/lib/prisma";
+import { NextWorkoutCard } from "./_components/next-workout-card";
+import { WellnessCheckin } from "./_components/wellness-checkin";
 
 export const dynamic = "force-dynamic";
 
 export default async function Dashboard() {
   const session = await auth();
   const userId = await getCurrentUserId();
-  const workouts = await listRecentWorkouts(userId, 10);
+  const [workouts, activeProgram, todayWellness, userSettings] = await Promise.all([
+    listRecentWorkouts(userId, 10),
+    getActiveProgram(userId),
+    getTodayWellnessLog(userId),
+    prisma.user.findUnique({ where: { id: userId }, select: { mentorEnabled: true } }),
+  ]);
 
   return (
     <main className="flex-1 flex flex-col items-center px-4 py-8">
@@ -47,14 +57,32 @@ export default async function Dashboard() {
           </div>
         </header>
 
-        <form action={createWorkoutAction}>
-          <button
-            type="submit"
-            className="w-full rounded-xl bg-accent text-white py-3.5 font-semibold hover:bg-accent-hover transition-colors cursor-pointer shadow-sm"
-          >
-            + Nouvelle s&eacute;ance
-          </button>
-        </form>
+        <WellnessCheckin existingLog={todayWellness} />
+
+        {activeProgram && <NextWorkoutCard info={activeProgram} />}
+
+        <div className="flex gap-2">
+          <form action={createWorkoutAction} className="flex-1">
+            <button
+              type="submit"
+              className="w-full rounded-xl bg-accent text-white py-3.5 font-semibold hover:bg-accent-hover transition-colors cursor-pointer shadow-sm"
+            >
+              + Nouvelle s&eacute;ance libre
+            </button>
+          </form>
+          {userSettings?.mentorEnabled && (
+            <Link
+              href="/mentor"
+              className="shrink-0 rounded-xl border border-accent/30 bg-accent/5 px-4 py-3.5 flex items-center gap-2 hover:bg-accent/10 transition-colors"
+              title="Mentor IA"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 2a7 7 0 017 7c0 3-2 5.5-4 7l-1 2H10l-1-2c-2-1.5-4-4-4-7a7 7 0 017-7z" />
+                <line x1="10" y1="22" x2="14" y2="22" />
+              </svg>
+            </Link>
+          )}
+        </div>
 
         <section className="space-y-3">
           <div className="flex items-center justify-between">

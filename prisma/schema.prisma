@@ -23,11 +23,14 @@ model User {
   exercises        Exercise[]
   workoutTemplates WorkoutTemplate[]
   bodyWeightEntries BodyWeightEntry[]
+  programs         Program[]
+  wellnessLogs     WellnessLog[]
 
   // Profile / preferences
   unitSystem       String   @default("metric") // "metric" | "imperial"
   defaultRestSecs  Int?     // repos par défaut en secondes
   bodyWeightKg     Float?   // dernier poids de corps connu
+  mentorEnabled    Boolean  @default(false)     // active le mentor IA
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -157,8 +160,14 @@ model Workout {
   notes      String?   @db.Text
   templateId String? // si créée depuis un template
 
+  // Programme lié (optionnel)
+  programId   String?
+  programWeek Int?    // semaine du cycle lors de la création
+  programDay  Int?    // jour du slot lors de la création
+
   user     User             @relation(fields: [userId], references: [id], onDelete: Cascade)
   template WorkoutTemplate? @relation(fields: [templateId], references: [id], onDelete: SetNull)
+  program  Program?         @relation(fields: [programId], references: [id], onDelete: SetNull)
   blocks   WorkoutBlock[]
 
   createdAt DateTime @default(now())
@@ -167,6 +176,7 @@ model Workout {
   @@index([userId])
   @@index([startedAt])
   @@index([templateId])
+  @@index([programId])
 }
 
 /// Un bloc dans une séance (ex: "Haut du corps", "Fractionné 10K")
@@ -252,9 +262,10 @@ model WorkoutTemplate {
   name   String
   tags   String[] @default([]) // ex: ["push", "upper", "strength"]
 
-  user     User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  blocks   WorkoutTemplateBlock[]
-  workouts Workout[] // séances créées à partir de ce template
+  user         User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  blocks       WorkoutTemplateBlock[]
+  workouts     Workout[] // séances créées à partir de ce template
+  programSlots ProgramSlot[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -310,4 +321,64 @@ model TemplateEntryKpiValue {
 
   @@unique([entryId, kpiDefinitionId])
   @@index([entryId])
+}
+
+// ---------- Programmes d'entraînement ----------
+
+/// Programme d'entraînement cyclique sur N semaines
+model Program {
+  id          String  @id @default(cuid())
+  userId      String
+  name        String
+  weekCount   Int     // nombre de semaines dans le cycle
+  isActive    Boolean @default(false)
+  currentWeek Int     @default(0) // 0-indexed
+  currentDay  Int     @default(0) // 0-indexed
+
+  user     User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  slots    ProgramSlot[]
+  workouts Workout[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+}
+
+/// Un créneau dans un programme : semaine X, jour Y → template Z
+model ProgramSlot {
+  id         String  @id @default(cuid())
+  programId  String
+  week       Int     // 0-indexed (0..weekCount-1)
+  day        Int     // 0-indexed dans la semaine
+  label      String? // label optionnel : "Push", "Pull", etc.
+
+  templateId String?
+
+  program  Program          @relation(fields: [programId], references: [id], onDelete: Cascade)
+  template WorkoutTemplate? @relation(fields: [templateId], references: [id], onDelete: SetNull)
+
+  @@unique([programId, week, day])
+  @@index([programId])
+}
+
+// ---------- Suivi bien-être ----------
+
+/// Journal de bien-être quotidien (pré-séance)
+model WellnessLog {
+  id     String   @id @default(cuid())
+  userId String
+  date   DateTime @db.Date
+  mood   Int      // 1-5
+  sleep  Int      // 1-5
+  energy Int      // 1-5
+  stress Int      // 1-5
+  notes  String?  @db.Text
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId, date])
+  @@index([userId])
 }

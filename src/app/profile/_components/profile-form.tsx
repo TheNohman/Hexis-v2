@@ -8,6 +8,7 @@ type Props = {
     unitSystem: string;
     defaultRestSecs: number | null;
     bodyWeightKg: number | null;
+    mentorEnabled: boolean;
     email: string | null;
     name: string | null;
   };
@@ -22,6 +23,7 @@ export function ProfileForm({ profile }: Props) {
     const unitSystem = form.get("unitSystem") as string;
     const restVal = form.get("defaultRestSecs") as string;
     const weightVal = form.get("bodyWeightKg") as string;
+    const mentorEnabled = form.get("mentorEnabled") === "on";
 
     const defaultRestSecs = restVal ? parseInt(restVal, 10) : null;
     const bodyWeightKg = weightVal ? parseFloat(weightVal) : null;
@@ -31,6 +33,7 @@ export function ProfileForm({ profile }: Props) {
         unitSystem,
         defaultRestSecs: defaultRestSecs && !Number.isNaN(defaultRestSecs) ? defaultRestSecs : null,
         bodyWeightKg: bodyWeightKg && !Number.isNaN(bodyWeightKg) ? bodyWeightKg : null,
+        mentorEnabled,
       }),
     );
   }
@@ -80,6 +83,19 @@ export function ProfileForm({ profile }: Props) {
           />
         </label>
       </div>
+
+      <label className="flex items-center gap-3 py-2">
+        <input
+          type="checkbox"
+          name="mentorEnabled"
+          defaultChecked={profile.mentorEnabled}
+          className="w-4 h-4 rounded border-border text-accent focus:ring-accent cursor-pointer accent-accent"
+        />
+        <div>
+          <span className="text-sm font-medium">Mentor IA</span>
+          <p className="text-xs text-muted">Active le coach IA pour analyser et ajuster tes programmes</p>
+        </div>
+      </label>
 
       <button
         type="submit"

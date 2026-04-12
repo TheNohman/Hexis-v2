@@ -8,6 +8,7 @@ export async function updateProfileAction(data: {
   unitSystem?: string;
   defaultRestSecs?: number | null;
   bodyWeightKg?: number | null;
+  mentorEnabled?: boolean;
 }) {
   const userId = await getCurrentUserId();
   await updateUserProfile(userId, data);
