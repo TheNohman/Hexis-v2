@@ -63,14 +63,62 @@ export async function listRecentWorkouts(
     },
   });
 
-  return workouts.map((w) => ({
-    id: w.id,
-    name: w.name,
-    startedAt: w.startedAt,
-    finishedAt: w.finishedAt,
-    blockCount: w.blocks.length,
-    entryCount: w.blocks.reduce((sum, b) => sum + b._count.entries, 0),
-  }));
+  return workouts.map((w) => {
+    let durationMins: number | null = null;
+    if (w.finishedAt && w.startedAt) {
+      durationMins =
+        Math.round(
+          ((w.finishedAt.getTime() - w.startedAt.getTime()) / 60000) * 10,
+        ) / 10;
+    }
+    return {
+      id: w.id,
+      name: w.name,
+      startedAt: w.startedAt,
+      finishedAt: w.finishedAt,
+      durationMins,
+      blockCount: w.blocks.length,
+      entryCount: w.blocks.reduce((sum, b) => sum + b._count.entries, 0),
+    };
+  });
+}
+
+/**
+ * Returns all workouts for the user, optionally limited.
+ */
+export async function listAllWorkouts(
+  userId: string,
+  limit?: number,
+): Promise<WorkoutListItem[]> {
+  const workouts = await prisma.workout.findMany({
+    where: { userId },
+    orderBy: { startedAt: "desc" },
+    ...(limit ? { take: limit } : {}),
+    include: {
+      blocks: {
+        include: { _count: { select: { entries: true } } },
+      },
+    },
+  });
+
+  return workouts.map((w) => {
+    let durationMins: number | null = null;
+    if (w.finishedAt && w.startedAt) {
+      durationMins =
+        Math.round(
+          ((w.finishedAt.getTime() - w.startedAt.getTime()) / 60000) * 10,
+        ) / 10;
+    }
+    return {
+      id: w.id,
+      name: w.name,
+      startedAt: w.startedAt,
+      finishedAt: w.finishedAt,
+      durationMins,
+      blockCount: w.blocks.length,
+      entryCount: w.blocks.reduce((sum, b) => sum + b._count.entries, 0),
+    };
+  });
 }
 
 /**
@@ -121,6 +169,8 @@ export async function getWorkoutById(
         status: e.status,
         completedAt: e.completedAt,
         restDurationSecs: e.restDurationSecs,
+        notes: e.notes,
+        isWarmup: e.isWarmup,
         exercise: {
           id: e.exercise.id,
           slug: e.exercise.slug,

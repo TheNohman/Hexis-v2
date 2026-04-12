@@ -18,6 +18,7 @@ import {
   reorderTemplateEntries,
   updateTemplateEntryRest,
 } from "@/lib/templates/mutations";
+import { cloneTemplate } from "@/lib/templates/clone";
 import type { KpiValueInput } from "@/lib/workouts/types";
 
 export async function createTemplateAction() {
@@ -137,4 +138,25 @@ export async function startSessionFromTemplateAction(templateId: string) {
   const userId = await getCurrentUserId();
   const workout = await createWorkoutFromTemplate(templateId, userId);
   redirect(`/sessions/${workout.id}`);
+}
+
+export async function cloneTemplateAction(templateId: string) {
+  const userId = await getCurrentUserId();
+  const newTemplate = await cloneTemplate(templateId, userId);
+  revalidatePath("/templates");
+  redirect(`/templates/${newTemplate.id}`);
+}
+
+export async function updateTemplateTagsAction(
+  templateId: string,
+  tags: string[],
+) {
+  const userId = await getCurrentUserId();
+  // Direct prisma update - simple enough to inline
+  const { prisma } = await import("@/lib/prisma");
+  const template = await prisma.workoutTemplate.findUnique({ where: { id: templateId } });
+  if (!template || template.userId !== userId) throw new Error("Forbidden");
+  await prisma.workoutTemplate.update({ where: { id: templateId }, data: { tags } });
+  revalidatePath(`/templates/${templateId}`);
+  revalidatePath("/templates");
 }

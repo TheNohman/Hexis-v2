@@ -3,6 +3,7 @@ import { auth, signOut } from "@/auth";
 import { getCurrentUserId } from "@/lib/auth-helpers";
 import { listRecentWorkouts } from "@/lib/workouts/queries";
 import { createWorkoutAction } from "@/app/sessions/actions";
+import { formatDuration } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
 
@@ -23,19 +24,27 @@ export default async function Dashboard() {
               Bonjour {session?.user?.name ?? session?.user?.email ?? ""}
             </p>
           </div>
-          <form
-            action={async () => {
-              "use server";
-              await signOut({ redirectTo: "/" });
-            }}
-          >
-            <button
-              type="submit"
+          <div className="flex items-center gap-3">
+            <Link
+              href="/profile"
               className="text-xs text-muted hover:text-foreground transition-colors cursor-pointer py-1"
             >
-              Se d&eacute;connecter
-            </button>
-          </form>
+              Profil
+            </Link>
+            <form
+              action={async () => {
+                "use server";
+                await signOut({ redirectTo: "/" });
+              }}
+            >
+              <button
+                type="submit"
+                className="text-xs text-muted hover:text-foreground transition-colors cursor-pointer py-1"
+              >
+                Se d&eacute;connecter
+              </button>
+            </form>
+          </div>
         </header>
 
         <form action={createWorkoutAction}>
@@ -48,9 +57,17 @@ export default async function Dashboard() {
         </form>
 
         <section className="space-y-3">
-          <h2 className="text-xs font-semibold text-muted uppercase tracking-wider">
-            Derni&egrave;res s&eacute;ances
-          </h2>
+          <div className="flex items-center justify-between">
+            <h2 className="text-xs font-semibold text-muted uppercase tracking-wider">
+              Derni&egrave;res s&eacute;ances
+            </h2>
+            <Link
+              href="/history"
+              className="text-xs text-accent hover:text-accent-hover transition-colors"
+            >
+              Tout voir &rarr;
+            </Link>
+          </div>
 
           {workouts.length === 0 ? (
             <div className="rounded-xl border border-dashed border-border p-8 text-center">
@@ -72,18 +89,25 @@ export default async function Dashboard() {
                     <div className="flex items-center justify-between">
                       <div className="min-w-0 flex-1">
                         <p className="font-medium truncate">{workout.name}</p>
-                        <p className="text-xs text-muted mt-0.5">
-                          {new Intl.DateTimeFormat("fr-FR", {
-                            day: "numeric",
-                            month: "short",
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          }).format(workout.startedAt)}
-                        </p>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          <span className="text-xs text-muted">
+                            {new Intl.DateTimeFormat("fr-FR", {
+                              day: "numeric",
+                              month: "short",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            }).format(workout.startedAt)}
+                          </span>
+                          {workout.durationMins != null && (
+                            <span className="text-xs text-subtle">
+                              &bull; {formatDuration(workout.durationMins * 60)}
+                            </span>
+                          )}
+                        </div>
                       </div>
                       <div className="text-right shrink-0 ml-4">
                         <p className="text-sm font-medium tabular-nums">
-                          {workout.entryCount} entr&eacute;e
+                          {workout.entryCount} s&eacute;rie
                           {workout.entryCount > 1 ? "s" : ""}
                         </p>
                         <p className="text-xs text-muted mt-0.5">

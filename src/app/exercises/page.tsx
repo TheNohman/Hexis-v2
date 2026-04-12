@@ -78,28 +78,33 @@ export default async function ExercisesPage() {
               </h2>
               <ul className="space-y-1.5">
                 {items.map((exercise) => (
-                  <li key={exercise.id} className="rounded-xl border border-border bg-surface p-3.5">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <p className="font-medium text-sm">
-                          {exercise.name}
-                          {exercise.isSystem && (
-                            <span className="ml-2 text-[10px] text-subtle bg-surface-hover rounded px-1.5 py-0.5">
-                              syst&egrave;me
-                            </span>
-                          )}
-                        </p>
-                        {exercise.description && (
-                          <p className="text-xs text-muted mt-0.5">{exercise.description}</p>
-                        )}
-                        {exercise.kpis.length > 0 && (
-                          <p className="text-xs text-subtle mt-1">
-                            {exercise.kpis.map((k) => k.name).join(" \u00b7 ")}
+                  <li key={exercise.id} className="rounded-xl border border-border bg-surface hover:bg-surface-hover transition-colors">
+                    <Link href={`/exercises/${exercise.id}`} className="block p-3.5">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="font-medium text-sm">
+                            {exercise.name}
+                            {exercise.isSystem && (
+                              <span className="ml-2 text-[10px] text-subtle bg-surface-hover rounded px-1.5 py-0.5">
+                                syst&egrave;me
+                              </span>
+                            )}
                           </p>
-                        )}
+                          {exercise.description && (
+                            <p className="text-xs text-muted mt-0.5">{exercise.description}</p>
+                          )}
+                          {exercise.kpis.length > 0 && (
+                            <p className="text-xs text-subtle mt-1">
+                              {exercise.kpis.map((k) => k.name).join(" \u00b7 ")}
+                            </p>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          {!exercise.isSystem && <DeleteButton exerciseId={exercise.id} />}
+                          <span className="text-xs text-subtle">&rarr;</span>
+                        </div>
                       </div>
-                      {!exercise.isSystem && <DeleteButton exerciseId={exercise.id} />}
-                    </div>
+                    </Link>
                   </li>
                 ))}
               </ul>
@@ -114,7 +119,7 @@ export default async function ExercisesPage() {
 function DeleteButton({ exerciseId }: { exerciseId: string }) {
   const deleteWithId = deleteExerciseAction.bind(null, exerciseId);
   return (
-    <form action={deleteWithId}>
+    <form action={deleteWithId} onClick={(e) => e.stopPropagation()}>
       <button type="submit" className="shrink-0 text-xs text-danger hover:text-danger/80 transition-colors cursor-pointer">
         Supprimer
       </button>

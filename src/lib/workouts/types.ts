@@ -34,6 +34,7 @@ export type WorkoutListItem = {
   name: string;
   startedAt: Date;
   finishedAt: Date | null;
+  durationMins: number | null;
   blockCount: number;
   entryCount: number;
 };
@@ -56,6 +57,8 @@ export type WorkoutDetail = {
       status: EntryStatus;
       completedAt: Date | null;
       restDurationSecs: number | null;
+      notes: string | null;
+      isWarmup: boolean;
       exercise: {
         id: string;
         slug: string;

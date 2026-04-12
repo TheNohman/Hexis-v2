@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getCurrentUserId } from "@/lib/auth-helpers";
 import { getWorkoutStats } from "@/lib/stats/queries";
+import { formatDuration } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
 
@@ -10,6 +11,7 @@ export default async function StatsPage() {
 
   const maxExerciseCount = stats.topExercises[0]?.count ?? 1;
   const maxWeekCount = Math.max(...stats.weeklyActivity.map((w) => w.count), 1);
+  const maxWeekVolume = Math.max(...stats.weeklyVolume.map((w) => w.volume), 1);
 
   return (
     <main className="flex-1 flex flex-col items-center px-4 py-8">
@@ -27,11 +29,15 @@ export default async function StatsPage() {
         </header>
 
         {/* Summary */}
-        <section className="grid grid-cols-3 gap-3">
+        <section className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {[
             { value: stats.totalWorkouts, label: "S\u00e9ances" },
             { value: stats.totalFinished, label: "Termin\u00e9es" },
             { value: stats.totalSetsDone, label: "S\u00e9ries" },
+            {
+              value: stats.avgDurationMins != null ? formatDuration(stats.avgDurationMins * 60) : "\u2014",
+              label: "Dur\u00e9e moy.",
+            },
           ].map(({ value, label }) => (
             <div key={label} className="rounded-xl border border-border bg-surface p-4 text-center">
               <p className="text-2xl font-display font-bold text-accent tabular-nums">{value}</p>
@@ -39,6 +45,16 @@ export default async function StatsPage() {
             </div>
           ))}
         </section>
+
+        {/* Total volume */}
+        {stats.totalVolume > 0 && (
+          <section className="rounded-xl border border-border bg-surface p-4 text-center">
+            <p className="text-3xl font-display font-bold text-accent tabular-nums">
+              {Math.round(stats.totalVolume).toLocaleString("fr-FR")} kg
+            </p>
+            <p className="text-xs text-muted mt-1">Volume total soulev&eacute;</p>
+          </section>
+        )}
 
         {/* Top exercises */}
         <section className="space-y-3">
@@ -50,19 +66,24 @@ export default async function StatsPage() {
           ) : (
             <ul className="space-y-2">
               {stats.topExercises.map((ex) => (
-                <li key={ex.exerciseId} className="rounded-xl border border-border bg-surface p-3.5">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-medium">{ex.name}</span>
-                    <span className="text-xs text-muted tabular-nums">
-                      {ex.count} entr&eacute;e{ex.count > 1 ? "s" : ""}
-                    </span>
-                  </div>
-                  <div className="h-1.5 rounded-full bg-border overflow-hidden">
-                    <div
-                      className="h-full rounded-full bg-accent transition-all duration-500"
-                      style={{ width: `${(ex.count / maxExerciseCount) * 100}%` }}
-                    />
-                  </div>
+                <li key={ex.exerciseId}>
+                  <Link
+                    href={`/exercises/${ex.exerciseId}`}
+                    className="block rounded-xl border border-border bg-surface p-3.5 hover:bg-surface-hover transition-colors"
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm font-medium">{ex.name}</span>
+                      <span className="text-xs text-muted tabular-nums">
+                        {ex.count} s&eacute;rie{ex.count > 1 ? "s" : ""}
+                      </span>
+                    </div>
+                    <div className="h-1.5 rounded-full bg-border overflow-hidden">
+                      <div
+                        className="h-full rounded-full bg-accent transition-all duration-500"
+                        style={{ width: `${(ex.count / maxExerciseCount) * 100}%` }}
+                      />
+                    </div>
+                  </Link>
                 </li>
               ))}
             </ul>
@@ -72,7 +93,7 @@ export default async function StatsPage() {
         {/* Weekly activity */}
         <section className="space-y-3">
           <h2 className="text-xs font-semibold text-muted uppercase tracking-wider">
-            Activit&eacute; par semaine
+            S&eacute;ances par semaine
           </h2>
           <div className="rounded-xl border border-border bg-surface p-4">
             <div className="flex items-end gap-2 h-32">
@@ -103,6 +124,43 @@ export default async function StatsPage() {
             </div>
           </div>
         </section>
+
+        {/* Weekly volume */}
+        {stats.weeklyVolume.some((w) => w.volume > 0) && (
+          <section className="space-y-3">
+            <h2 className="text-xs font-semibold text-muted uppercase tracking-wider">
+              Volume par semaine (kg)
+            </h2>
+            <div className="rounded-xl border border-border bg-surface p-4">
+              <div className="flex items-end gap-2 h-32">
+                {stats.weeklyVolume.map((week) => {
+                  const pct = (week.volume / maxWeekVolume) * 100;
+                  const label = new Intl.DateTimeFormat("fr-FR", {
+                    day: "numeric",
+                    month: "short",
+                  }).format(new Date(week.weekStart));
+                  return (
+                    <div key={week.weekStart} className="flex-1 flex flex-col items-center gap-1">
+                      <span className="text-[10px] text-muted tabular-nums">
+                        {week.volume > 0 ? `${Math.round(week.volume / 1000)}k` : ""}
+                      </span>
+                      <div className="w-full flex items-end h-20">
+                        <div
+                          className="w-full rounded bg-done transition-all duration-500"
+                          style={{
+                            height: week.volume > 0 ? `${Math.max(pct, 10)}%` : "3px",
+                            opacity: week.volume > 0 ? 0.7 : 0.15,
+                          }}
+                        />
+                      </div>
+                      <span className="text-[10px] text-subtle">{label}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </section>
+        )}
       </div>
     </main>
   );

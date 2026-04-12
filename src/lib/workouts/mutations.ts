@@ -463,6 +463,45 @@ export async function addSetAfter(
   });
 }
 
+export async function updateEntryNotes(
+  entryId: string,
+  userId: string,
+  notes: string | null,
+) {
+  const entry = await prisma.workoutEntry.findUnique({
+    where: { id: entryId },
+    include: {
+      block: { include: { workout: { select: { userId: true } } } },
+    },
+  });
+  if (!entry) throw new Error("Not found");
+  if (entry.block.workout.userId !== userId) throw new Error("Forbidden");
+
+  return prisma.workoutEntry.update({
+    where: { id: entryId },
+    data: { notes },
+  });
+}
+
+export async function toggleEntryWarmup(
+  entryId: string,
+  userId: string,
+) {
+  const entry = await prisma.workoutEntry.findUnique({
+    where: { id: entryId },
+    include: {
+      block: { include: { workout: { select: { userId: true } } } },
+    },
+  });
+  if (!entry) throw new Error("Not found");
+  if (entry.block.workout.userId !== userId) throw new Error("Forbidden");
+
+  return prisma.workoutEntry.update({
+    where: { id: entryId },
+    data: { isWarmup: !entry.isWarmup },
+  });
+}
+
 export async function deleteEntry(entryId: string, userId: string) {
   const entry = await prisma.workoutEntry.findUnique({
     where: { id: entryId },

@@ -22,6 +22,12 @@ model User {
   workouts         Workout[]
   exercises        Exercise[]
   workoutTemplates WorkoutTemplate[]
+  bodyWeightEntries BodyWeightEntry[]
+
+  // Profile / preferences
+  unitSystem       String   @default("metric") // "metric" | "imperial"
+  defaultRestSecs  Int?     // repos par défaut en secondes
+  bodyWeightKg     Float?   // dernier poids de corps connu
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -189,6 +195,9 @@ model WorkoutEntry {
   completedAt      DateTime?
   restDurationSecs Int? // repos prévu après cette entrée (hérité du template)
 
+  notes            String?     @db.Text // notes par série (ex: "tempo 3-1-2")
+  isWarmup         Boolean     @default(false) // série d'échauffement
+
   block    WorkoutBlock    @relation(fields: [blockId], references: [id], onDelete: Cascade)
   exercise Exercise        @relation(fields: [exerciseId], references: [id], onDelete: Restrict)
   values   EntryKpiValue[]
@@ -219,11 +228,29 @@ model EntryKpiValue {
 
 // ---------- Templates ----------
 
+/// Suivi du poids corporel
+model BodyWeightEntry {
+  id       String   @id @default(cuid())
+  userId   String
+  weightKg Float
+  date     DateTime @db.Date
+  notes    String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId, date])
+  @@index([userId])
+  @@index([date])
+}
+
 /// Template de séance réutilisable
 model WorkoutTemplate {
-  id     String @id @default(cuid())
+  id     String   @id @default(cuid())
   userId String
   name   String
+  tags   String[] @default([]) // ex: ["push", "upper", "strength"]
 
   user     User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
   blocks   WorkoutTemplateBlock[]

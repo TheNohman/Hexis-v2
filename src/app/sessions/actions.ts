@@ -17,10 +17,13 @@ import {
   reorderEntries,
   skipEntry,
   updateEntryValues,
+  updateEntryNotes,
   updateWorkoutName,
   updateWorkoutNotes,
+  toggleEntryWarmup,
   validateEntry,
 } from "@/lib/workouts/mutations";
+import { createTemplateFromWorkout } from "@/lib/templates/from-workout";
 import type { KpiValueInput } from "@/lib/workouts/types";
 
 export async function createWorkoutAction() {
@@ -155,4 +158,30 @@ export async function finishWorkoutAction(workoutId: string) {
   await finishWorkout(workoutId, userId);
   revalidatePath("/dashboard");
   redirect("/dashboard");
+}
+
+export async function updateEntryNotesAction(
+  workoutId: string,
+  entryId: string,
+  notes: string | null,
+) {
+  const userId = await getCurrentUserId();
+  await updateEntryNotes(entryId, userId, notes);
+  revalidatePath(`/sessions/${workoutId}`);
+}
+
+export async function toggleEntryWarmupAction(
+  workoutId: string,
+  entryId: string,
+) {
+  const userId = await getCurrentUserId();
+  await toggleEntryWarmup(entryId, userId);
+  revalidatePath(`/sessions/${workoutId}`);
+}
+
+export async function saveAsTemplateAction(workoutId: string, name?: string) {
+  const userId = await getCurrentUserId();
+  const template = await createTemplateFromWorkout(workoutId, userId, name);
+  revalidatePath("/templates");
+  redirect(`/templates/${template.id}`);
 }

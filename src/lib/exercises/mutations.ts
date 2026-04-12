@@ -137,3 +137,30 @@ export async function deleteExercise(
 
   await prisma.exercise.delete({ where: { id: exerciseId } });
 }
+
+/**
+ * Update a custom exercise. Cannot update system exercises.
+ */
+export async function updateExercise(
+  exerciseId: string,
+  userId: string,
+  data: { name?: string; description?: string | null; type?: ExerciseType },
+): Promise<void> {
+  const exercise = await prisma.exercise.findUnique({
+    where: { id: exerciseId },
+    select: { id: true, userId: true, isSystem: true },
+  });
+
+  if (!exercise) throw new Error("Not found");
+  if (exercise.isSystem) throw new Error("Impossible de modifier un exercice système");
+  assertOwnership(exercise as { userId: string }, userId);
+
+  await prisma.exercise.update({
+    where: { id: exerciseId },
+    data: {
+      ...(data.name !== undefined && { name: data.name }),
+      ...(data.description !== undefined && { description: data.description }),
+      ...(data.type !== undefined && { type: data.type }),
+    },
+  });
+}

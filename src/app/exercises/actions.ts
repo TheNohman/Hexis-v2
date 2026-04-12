@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { getCurrentUserId } from "@/lib/auth-helpers";
-import { createExercise, deleteExercise } from "@/lib/exercises/mutations";
+import { createExercise, deleteExercise, updateExercise } from "@/lib/exercises/mutations";
 import type { ExerciseType } from "@/generated/prisma/enums";
 
 const VALID_TYPES = new Set<ExerciseType>([
@@ -38,5 +38,14 @@ export async function createExerciseAction(formData: FormData) {
 export async function deleteExerciseAction(exerciseId: string) {
   const userId = await getCurrentUserId();
   await deleteExercise(exerciseId, userId);
+  revalidatePath("/exercises");
+}
+
+export async function updateExerciseAction(
+  exerciseId: string,
+  data: { name?: string; description?: string | null },
+) {
+  const userId = await getCurrentUserId();
+  await updateExercise(exerciseId, userId, data);
   revalidatePath("/exercises");
 }

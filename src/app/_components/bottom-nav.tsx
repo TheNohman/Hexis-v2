@@ -7,6 +7,7 @@ const NAV_ITEMS = [
   { href: "/dashboard", label: "Accueil", icon: "home" },
   { href: "/templates", label: "Templates", icon: "layers" },
   { href: "/exercises", label: "Exercices", icon: "target" },
+  { href: "/history", label: "Historique", icon: "clock" },
   { href: "/stats", label: "Stats", icon: "chart" },
 ] as const;
 
@@ -36,6 +37,13 @@ function NavIcon({ name, active }: { name: string; active: boolean }) {
           <circle cx="12" cy="12" r="10" />
           <circle cx="12" cy="12" r="6" />
           <circle cx="12" cy="12" r="2" />
+        </svg>
+      );
+    case "clock":
+      return (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={sw} strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="12" cy="12" r="10" />
+          <polyline points="12,6 12,12 16,14" />
         </svg>
       );
     case "chart":

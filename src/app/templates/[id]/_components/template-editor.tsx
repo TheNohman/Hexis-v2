@@ -21,6 +21,7 @@ import type { ExerciseListItem } from "@/lib/workouts/types";
 import type { TemplateDetail } from "@/lib/templates/types";
 import {
   addTemplateBlockAction,
+  cloneTemplateAction,
   deleteTemplateAction,
   renameTemplateAction,
   reorderTemplateBlocksAction,
@@ -80,6 +81,10 @@ export function TemplateEditor({ template, exercises }: Props) {
   function handleDelete() {
     if (!confirm(`Supprimer le template "${template.name}" ?`)) return;
     startTransition(() => deleteTemplateAction(template.id));
+  }
+
+  function handleClone() {
+    startTransition(() => cloneTemplateAction(template.id));
   }
 
   function handleStartSession() {
@@ -201,6 +206,14 @@ export function TemplateEditor({ template, exercises }: Props) {
             className="w-full rounded-2xl bg-done text-white py-4 font-bold tracking-wide hover:bg-done/90 transition-colors cursor-pointer disabled:opacity-50 uppercase"
           >
             D&eacute;marrer une s&eacute;ance
+          </button>
+          <button
+            type="button"
+            onClick={handleClone}
+            disabled={isPending}
+            className="w-full rounded-2xl border border-border text-muted py-3 text-sm font-medium hover:bg-surface transition-colors cursor-pointer disabled:opacity-50"
+          >
+            Dupliquer ce template
           </button>
           <button
             type="button"
