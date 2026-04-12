@@ -94,7 +94,7 @@ export function MeasurementsList({ entries, typeConfigs }: Props) {
           showForm={addingType === config.slug}
           onShowForm={() => setAddingType(addingType === config.slug ? null : config.slug)}
           onAdd={(e) => handleAdd(e, config.slug, config.unit)}
-          onDelete={(id) => startTransition(() => deleteMeasurementAction(id))}
+          onDelete={(id) => startTransition(() => deleteMeasurementAction(id, config.slug))}
         />
       ))}
 

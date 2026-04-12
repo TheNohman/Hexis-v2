@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { getCurrentUserId } from "@/lib/auth-helpers";
 import { upsertMeasurement, deleteMeasurement } from "@/lib/measurements/mutations";
+import { upsertBodyWeight, deleteBodyWeight } from "@/lib/bodyweight/mutations";
 import {
   createTypeConfig,
   updateTypeConfig,
@@ -10,30 +11,51 @@ import {
   reorderTypeConfigs,
 } from "@/lib/measurements/type-config-mutations";
 
+const REVALIDATE_PATHS = ["/profile", "/profile/mesures", "/stats"];
+
+function revalidateAll() {
+  for (const p of REVALIDATE_PATHS) revalidatePath(p);
+}
+
 // ─── Measurement entries ───
 
 export async function addMeasurementAction(data: {
   type: string;
-  date: string; // ISO date string
+  date: string;
   value: number;
   notes?: string;
 }) {
   const userId = await getCurrentUserId();
-  await upsertMeasurement(userId, {
-    type: data.type,
-    date: new Date(data.date),
-    value: data.value,
-    notes: data.notes ?? null,
-  });
-  revalidatePath("/profile");
-  revalidatePath("/profile/mesures");
+  const date = new Date(data.date);
+
+  if (data.type === "poids") {
+    await upsertBodyWeight(userId, {
+      date,
+      weightKg: data.value,
+      notes: data.notes ?? null,
+    });
+  } else {
+    await upsertMeasurement(userId, {
+      type: data.type,
+      date,
+      value: data.value,
+      notes: data.notes ?? null,
+    });
+  }
+
+  revalidateAll();
 }
 
-export async function deleteMeasurementAction(entryId: string) {
+export async function deleteMeasurementAction(entryId: string, type?: string) {
   const userId = await getCurrentUserId();
-  await deleteMeasurement(entryId, userId);
-  revalidatePath("/profile");
-  revalidatePath("/profile/mesures");
+
+  if (type === "poids") {
+    await deleteBodyWeight(entryId, userId);
+  } else {
+    await deleteMeasurement(entryId, userId);
+  }
+
+  revalidateAll();
 }
 
 // ─── Type config ───
@@ -45,8 +67,7 @@ export async function createMeasurementTypeAction(data: {
 }) {
   const userId = await getCurrentUserId();
   await createTypeConfig(userId, data);
-  revalidatePath("/profile");
-  revalidatePath("/profile/mesures");
+  revalidateAll();
 }
 
 export async function updateMeasurementTypeAction(
@@ -55,15 +76,13 @@ export async function updateMeasurementTypeAction(
 ) {
   const userId = await getCurrentUserId();
   await updateTypeConfig(userId, slug, data);
-  revalidatePath("/profile");
-  revalidatePath("/profile/mesures");
+  revalidateAll();
 }
 
 export async function deleteMeasurementTypeAction(slug: string) {
   const userId = await getCurrentUserId();
   const result = await deleteTypeConfig(userId, slug);
-  revalidatePath("/profile");
-  revalidatePath("/profile/mesures");
+  revalidateAll();
   return result;
 }
 
