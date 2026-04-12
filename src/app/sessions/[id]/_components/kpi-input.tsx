@@ -14,13 +14,13 @@ type Props = {
 };
 
 const inputClasses =
-  "rounded-xl bg-surface-hover border border-transparent px-3 py-3 text-sm focus:outline-none focus:border-accent/40 tabular-nums transition-colors";
+  "rounded-lg bg-surface border border-border px-3 py-2.5 text-sm focus:outline-none focus:border-accent tabular-nums transition-colors";
 
 export function KpiInput({ kpi, valueNumeric, valueText, onChange, autoFocus }: Props) {
   if (kpi.dataType === "DURATION") {
     return (
       <label className="flex flex-col gap-1.5 min-w-0">
-        <span className="text-[10px] uppercase tracking-widest text-subtle font-medium">
+        <span className="text-[10px] uppercase text-muted">
           {kpi.name}
           {kpi.isRequired ? "" : " \u00b7"}
         </span>
@@ -44,7 +44,7 @@ export function KpiInput({ kpi, valueNumeric, valueText, onChange, autoFocus }: 
   if (kpi.dataType === "TEXT") {
     return (
       <label className="flex flex-col gap-1.5 min-w-0">
-        <span className="text-[10px] uppercase tracking-widest text-subtle font-medium">
+        <span className="text-[10px] uppercase text-muted">
           {kpi.name}
           {kpi.isRequired ? "" : " \u00b7"}
         </span>
@@ -64,7 +64,7 @@ export function KpiInput({ kpi, valueNumeric, valueText, onChange, autoFocus }: 
   const step = kpi.dataType === "INTEGER" ? "1" : "any";
   return (
     <label className="flex flex-col gap-1.5 min-w-0">
-      <span className="text-[10px] uppercase tracking-widest text-subtle font-medium">
+      <span className="text-[10px] uppercase text-muted">
         {kpi.name}
         {kpi.unit ? ` (${kpi.unit})` : ""}
         {kpi.isRequired ? "" : " \u00b7"}

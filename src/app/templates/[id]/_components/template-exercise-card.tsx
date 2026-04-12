@@ -40,9 +40,9 @@ export function TemplateExerciseCard({ templateId, blockId, group }: Props) {
   }
 
   return (
-    <div className="rounded-2xl border border-surface-border bg-surface overflow-hidden">
+    <div className="rounded-2xl border border-border bg-surface overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-surface-border">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-border">
         <span className="text-sm font-bold truncate">
           {group.exerciseName}
         </span>
@@ -64,12 +64,12 @@ export function TemplateExerciseCard({ templateId, blockId, group }: Props) {
                 className="fixed inset-0 z-40"
                 onClick={() => setMenuOpen(false)}
               />
-              <div className="absolute right-0 top-full z-50 bg-background border border-surface-border rounded-xl shadow-2xl py-1 min-w-[160px]">
+              <div className="absolute right-0 top-full z-50 bg-background border border-border rounded-xl shadow-2xl py-1 min-w-[160px]">
                 <button
                   type="button"
                   onClick={handleDeleteAll}
                   disabled={isPending}
-                  className="w-full text-left px-4 py-3 text-sm text-danger hover:bg-danger-surface cursor-pointer disabled:opacity-50 transition-colors"
+                  className="w-full text-left px-4 py-3 text-sm text-danger hover:bg-danger-light cursor-pointer disabled:opacity-50 transition-colors"
                 >
                   Supprimer l&apos;exercice
                 </button>
@@ -114,7 +114,7 @@ export function TemplateExerciseCard({ templateId, blockId, group }: Props) {
         type="button"
         onClick={handleDuplicateLast}
         disabled={isPending}
-        className="w-full px-4 py-3 text-sm text-subtle hover:text-accent border-t border-surface-border cursor-pointer transition-colors disabled:opacity-50 font-medium"
+        className="w-full px-4 py-3 text-sm text-subtle hover:text-accent border-t border-border cursor-pointer transition-colors disabled:opacity-50 font-medium"
       >
         + S&eacute;rie
       </button>
@@ -124,13 +124,13 @@ export function TemplateExerciseCard({ templateId, blockId, group }: Props) {
         <button
           type="button"
           onClick={() => setEditingRest(true)}
-          className="w-full px-4 py-2 text-xs text-subtle hover:text-muted border-t border-surface-border/50 cursor-pointer transition-colors"
+          className="w-full px-4 py-2 text-xs text-subtle hover:text-muted border-t border-border/50 cursor-pointer transition-colors"
         >
           Repos : {formatDuration(group.restDurationSecs)}
         </button>
       )}
       {(editingRest || group.restDurationSecs == null) && (
-        <div className="px-4 py-2.5 border-t border-surface-border/50 flex items-center gap-2">
+        <div className="px-4 py-2.5 border-t border-border/50 flex items-center gap-2">
           <input
             type="number"
             min={0}
@@ -151,7 +151,7 @@ export function TemplateExerciseCard({ templateId, blockId, group }: Props) {
                 setEditingRest(false);
               });
             }}
-            className="w-24 rounded-lg bg-surface-hover border border-transparent px-2.5 py-1.5 text-xs focus:outline-none focus:border-accent/40 transition-colors"
+            className="w-24 rounded-lg bg-surface border border-transparent px-2.5 py-1.5 text-xs focus:outline-none focus:border-accent/40 transition-colors"
           />
           <span className="text-xs text-subtle">sec repos</span>
         </div>

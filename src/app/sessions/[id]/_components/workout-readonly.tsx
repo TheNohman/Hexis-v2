@@ -44,7 +44,7 @@ export function WorkoutReadonly({ workout }: Props) {
           </div>
           <Link
             href="/dashboard"
-            className="text-xs text-subtle hover:text-foreground whitespace-nowrap px-3 py-2 rounded-lg hover:bg-surface-hover transition-colors"
+            className="text-xs text-subtle hover:text-foreground whitespace-nowrap px-3 py-2 rounded-lg hover:bg-surface transition-colors"
           >
             &larr; Retour
           </Link>
@@ -59,9 +59,9 @@ export function WorkoutReadonly({ workout }: Props) {
             workout.blocks.map((block) => (
               <section
                 key={block.id}
-                className="rounded-2xl border border-surface-border bg-surface overflow-hidden"
+                className="rounded-2xl border border-border bg-surface overflow-hidden"
               >
-                <header className="px-4 py-3 border-b border-surface-border">
+                <header className="px-4 py-3 border-b border-border">
                   <h2 className="text-xs font-bold uppercase tracking-widest">{block.name}</h2>
                 </header>
                 <ul className="p-2">

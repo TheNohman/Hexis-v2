@@ -114,7 +114,7 @@ export function TemplateBlockCard({ templateId, block, exercises }: Props) {
       {/* Exercise cards */}
       <div className="space-y-3">
         {groups.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-surface-border px-4 py-6 text-center text-xs text-subtle">
+          <div className="rounded-2xl border border-dashed border-border px-4 py-6 text-center text-xs text-subtle">
             Aucun exercice &mdash; ajoute ton premier exercice
           </div>
         ) : (
@@ -133,7 +133,7 @@ export function TemplateBlockCard({ templateId, block, exercises }: Props) {
       <button
         type="button"
         onClick={() => setPickerOpen(true)}
-        className="w-full rounded-2xl border border-dashed border-surface-border px-4 py-4 text-sm text-subtle hover:text-accent hover:border-accent/30 cursor-pointer transition-colors"
+        className="w-full rounded-2xl border border-dashed border-border px-4 py-4 text-sm text-subtle hover:text-accent hover:border-accent/30 cursor-pointer transition-colors"
       >
         + Ajouter un exercice
       </button>

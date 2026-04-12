@@ -87,7 +87,7 @@ export function BlockSection({
         <div className="flex items-center gap-2 min-w-0 flex-1">
           <button
             type="button"
-            className="cursor-grab touch-none text-subtle hover:text-muted shrink-0 p-3 -ml-3 transition-colors"
+            className="cursor-grab touch-none text-muted hover:text-foreground shrink-0 p-3 -ml-3 transition-colors"
             aria-label="R\u00e9organiser le bloc"
             {...attributes}
             {...listeners}
@@ -139,7 +139,7 @@ export function BlockSection({
               startTransition(() => deleteBlockAction(workoutId, block.id));
             }
           }}
-          className="text-xs text-subtle hover:text-danger cursor-pointer disabled:opacity-50 p-2 -mr-2 transition-colors"
+          className="text-xs text-subtle hover:text-danger transition-colors cursor-pointer disabled:opacity-50 p-2 -mr-2 transition-colors"
         >
           Supprimer
         </button>
@@ -157,7 +157,7 @@ export function BlockSection({
         >
           <div className="space-y-3">
             {groups.length === 0 ? (
-              <div className="rounded-2xl border border-dashed border-surface-border px-4 py-6 text-center text-xs text-subtle">
+              <div className="rounded-2xl border border-dashed border-border px-4 py-6 text-center text-xs text-subtle">
                 Aucun exercice &mdash; ajoute ton premier exercice
               </div>
             ) : (
@@ -179,7 +179,7 @@ export function BlockSection({
       <button
         type="button"
         onClick={() => setPickerOpen(true)}
-        className="w-full rounded-2xl border border-dashed border-surface-border px-4 py-4 text-sm text-subtle hover:text-accent hover:border-accent/30 cursor-pointer transition-colors"
+        className="w-full rounded-2xl border border-dashed border-border px-4 py-4 text-sm text-subtle hover:text-accent hover:border-accent/40 cursor-pointer transition-colors"
       >
         + Ajouter un exercice
       </button>

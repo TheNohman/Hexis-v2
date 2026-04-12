@@ -121,7 +121,7 @@ export function TemplateEditor({ template, exercises }: Props) {
           )}
           <Link
             href="/templates"
-            className="text-xs text-subtle hover:text-foreground whitespace-nowrap px-3 py-2 rounded-lg hover:bg-surface-hover transition-colors"
+            className="text-xs text-subtle hover:text-foreground whitespace-nowrap px-3 py-2 rounded-lg hover:bg-surface transition-colors"
           >
             &larr; Templates
           </Link>
@@ -149,7 +149,7 @@ export function TemplateEditor({ template, exercises }: Props) {
           </DndContext>
 
           {optimisticBlocks.length === 0 && !showNewBlockInput && (
-            <div className="rounded-2xl border border-dashed border-surface-border p-8 text-center">
+            <div className="rounded-2xl border border-dashed border-border p-8 text-center">
               <p className="text-sm text-muted">
                 Commence en ajoutant un premier bloc.
               </p>
@@ -171,13 +171,13 @@ export function TemplateEditor({ template, exercises }: Props) {
                   }
                 }}
                 autoFocus
-                className="flex-1 rounded-xl border border-surface-border bg-surface px-4 py-3 text-sm outline-none focus:border-accent/50 transition-colors"
+                className="flex-1 rounded-xl border border-border bg-surface px-4 py-3 text-sm outline-none focus:border-accent/50 transition-colors"
               />
               <button
                 type="button"
                 onClick={handleAddBlock}
                 disabled={isPending}
-                className="rounded-xl bg-accent text-background px-5 text-sm font-bold disabled:opacity-50 cursor-pointer hover:bg-accent-dark transition-colors"
+                className="rounded-xl bg-accent text-background px-5 text-sm font-bold disabled:opacity-50 cursor-pointer hover:bg-accent-hover transition-colors"
               >
                 Ajouter
               </button>
@@ -186,7 +186,7 @@ export function TemplateEditor({ template, exercises }: Props) {
             <button
               type="button"
               onClick={() => setShowNewBlockInput(true)}
-              className="w-full rounded-2xl border border-dashed border-surface-border px-4 py-4 text-sm text-subtle hover:text-accent hover:border-accent/30 cursor-pointer transition-colors"
+              className="w-full rounded-2xl border border-dashed border-border px-4 py-4 text-sm text-subtle hover:text-accent hover:border-accent/30 cursor-pointer transition-colors"
             >
               + Ajouter un bloc
             </button>
@@ -206,7 +206,7 @@ export function TemplateEditor({ template, exercises }: Props) {
             type="button"
             onClick={handleDelete}
             disabled={isPending}
-            className="w-full rounded-2xl border border-danger/30 text-danger py-3 text-sm font-bold hover:bg-danger-surface transition-colors cursor-pointer disabled:opacity-50"
+            className="w-full rounded-2xl border border-danger/30 text-danger py-3 text-sm font-bold hover:bg-danger-light transition-colors cursor-pointer disabled:opacity-50"
           >
             Supprimer ce template
           </button>

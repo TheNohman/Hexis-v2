@@ -1,83 +1,92 @@
 @import "tailwindcss";
 
 :root {
-  --background: #0C0C0E;
-  --foreground: #E8E6E3;
-  --accent: #C8FF00;
-  --accent-dark: #9ECC00;
-  --surface: rgba(255, 255, 255, 0.04);
-  --surface-hover: rgba(255, 255, 255, 0.08);
-  --surface-border: rgba(255, 255, 255, 0.08);
-  --surface-border-hover: rgba(255, 255, 255, 0.16);
-  --muted: rgba(232, 230, 227, 0.5);
-  --subtle: rgba(232, 230, 227, 0.25);
-  --done: #22C55E;
+  --background: #FFFFFF;
+  --foreground: #111827;
+  --accent: #6366F1;
+  --accent-hover: #4F46E5;
+  --accent-light: rgba(99, 102, 241, 0.08);
+  --surface: #F9FAFB;
+  --surface-hover: #F3F4F6;
+  --border: #E5E7EB;
+  --border-hover: #D1D5DB;
+  --muted: #6B7280;
+  --subtle: #9CA3AF;
+  --done: #10B981;
+  --done-light: rgba(16, 185, 129, 0.08);
   --planned: #3B82F6;
-  --danger: #FF4757;
-  --danger-surface: rgba(255, 71, 87, 0.1);
+  --planned-light: rgba(59, 130, 246, 0.08);
+  --danger: #EF4444;
+  --danger-light: rgba(239, 68, 68, 0.08);
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+  --shadow: 0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0F1117;
+    --foreground: #F3F4F6;
+    --accent: #818CF8;
+    --accent-hover: #6366F1;
+    --accent-light: rgba(129, 140, 248, 0.12);
+    --surface: rgba(255, 255, 255, 0.04);
+    --surface-hover: rgba(255, 255, 255, 0.07);
+    --border: rgba(255, 255, 255, 0.08);
+    --border-hover: rgba(255, 255, 255, 0.15);
+    --muted: #9CA3AF;
+    --subtle: #6B7280;
+    --done: #34D399;
+    --done-light: rgba(52, 211, 153, 0.1);
+    --planned: #60A5FA;
+    --planned-light: rgba(96, 165, 250, 0.1);
+    --danger: #F87171;
+    --danger-light: rgba(248, 113, 113, 0.1);
+    --shadow-sm: none;
+    --shadow: none;
+  }
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-accent: var(--accent);
-  --color-accent-dark: var(--accent-dark);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-light: var(--accent-light);
   --color-surface: var(--surface);
   --color-surface-hover: var(--surface-hover);
-  --color-surface-border: var(--surface-border);
-  --color-surface-border-hover: var(--surface-border-hover);
+  --color-border: var(--border);
+  --color-border-hover: var(--border-hover);
   --color-muted: var(--muted);
   --color-subtle: var(--subtle);
   --color-done: var(--done);
+  --color-done-light: var(--done-light);
   --color-planned: var(--planned);
+  --color-planned-light: var(--planned-light);
   --color-danger: var(--danger);
-  --color-danger-surface: var(--danger-surface);
+  --color-danger-light: var(--danger-light);
+  --shadow-sm: var(--shadow-sm);
+  --shadow-card: var(--shadow);
   --font-sans: var(--font-dm-sans);
   --font-mono: var(--font-geist-mono);
   --font-display: var(--font-outfit);
 }
 
-/* Noise texture overlay */
-body::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  z-index: 9999;
-  pointer-events: none;
-  opacity: 0.025;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-  background-repeat: repeat;
-  background-size: 256px 256px;
-}
-
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-dm-sans), system-ui, sans-serif;
 }
 
-/* Scrollbar styling */
-::-webkit-scrollbar {
-  width: 6px;
-}
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 3px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.2);
-}
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--border-hover); }
 
-/* Selection color */
 ::selection {
-  background: rgba(200, 255, 0, 0.3);
-  color: #fff;
+  background: var(--accent-light);
+  color: var(--foreground);
 }
 
-/* Input autofill override */
 input:-webkit-autofill,
 input:-webkit-autofill:hover,
 input:-webkit-autofill:focus {
@@ -86,7 +95,6 @@ input:-webkit-autofill:focus {
   transition: background-color 5000s ease-in-out 0s;
 }
 
-/* Number input spinner hide */
 input[type="number"]::-webkit-outer-spin-button,
 input[type="number"]::-webkit-inner-spin-button {
   -webkit-appearance: none;
@@ -94,16 +102,4 @@ input[type="number"]::-webkit-inner-spin-button {
 }
 input[type="number"] {
   -moz-appearance: textfield;
-}
-
-/* Focus visible ring */
-*:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-  border-radius: 4px;
-}
-
-/* Smooth page transitions */
-@view-transition {
-  navigation: auto;
 }
