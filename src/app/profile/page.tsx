@@ -8,6 +8,7 @@ import { getActiveProgram } from "@/lib/programs/queries";
 import { listTypeConfigs } from "@/lib/measurements/type-config-queries";
 import { listAllMeasurements } from "@/lib/measurements/queries";
 import { formatDuration } from "@/lib/format";
+import { getSessionAdvice } from "@/lib/mentor/advice";
 import { ProfileForm } from "./_components/profile-form";
 import { HubCard } from "./_components/hub-card";
 
@@ -25,6 +26,7 @@ export default async function ProfilePage() {
     wellnessLogs,
     stats,
     activeProgram,
+    mentorAdvice,
   ] = await Promise.all([
     getUserProfile(userId),
     listBodyWeightEntries(userId),
@@ -33,6 +35,7 @@ export default async function ProfilePage() {
     getRecentWellnessLogs(userId, 30),
     getWorkoutStats(userId),
     getActiveProgram(userId),
+    getSessionAdvice(userId),
   ]);
 
   // ─── Measurements summary ───
@@ -407,8 +410,8 @@ export default async function ProfilePage() {
             </div>
           </HubCard>
 
-          {/* ─── Mentor IA (CTA) ─── */}
-          {profile.mentorEnabled && (
+          {/* ─── Mentor IA — conseil prochaine séance ─── */}
+          {mentorAdvice && (
             <HubCard
               title="Mentor IA"
               className="col-span-2"
@@ -428,8 +431,8 @@ export default async function ProfilePage() {
                 </svg>
               }
             >
-              <p className="text-sm text-muted">
-                Conseil pour ta prochaine séance
+              <p className="text-sm text-muted leading-relaxed">
+                {mentorAdvice}
               </p>
             </HubCard>
           )}

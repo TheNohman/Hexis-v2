@@ -34,6 +34,10 @@ model User {
   bodyWeightKg     Float?   // dernier poids de corps connu
   mentorEnabled    Boolean  @default(false)     // active le mentor IA
 
+  // Mentor advice cache
+  lastAdvice       String?
+  lastAdviceAt     DateTime?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
