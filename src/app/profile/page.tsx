@@ -410,7 +410,6 @@ export default async function ProfilePage() {
           {/* ─── Mentor IA (CTA) ─── */}
           {profile.mentorEnabled && (
             <HubCard
-              href="/mentor"
               title="Mentor IA"
               className="col-span-2"
               icon={
@@ -430,7 +429,7 @@ export default async function ProfilePage() {
               }
             >
               <p className="text-sm text-muted">
-                Demande un bilan, des recommandations ou un ajustement de programme.
+                Conseil pour ta prochaine séance
               </p>
             </HubCard>
           )}
