@@ -1,7 +1,9 @@
 import OpenAI from "openai";
 import type { MentorContext } from "./context";
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+function getOpenAI() {
+  return new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+}
 
 const SYSTEM_PROMPT = `Tu es un coach sportif expert. Tu crées des programmes d'entraînement personnalisés basés sur les données de l'utilisateur.
 
@@ -56,7 +58,7 @@ export async function generateProgram(
 ): Promise<string> {
   const contextSummary = JSON.stringify(context, null, 0);
 
-  const response = await openai.chat.completions.create({
+  const response = await getOpenAI().chat.completions.create({
     model: "gpt-4o-mini",
     messages: [
       { role: "system", content: SYSTEM_PROMPT },
