@@ -24,16 +24,22 @@ export default async function ProfilePage() {
       getWorkoutStats(userId),
     ]);
 
-  // Summaries for hub cards
+  // Body weight summary
   const latestWeight = bodyWeightEntries.length > 0 ? bodyWeightEntries[0].weightKg : null;
   const weightTrend =
     bodyWeightEntries.length >= 2
       ? bodyWeightEntries[0].weightKg - bodyWeightEntries[1].weightKg
       : null;
 
-  const measurementCount = typeConfigs.length;
-  const totalMeasurementEntries = measurements.length;
+  // Latest value per measurement type
+  const latestByType = new Map<string, number>();
+  for (const entry of measurements) {
+    if (!latestByType.has(entry.type)) {
+      latestByType.set(entry.type, entry.value);
+    }
+  }
 
+  // Wellness averages
   const avgMood =
     wellnessLogs.length > 0
       ? wellnessLogs.reduce((s, l) => s + l.mood, 0) / wellnessLogs.length
@@ -70,70 +76,106 @@ export default async function ProfilePage() {
 
         {/* Hub cards */}
         <div className="grid grid-cols-2 gap-3">
-          <HubCard
-            href="/profile/poids"
-            title="Poids corporel"
-            value={latestWeight != null ? `${latestWeight.toFixed(1)} kg` : "\u2014"}
-            subtitle={
-              weightTrend != null
-                ? `${weightTrend > 0 ? "+" : ""}${weightTrend.toFixed(1)} kg`
-                : `${bodyWeightEntries.length} entree${bodyWeightEntries.length !== 1 ? "s" : ""}`
-            }
-            icon={
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="8" cy="8" r="6" />
-                <path d="M8 5v3l2 1.5" />
-              </svg>
-            }
-          />
-
+          {/* Mesures corporelles — full width, includes weight */}
           <HubCard
             href="/profile/mesures"
-            title="Mesures corporelles"
-            value={`${measurementCount} type${measurementCount !== 1 ? "s" : ""}`}
-            subtitle={`${totalMeasurementEntries} mesure${totalMeasurementEntries !== 1 ? "s" : ""}`}
+            title="Mesures"
+            className="col-span-2"
             icon={
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M2 14V4l4 3 4-5 4 4v8H2z" />
               </svg>
             }
-          />
+          >
+            <div className="space-y-1.5">
+              {/* Body weight row */}
+              <Link
+                href="/profile/poids"
+                onClick={(e) => e.stopPropagation()}
+                className="flex items-center justify-between rounded-lg bg-background/50 px-3 py-2 hover:bg-background transition-colors"
+              >
+                <span className="text-sm text-muted">Poids</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium tabular-nums">
+                    {latestWeight != null ? `${latestWeight.toFixed(1)} kg` : "\u2014"}
+                  </span>
+                  {weightTrend != null && (
+                    <span
+                      className={`text-xs tabular-nums ${
+                        weightTrend > 0 ? "text-danger" : weightTrend < 0 ? "text-done" : "text-muted"
+                      }`}
+                    >
+                      {weightTrend > 0 ? "+" : ""}{weightTrend.toFixed(1)}
+                    </span>
+                  )}
+                </div>
+              </Link>
 
+              {/* Each measurement type row */}
+              {typeConfigs.map((config) => {
+                const latest = latestByType.get(config.slug);
+                return (
+                  <div
+                    key={config.slug}
+                    className="flex items-center justify-between rounded-lg bg-background/50 px-3 py-2"
+                  >
+                    <span className="text-sm text-muted">{config.label}</span>
+                    <span className="text-sm font-medium tabular-nums">
+                      {latest != null ? `${latest.toFixed(1)} ${config.unit}` : "\u2014"}
+                    </span>
+                  </div>
+                );
+              })}
+
+              {typeConfigs.length === 0 && latestWeight == null && (
+                <p className="text-xs text-subtle text-center py-1">
+                  Aucune mesure enregistree
+                </p>
+              )}
+            </div>
+          </HubCard>
+
+          {/* Bien-etre */}
           <HubCard
             href="/profile/bien-etre"
             title="Bien-etre"
-            value={
-              avgMood != null
-                ? `${MOOD_EMOJI[Math.round(avgMood)]} ${ENERGY_EMOJI[Math.round(avgEnergy ?? 3)]}`
-                : "\u2014"
-            }
-            subtitle={
-              wellnessLogs.length > 0
-                ? `${wellnessLogs.length} jour${wellnessLogs.length !== 1 ? "s" : ""} enregistre${wellnessLogs.length !== 1 ? "s" : ""}`
-                : "Aucune donnee"
-            }
             icon={
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M8 14s-5.5-3.5-5.5-7A3.5 3.5 0 018 4a3.5 3.5 0 015.5 3c0 3.5-5.5 7-5.5 7z" />
               </svg>
             }
-          />
+          >
+            <p className="text-xl font-display font-bold tabular-nums">
+              {avgMood != null
+                ? `${MOOD_EMOJI[Math.round(avgMood)]} ${ENERGY_EMOJI[Math.round(avgEnergy ?? 3)]}`
+                : "\u2014"}
+            </p>
+            <p className="text-xs text-subtle mt-1">
+              {wellnessLogs.length > 0
+                ? `${wellnessLogs.length} jour${wellnessLogs.length !== 1 ? "s" : ""}`
+                : "Aucune donnee"}
+            </p>
+          </HubCard>
 
+          {/* Activite */}
           <HubCard
             href="/stats"
             title="Activite"
-            value={`${stats.totalWorkouts} seance${stats.totalWorkouts !== 1 ? "s" : ""}`}
-            subtitle={
-              stats.avgDurationMins != null
-                ? `Moy. ${formatDuration(stats.avgDurationMins * 60)}`
-                : "Aucune seance"
-            }
             icon={
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M4 2v12M12 2v12M2 6h4M10 6h4M2 10h4M10 10h4" />
               </svg>
             }
-          />
+          >
+            <p className="text-xl font-display font-bold tabular-nums">
+              {stats.totalWorkouts} seance{stats.totalWorkouts !== 1 ? "s" : ""}
+            </p>
+            <p className="text-xs text-subtle mt-1">
+              {stats.avgDurationMins != null
+                ? `Moy. ${formatDuration(stats.avgDurationMins * 60)}`
+                : "Aucune seance"}
+            </p>
+          </HubCard>
         </div>
       </div>
     </main>
