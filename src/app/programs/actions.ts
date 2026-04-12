@@ -7,9 +7,11 @@ import {
   createProgram,
   deleteProgram,
   renameProgram,
-  updateWeekCount,
+  updateCycleCount,
+  updateCycleDays,
   toggleProgramActive,
-  upsertSlot,
+  addSlot,
+  updateSlot,
   deleteSlot,
   createWorkoutFromProgramSlot,
   skipCurrentSlot,
@@ -35,9 +37,15 @@ export async function renameProgramAction(programId: string, name: string) {
   revalidatePath("/planning");
 }
 
-export async function updateWeekCountAction(programId: string, weekCount: number) {
+export async function updateCycleCountAction(programId: string, cycleCount: number) {
   const userId = await getCurrentUserId();
-  await updateWeekCount(programId, userId, weekCount);
+  await updateCycleCount(programId, userId, cycleCount);
+  revalidatePath(`/programs/${programId}`);
+}
+
+export async function updateCycleDaysAction(programId: string, cycleDays: number) {
+  const userId = await getCurrentUserId();
+  await updateCycleDays(programId, userId, cycleDays);
   revalidatePath(`/programs/${programId}`);
 }
 
@@ -49,21 +57,29 @@ export async function toggleProgramActiveAction(programId: string) {
   revalidatePath("/dashboard");
 }
 
-export async function upsertSlotAction(
+export async function addSlotAction(
   programId: string,
-  week: number,
-  day: number,
-  data: { templateId?: string | null; label?: string | null; startTime?: string | null },
+  cycle: number,
+  data: { templateId?: string | null; day?: number; startTime?: string | null; label?: string | null },
 ) {
   const userId = await getCurrentUserId();
-  await upsertSlot(programId, userId, week, day, data);
+  await addSlot(programId, userId, cycle, data);
   revalidatePath(`/programs/${programId}`);
 }
 
-export async function deleteSlotAction(programId: string, week: number, day: number) {
+export async function updateSlotAction(
+  slotId: string,
+  data: { templateId?: string | null; day?: number; startTime?: string | null; label?: string | null },
+) {
   const userId = await getCurrentUserId();
-  await deleteSlot(programId, userId, week, day);
-  revalidatePath(`/programs/${programId}`);
+  await updateSlot(slotId, userId, data);
+  revalidatePath("/programs");
+}
+
+export async function deleteSlotAction(slotId: string) {
+  const userId = await getCurrentUserId();
+  await deleteSlot(slotId, userId);
+  revalidatePath("/programs");
 }
 
 export async function startProgramWorkoutAction() {

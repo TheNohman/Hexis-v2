@@ -5,11 +5,7 @@ import type {
   ActiveProgramInfo,
 } from "./types";
 
-// --------------- List programs ---------------
-
-export async function listPrograms(
-  userId: string,
-): Promise<ProgramListItem[]> {
+export async function listPrograms(userId: string): Promise<ProgramListItem[]> {
   const programs = await prisma.program.findMany({
     where: { userId },
     orderBy: [{ isActive: "desc" }, { updatedAt: "desc" }],
@@ -19,46 +15,39 @@ export async function listPrograms(
   return programs.map((p) => ({
     id: p.id,
     name: p.name,
-    weekCount: p.weekCount,
+    cycleCount: p.cycleCount,
+    cycleDays: p.cycleDays,
     isActive: p.isActive,
-    currentWeek: p.currentWeek,
-    currentDay: p.currentDay,
+    currentSlotId: p.currentSlotId,
     slotCount: p._count.slots,
     createdAt: p.createdAt,
     updatedAt: p.updatedAt,
   }));
 }
 
-// --------------- Get program detail ---------------
-
-export async function getProgramById(
-  programId: string,
-  userId: string,
-): Promise<ProgramDetail> {
+export async function getProgramById(programId: string, userId: string): Promise<ProgramDetail> {
   const program = await prisma.program.findUnique({
     where: { id: programId },
     include: {
       slots: {
-        orderBy: [{ week: "asc" }, { day: "asc" }],
+        orderBy: [{ cycle: "asc" }, { day: "asc" }, { startTime: "asc" }],
         include: { template: { select: { name: true } } },
       },
     },
   });
 
-  if (!program || program.userId !== userId) {
-    throw new Error("Forbidden");
-  }
+  if (!program || program.userId !== userId) throw new Error("Forbidden");
 
   return {
     id: program.id,
     name: program.name,
-    weekCount: program.weekCount,
+    cycleCount: program.cycleCount,
+    cycleDays: program.cycleDays,
     isActive: program.isActive,
-    currentWeek: program.currentWeek,
-    currentDay: program.currentDay,
+    currentSlotId: program.currentSlotId,
     slots: program.slots.map((s) => ({
       id: s.id,
-      week: s.week,
+      cycle: s.cycle,
       day: s.day,
       startTime: s.startTime,
       label: s.label,
@@ -70,15 +59,11 @@ export async function getProgramById(
   };
 }
 
-// --------------- Get active program ---------------
-
-export async function getActiveProgram(
-  userId: string,
-): Promise<ActiveProgramInfo | null> {
+export async function getActiveProgram(userId: string): Promise<ActiveProgramInfo | null> {
   const program = await prisma.program.findFirst({
     where: { userId, isActive: true },
     include: {
-      slots: {
+      currentSlot: {
         include: { template: { select: { name: true } } },
       },
     },
@@ -86,46 +71,21 @@ export async function getActiveProgram(
 
   if (!program) return null;
 
-  const currentSlotData = program.slots.find(
-    (s) => s.week === program.currentWeek && s.day === program.currentDay,
-  );
-
   return {
     programId: program.id,
     programName: program.name,
-    weekCount: program.weekCount,
-    currentWeek: program.currentWeek,
-    currentDay: program.currentDay,
-    currentSlot: currentSlotData
+    cycleCount: program.cycleCount,
+    cycleDays: program.cycleDays,
+    currentSlot: program.currentSlot
       ? {
-          id: currentSlotData.id,
-          day: currentSlotData.day,
-          startTime: currentSlotData.startTime,
-          label: currentSlotData.label,
-          templateId: currentSlotData.templateId,
-          templateName: currentSlotData.template?.name ?? null,
+          id: program.currentSlot.id,
+          cycle: program.currentSlot.cycle,
+          day: program.currentSlot.day,
+          startTime: program.currentSlot.startTime,
+          label: program.currentSlot.label,
+          templateId: program.currentSlot.templateId,
+          templateName: program.currentSlot.template?.name ?? null,
         }
       : null,
   };
-}
-
-// --------------- Get last workout for a slot ---------------
-
-export async function getLastWorkoutForSlot(
-  programId: string,
-  week: number,
-  day: number,
-): Promise<string | null> {
-  const rows = await prisma.$queryRaw<{ id: string }[]>`
-    SELECT "id"
-    FROM   "Workout"
-    WHERE  "programId" = ${programId}
-      AND  "programWeek" = ${week}
-      AND  "programDay" = ${day}
-      AND  "finishedAt" IS NOT NULL
-    ORDER BY "startedAt" DESC
-    LIMIT 1
-  `;
-
-  return rows[0]?.id ?? null;
 }

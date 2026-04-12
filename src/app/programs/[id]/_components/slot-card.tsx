@@ -1,52 +1,73 @@
 "use client";
 
 import { useState } from "react";
-import type { ProgramDetail } from "@/lib/programs/types";
-import { dayLabel, dayShort } from "@/lib/programs/utils";
-
-type Slot = ProgramDetail["slots"][number];
+import type { ProgramSlotDetail } from "@/lib/programs/types";
+import { dayLabel } from "@/lib/programs/utils";
 
 type Props = {
-  slot: Slot;
-  isCurrentSlot: boolean;
-  onClick: () => void;
+  slot: ProgramSlotDetail;
+  cycleDays: number;
+  isCurrent: boolean;
+  onClickTemplate: () => void;
   onDelete: () => void;
-  onUpdateLabel: (label: string | null) => void;
+  onUpdateDay: (day: number) => void;
   onUpdateTime: (startTime: string | null) => void;
+  onUpdateLabel: (label: string | null) => void;
   isPending: boolean;
 };
 
-export function SlotCard({ slot, isCurrentSlot, onClick, onDelete, onUpdateLabel, onUpdateTime, isPending }: Props) {
+export function SlotCard({
+  slot,
+  cycleDays,
+  isCurrent,
+  onClickTemplate,
+  onDelete,
+  onUpdateDay,
+  onUpdateTime,
+  onUpdateLabel,
+  isPending,
+}: Props) {
   const [editingLabel, setEditingLabel] = useState(false);
 
   return (
-    <div
-      className={`rounded-xl border bg-surface transition-colors ${
-        isCurrentSlot ? "border-accent/50 bg-accent/5" : "border-border hover:bg-surface-hover"
-      }`}
-    >
-      <div className="flex items-center gap-3 p-3.5">
-        {/* Day indicator */}
-        <div className={`min-w-[48px] rounded-lg flex flex-col items-center justify-center py-1.5 px-2 text-center shrink-0 ${
-          isCurrentSlot ? "bg-accent text-white" : "bg-surface-hover text-muted"
-        }`}>
-          <span className="text-[10px] font-semibold uppercase">{dayShort(slot.day)}</span>
-          {slot.startTime && (
-            <span className="text-[10px] opacity-80">{slot.startTime}</span>
-          )}
-        </div>
+    <div className={`rounded-xl border bg-surface transition-colors ${
+      isCurrent ? "border-accent/50 bg-accent/5" : "border-border hover:bg-surface-hover"
+    }`}>
+      <div className="flex items-center gap-2.5 p-3">
+        {/* Day select */}
+        <select
+          value={slot.day}
+          onChange={(e) => onUpdateDay(parseInt(e.target.value, 10))}
+          className={`rounded-lg border px-2 py-1.5 text-xs font-semibold text-center shrink-0 focus:outline-none focus:border-accent transition-colors ${
+            isCurrent
+              ? "bg-accent text-white border-accent"
+              : "bg-surface-hover border-border text-muted"
+          }`}
+          style={{ width: "72px" }}
+        >
+          {Array.from({ length: cycleDays }, (_, i) => (
+            <option key={i} value={i}>J{i + 1}</option>
+          ))}
+        </select>
 
-        {/* Content */}
-        <div className="flex-1 min-w-0 cursor-pointer" onClick={onClick}>
+        {/* Time */}
+        <input
+          type="time"
+          value={slot.startTime ?? ""}
+          onChange={(e) => onUpdateTime(e.target.value || null)}
+          className="w-[72px] rounded-lg border border-border bg-background px-1.5 py-1.5 text-[11px] text-center focus:outline-none focus:border-accent transition-colors tabular-nums shrink-0"
+        />
+
+        {/* Template + label */}
+        <div className="flex-1 min-w-0 cursor-pointer" onClick={onClickTemplate}>
           {editingLabel ? (
             <input
               type="text"
               defaultValue={slot.label ?? ""}
               autoFocus
-              placeholder="Label (ex: Push, Pull...)"
+              placeholder="Label (Push, Pull...)"
               onBlur={(e) => {
-                const val = e.target.value.trim() || null;
-                onUpdateLabel(val);
+                onUpdateLabel(e.target.value.trim() || null);
                 setEditingLabel(false);
               }}
               onKeyDown={(e) => { if (e.key === "Enter") (e.target as HTMLInputElement).blur(); }}
@@ -55,64 +76,32 @@ export function SlotCard({ slot, isCurrentSlot, onClick, onDelete, onUpdateLabel
             />
           ) : (
             <>
-              <div className="flex items-center gap-2">
-                <p className="text-xs text-muted">{dayLabel(slot.day)}</p>
-                {slot.label && (
-                  <span
-                    className="text-xs text-accent font-medium cursor-pointer hover:underline"
-                    onClick={(e) => { e.stopPropagation(); setEditingLabel(true); }}
-                  >
-                    {slot.label}
-                  </span>
-                )}
-              </div>
+              {slot.label && (
+                <p
+                  className="text-[10px] text-accent font-medium cursor-pointer hover:underline"
+                  onClick={(e) => { e.stopPropagation(); setEditingLabel(true); }}
+                >
+                  {slot.label}
+                </p>
+              )}
               {slot.templateName ? (
                 <p className="text-sm font-medium truncate">{slot.templateName}</p>
               ) : (
-                <p className="text-sm text-subtle italic">Tap pour assigner un template</p>
+                <p className="text-sm text-subtle italic">Choisir un template</p>
               )}
             </>
           )}
         </div>
 
         {/* Actions */}
-        <div className="flex items-center gap-1 shrink-0">
-          {/* Time picker */}
-          <input
-            type="time"
-            value={slot.startTime ?? ""}
-            onChange={(e) => {
-              const val = e.target.value || null;
-              onUpdateTime(val);
-            }}
-            onClick={(e) => e.stopPropagation()}
-            className="w-[70px] rounded-lg border border-border bg-background px-1.5 py-1 text-[11px] text-center focus:outline-none focus:border-accent transition-colors tabular-nums"
-          />
-          {/* Label edit */}
+        <div className="flex items-center gap-0.5 shrink-0">
           {!slot.label && !editingLabel && (
-            <button
-              type="button"
-              onClick={(e) => { e.stopPropagation(); setEditingLabel(true); }}
-              className="min-h-[32px] min-w-[32px] flex items-center justify-center text-subtle hover:text-muted cursor-pointer transition-colors"
-              title="Ajouter un label"
-            >
-              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
-                <path d="M2 8.5l5.5-5.5 1.5 1.5-5.5 5.5H2v-1.5z" />
-              </svg>
+            <button type="button" onClick={() => setEditingLabel(true)} className="min-h-[28px] min-w-[28px] flex items-center justify-center text-subtle hover:text-muted cursor-pointer transition-colors" title="Label">
+              <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><path d="M2 8.5l5.5-5.5 1.5 1.5-5.5 5.5H2v-1.5z" /></svg>
             </button>
           )}
-          {/* Delete */}
-          <button
-            type="button"
-            onClick={(e) => { e.stopPropagation(); onDelete(); }}
-            disabled={isPending}
-            className="min-h-[32px] min-w-[32px] flex items-center justify-center text-subtle hover:text-danger cursor-pointer transition-colors disabled:opacity-50"
-            title="Supprimer ce jour"
-          >
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
-              <line x1="1" y1="1" x2="11" y2="11" />
-              <line x1="11" y1="1" x2="1" y2="11" />
-            </svg>
+          <button type="button" onClick={onDelete} disabled={isPending} className="min-h-[28px] min-w-[28px] flex items-center justify-center text-subtle hover:text-danger cursor-pointer transition-colors disabled:opacity-50" title="Supprimer">
+            <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><line x1="1" y1="1" x2="11" y2="11" /><line x1="11" y1="1" x2="1" y2="11" /></svg>
           </button>
         </div>
       </div>

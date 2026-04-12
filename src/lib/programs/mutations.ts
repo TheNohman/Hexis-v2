@@ -1,11 +1,21 @@
 import { prisma } from "@/lib/prisma";
 import type { ExerciseType } from "@/generated/prisma/enums";
 
+// --------------- Helpers ---------------
+
+/** Get all slots sorted by (week, day, startTime) — the canonical order. */
+async function getSortedSlots(programId: string) {
+  return prisma.programSlot.findMany({
+    where: { programId, templateId: { not: null } },
+    orderBy: [{ cycle: "asc" }, { day: "asc" }, { startTime: "asc" }],
+  });
+}
+
 // --------------- CRUD ---------------
 
 export async function createProgram(userId: string, name = "Nouveau programme") {
   return prisma.program.create({
-    data: { userId, name, weekCount: 1 },
+    data: { userId, name, cycleCount: 1, cycleDays: 7 },
   });
 }
 
@@ -21,24 +31,38 @@ export async function renameProgram(programId: string, userId: string, name: str
   return prisma.program.update({ where: { id: programId }, data: { name } });
 }
 
-export async function updateWeekCount(programId: string, userId: string, weekCount: number) {
+export async function updateCycleCount(programId: string, userId: string, cycleCount: number) {
   const program = await prisma.program.findUnique({ where: { id: programId } });
   if (!program || program.userId !== userId) throw new Error("Forbidden");
-  if (weekCount < 1 || weekCount > 12) throw new Error("Invalid week count");
+  if (cycleCount < 1 || cycleCount > 12) throw new Error("Invalid cycle count");
 
-  // Delete slots for weeks beyond the new count
-  if (weekCount < program.weekCount) {
+  if (cycleCount < program.cycleCount) {
     await prisma.programSlot.deleteMany({
-      where: { programId, week: { gte: weekCount } },
+      where: { programId, cycle: { gte: cycleCount } },
     });
   }
 
   return prisma.program.update({
     where: { id: programId },
-    data: {
-      weekCount,
-      currentWeek: Math.min(program.currentWeek, weekCount - 1),
-    },
+    data: { cycleCount },
+  });
+}
+
+export async function updateCycleDays(programId: string, userId: string, cycleDays: number) {
+  const program = await prisma.program.findUnique({ where: { id: programId } });
+  if (!program || program.userId !== userId) throw new Error("Forbidden");
+  if (cycleDays < 1 || cycleDays > 30) throw new Error("Invalid cycle days");
+
+  // Delete slots that exceed new day count
+  if (cycleDays < program.cycleDays) {
+    await prisma.programSlot.deleteMany({
+      where: { programId, day: { gte: cycleDays } },
+    });
+  }
+
+  return prisma.program.update({
+    where: { id: programId },
+    data: { cycleDays },
   });
 }
 
@@ -52,6 +76,19 @@ export async function toggleProgramActive(programId: string, userId: string) {
       where: { userId, isActive: true },
       data: { isActive: false },
     });
+    // Auto-set cursor to first slot if not set
+    if (!program.currentSlotId) {
+      const firstSlot = await prisma.programSlot.findFirst({
+        where: { programId, templateId: { not: null } },
+        orderBy: [{ cycle: "asc" }, { day: "asc" }, { startTime: "asc" }],
+      });
+      if (firstSlot) {
+        return prisma.program.update({
+          where: { id: programId },
+          data: { isActive: true, currentSlotId: firstSlot.id },
+        });
+      }
+    }
   }
 
   return prisma.program.update({
@@ -62,46 +99,69 @@ export async function toggleProgramActive(programId: string, userId: string) {
 
 // --------------- Slot management ---------------
 
-export async function upsertSlot(
+/** Add a new slot to a week. Returns the created slot. */
+export async function addSlot(
   programId: string,
   userId: string,
   week: number,
-  day: number,
-  data: { templateId?: string | null; label?: string | null; startTime?: string | null },
+  data: { templateId?: string | null; day?: number; startTime?: string | null; label?: string | null },
 ) {
   const program = await prisma.program.findUnique({ where: { id: programId } });
   if (!program || program.userId !== userId) throw new Error("Forbidden");
-  if (week < 0 || week >= program.weekCount) throw new Error("Invalid week");
-  if (day < 0 || day > 6) throw new Error("Invalid day");
+  if (week < 0 || week >= program.cycleCount) throw new Error("Invalid cycle");
 
-  return prisma.programSlot.upsert({
-    where: { programId_week_day: { programId, week, day } },
-    create: {
+  return prisma.programSlot.create({
+    data: {
       programId,
-      week,
-      day,
-      templateId: data.templateId ?? null,
-      label: data.label ?? null,
+      cycle: week,
+      day: data.day ?? 0,
       startTime: data.startTime ?? null,
-    },
-    update: {
-      templateId: data.templateId !== undefined ? data.templateId : undefined,
-      label: data.label !== undefined ? data.label : undefined,
-      startTime: data.startTime !== undefined ? data.startTime : undefined,
+      label: data.label ?? null,
+      templateId: data.templateId ?? null,
     },
   });
 }
 
-export async function deleteSlot(programId: string, userId: string, week: number, day: number) {
-  const program = await prisma.program.findUnique({ where: { id: programId } });
-  if (!program || program.userId !== userId) throw new Error("Forbidden");
+/** Update an existing slot's day, time, template, or label. */
+export async function updateSlot(
+  slotId: string,
+  userId: string,
+  data: { templateId?: string | null; day?: number; startTime?: string | null; label?: string | null },
+) {
+  const slot = await prisma.programSlot.findUnique({
+    where: { id: slotId },
+    include: { program: { select: { userId: true } } },
+  });
+  if (!slot || slot.program.userId !== userId) throw new Error("Forbidden");
 
-  return prisma.programSlot.delete({
-    where: { programId_week_day: { programId, week, day } },
+  return prisma.programSlot.update({
+    where: { id: slotId },
+    data: {
+      ...(data.templateId !== undefined && { templateId: data.templateId }),
+      ...(data.day !== undefined && { day: data.day }),
+      ...(data.startTime !== undefined && { startTime: data.startTime }),
+      ...(data.label !== undefined && { label: data.label }),
+    },
   });
 }
 
-// --------------- Create workout from program slot ---------------
+/** Delete a slot. */
+export async function deleteSlot(slotId: string, userId: string) {
+  const slot = await prisma.programSlot.findUnique({
+    where: { id: slotId },
+    include: { program: { select: { userId: true, id: true, currentSlotId: true } } },
+  });
+  if (!slot || slot.program.userId !== userId) throw new Error("Forbidden");
+
+  // If this was the current slot, advance cursor first
+  if (slot.program.currentSlotId === slotId) {
+    await advanceCursor(slot.program.id);
+  }
+
+  return prisma.programSlot.delete({ where: { id: slotId } });
+}
+
+// --------------- Create workout from current program slot ---------------
 
 function applySuggestion(
   exerciseType: ExerciseType,
@@ -121,11 +181,11 @@ function applySuggestion(
 }
 
 export async function createWorkoutFromProgramSlot(userId: string) {
-  // 1. Get active program
+  // 1. Get active program with current slot
   const program = await prisma.program.findFirst({
     where: { userId, isActive: true },
     include: {
-      slots: {
+      currentSlot: {
         include: {
           template: {
             include: {
@@ -148,22 +208,15 @@ export async function createWorkoutFromProgramSlot(userId: string) {
     },
   });
 
-  if (!program) throw new Error("No active program");
+  if (!program?.currentSlot?.template) throw new Error("No template for current slot");
 
-  const slot = program.slots.find(
-    (s) => s.week === program.currentWeek && s.day === program.currentDay,
-  );
+  const slot = program.currentSlot!;
+  const template = slot.template!;
 
-  if (!slot?.template) throw new Error("No template for current slot");
-
-  const template = slot.template;
-
-  // 2. Find the last completed workout for this same slot position
+  // 2. Find last completed workout for this same slot
   const lastWorkout = await prisma.workout.findFirst({
     where: {
-      programId: program.id,
-      programWeek: program.currentWeek,
-      programDay: program.currentDay,
+      programSlotId: slot.id,
       finishedAt: { not: null },
     },
     orderBy: { startedAt: "desc" },
@@ -182,26 +235,22 @@ export async function createWorkoutFromProgramSlot(userId: string) {
     },
   });
 
-  // 3. Build a map of last values: exerciseId+displayOrder -> { allDone, values }
+  // 3. Build map of last values
   type LastEntryData = {
     allDone: boolean;
-    exerciseType: ExerciseType;
     values: Map<string, { slug: string; valueNumeric: number | null; valueText: string | null }>;
   };
 
   const lastDataMap = new Map<string, LastEntryData>();
 
   if (lastWorkout) {
-    // Group entries by exercise+order to check if all sets were done
-    const exerciseGroups = new Map<string, { done: number; total: number; type: ExerciseType }>();
-
+    const exerciseGroups = new Map<string, { done: number; total: number }>();
     for (const block of lastWorkout.blocks) {
       for (const entry of block.entries) {
-        const groupKey = entry.exerciseId;
-        const existing = exerciseGroups.get(groupKey) ?? { done: 0, total: 0, type: "STRENGTH" as ExerciseType };
+        const existing = exerciseGroups.get(entry.exerciseId) ?? { done: 0, total: 0 };
         existing.total++;
         if (entry.status === "DONE") existing.done++;
-        exerciseGroups.set(groupKey, existing);
+        exerciseGroups.set(entry.exerciseId, existing);
       }
     }
 
@@ -210,7 +259,6 @@ export async function createWorkoutFromProgramSlot(userId: string) {
         const key = `${entry.exerciseId}:${entry.displayOrder}`;
         const group = exerciseGroups.get(entry.exerciseId);
         const allDone = group ? group.done === group.total : false;
-
         const values = new Map<string, { slug: string; valueNumeric: number | null; valueText: string | null }>();
         for (const v of entry.values) {
           values.set(v.kpiDefinitionId, {
@@ -219,12 +267,7 @@ export async function createWorkoutFromProgramSlot(userId: string) {
             valueText: v.valueText,
           });
         }
-
-        lastDataMap.set(key, {
-          allDone,
-          exerciseType: (group ? "STRENGTH" : "STRENGTH") as ExerciseType,
-          values,
-        });
+        lastDataMap.set(key, { allDone, values });
       }
     }
   }
@@ -244,8 +287,7 @@ export async function createWorkoutFromProgramSlot(userId: string) {
       startedAt: now,
       templateId: slot.templateId,
       programId: program.id,
-      programWeek: program.currentWeek,
-      programDay: program.currentDay,
+      programSlotId: slot.id,
       blocks: {
         create: template.blocks.map((block) => ({
           name: block.name,
@@ -268,24 +310,21 @@ export async function createWorkoutFromProgramSlot(userId: string) {
                     let plannedNumeric = v.valueNumeric;
                     let plannedText = v.valueText;
 
-                    // If we have data from the last workout, use it
                     if (lastData) {
                       const lastVal = lastData.values.get(v.kpiDefinitionId);
-                      if (lastVal) {
-                        if (lastVal.valueNumeric != null) {
-                          const suggested = applySuggestion(
-                            exerciseType,
-                            lastData.allDone,
-                            lastVal.slug,
-                            lastVal.valueNumeric,
-                          );
-                          valueNumeric = suggested;
-                          plannedNumeric = suggested;
-                        }
-                        if (lastVal.valueText != null) {
-                          valueText = lastVal.valueText;
-                          plannedText = lastVal.valueText;
-                        }
+                      if (lastVal?.valueNumeric != null) {
+                        const suggested = applySuggestion(
+                          exerciseType,
+                          lastData.allDone,
+                          lastVal.slug,
+                          lastVal.valueNumeric,
+                        );
+                        valueNumeric = suggested;
+                        plannedNumeric = suggested;
+                      }
+                      if (lastVal?.valueText != null) {
+                        valueText = lastVal.valueText;
+                        plannedText = lastVal.valueText;
                       }
                     }
 
@@ -315,37 +354,25 @@ export async function createWorkoutFromProgramSlot(userId: string) {
 // --------------- Cursor management ---------------
 
 export async function advanceCursor(programId: string) {
-  const program = await prisma.program.findUnique({
-    where: { id: programId },
-    include: { slots: { orderBy: [{ week: "asc" }, { day: "asc" }] } },
-  });
-
+  const program = await prisma.program.findUnique({ where: { id: programId } });
   if (!program) throw new Error("Program not found");
 
-  let { currentWeek, currentDay } = program;
-
-  // Slots with templates, sorted by week then day-of-week
-  const filledSlots = program.slots.filter((s) => s.templateId != null);
-  if (filledSlots.length === 0) return program;
-
-  // Find next slot after current (week, day) — day is 0=Mon..6=Sun
-  const maxAttempts = program.weekCount * 7 + 1;
-  for (let attempt = 0; attempt < maxAttempts; attempt++) {
-    currentDay++;
-    if (currentDay > 6) {
-      currentDay = 0;
-      currentWeek = (currentWeek + 1) % program.weekCount;
-    }
-
-    const nextSlot = filledSlots.find(
-      (s) => s.week === currentWeek && s.day === currentDay,
-    );
-    if (nextSlot) break;
+  const sortedSlots = await getSortedSlots(programId);
+  if (sortedSlots.length === 0) {
+    return prisma.program.update({
+      where: { id: programId },
+      data: { currentSlotId: null },
+    });
   }
+
+  // Find current slot index
+  const currentIdx = sortedSlots.findIndex((s) => s.id === program.currentSlotId);
+  // Next slot wraps around
+  const nextIdx = (currentIdx + 1) % sortedSlots.length;
 
   return prisma.program.update({
     where: { id: programId },
-    data: { currentWeek, currentDay },
+    data: { currentSlotId: sortedSlots[nextIdx].id },
   });
 }
 
@@ -353,8 +380,6 @@ export async function skipCurrentSlot(userId: string) {
   const program = await prisma.program.findFirst({
     where: { userId, isActive: true },
   });
-
   if (!program) throw new Error("No active program");
-
   return advanceCursor(program.id);
 }

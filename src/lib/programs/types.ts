@@ -3,10 +3,10 @@
 export type ProgramListItem = {
   id: string;
   name: string;
-  weekCount: number;
+  cycleCount: number;
+  cycleDays: number;
   isActive: boolean;
-  currentWeek: number;
-  currentDay: number;
+  currentSlotId: string | null;
   slotCount: number;
   createdAt: Date;
   updatedAt: Date;
@@ -14,9 +14,9 @@ export type ProgramListItem = {
 
 export type ProgramSlotDetail = {
   id: string;
-  week: number;
-  day: number; // 0=Lundi … 6=Dimanche
-  startTime: string | null; // "HH:mm"
+  cycle: number;
+  day: number; // 0-indexed (0..cycleDays-1)
+  startTime: string | null;
   label: string | null;
   templateId: string | null;
   templateName: string | null;
@@ -25,10 +25,10 @@ export type ProgramSlotDetail = {
 export type ProgramDetail = {
   id: string;
   name: string;
-  weekCount: number;
+  cycleCount: number;
+  cycleDays: number;
   isActive: boolean;
-  currentWeek: number;
-  currentDay: number;
+  currentSlotId: string | null;
   slots: ProgramSlotDetail[];
   createdAt: Date;
   updatedAt: Date;
@@ -37,11 +37,11 @@ export type ProgramDetail = {
 export type ActiveProgramInfo = {
   programId: string;
   programName: string;
-  weekCount: number;
-  currentWeek: number;
-  currentDay: number;
+  cycleCount: number;
+  cycleDays: number;
   currentSlot: {
     id: string;
+    cycle: number;
     day: number;
     startTime: string | null;
     label: string | null;

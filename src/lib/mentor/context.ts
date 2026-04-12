@@ -35,10 +35,10 @@ export type MentorContext = {
   }[];
   currentProgram: {
     name: string;
-    weekCount: number;
-    currentWeek: number;
-    currentDay: number;
-    slots: { week: number; day: number; label: string | null; templateName: string | null }[];
+    cycleCount: number;
+    cycleDays: number;
+    currentSlotId: string | null;
+    slots: { cycle: number; day: number; label: string | null; templateName: string | null }[];
   } | null;
   wellness: {
     date: string;
@@ -66,7 +66,7 @@ export async function buildMentorContext(userId: string): Promise<MentorContext>
         where: { userId, isActive: true },
         include: {
           slots: {
-            orderBy: [{ week: "asc" }, { day: "asc" }],
+            orderBy: [{ cycle: "asc" }, { day: "asc" }],
             include: { template: { select: { name: true } } },
           },
         },
@@ -159,11 +159,11 @@ export async function buildMentorContext(userId: string): Promise<MentorContext>
     currentProgram: activeProgram
       ? {
           name: activeProgram.name,
-          weekCount: activeProgram.weekCount,
-          currentWeek: activeProgram.currentWeek,
-          currentDay: activeProgram.currentDay,
+          cycleCount: activeProgram.cycleCount,
+          cycleDays: activeProgram.cycleDays,
+          currentSlotId: activeProgram.currentSlotId,
           slots: activeProgram.slots.map((s) => ({
-            week: s.week,
+            cycle: s.cycle,
             day: s.day,
             label: s.label,
             templateName: s.template?.name ?? null,
