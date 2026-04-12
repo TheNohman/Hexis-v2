@@ -48,21 +48,13 @@ export function ProgramEditor({ program, templates }: Props) {
   function handleAssignTemplate(templateId: string | null) {
     if (!editingSlot) return;
     startTransition(() => {
-      if (templateId) {
-        upsertSlotAction(program.id, editingSlot.week, editingSlot.day, { templateId });
-      } else {
-        // Remove template
-        upsertSlotAction(program.id, editingSlot.week, editingSlot.day, { templateId: null });
-      }
+      upsertSlotAction(program.id, editingSlot.week, editingSlot.day, { templateId });
       setEditingSlot(null);
     });
   }
 
-  function handleAddDay(week: number) {
-    const weekSlots = program.slots.filter((s) => s.week === week);
-    const maxDay = weekSlots.length > 0 ? Math.max(...weekSlots.map((s) => s.day)) : -1;
-    const newDay = maxDay + 1;
-    startTransition(() => upsertSlotAction(program.id, week, newDay, {}));
+  function handleAddDay(week: number, day: number) {
+    startTransition(() => upsertSlotAction(program.id, week, day, {}));
   }
 
   function handleDeleteDay(week: number, day: number) {
@@ -71,6 +63,10 @@ export function ProgramEditor({ program, templates }: Props) {
 
   function handleUpdateLabel(week: number, day: number, label: string | null) {
     startTransition(() => upsertSlotAction(program.id, week, day, { label }));
+  }
+
+  function handleUpdateTime(week: number, day: number, startTime: string | null) {
+    startTransition(() => upsertSlotAction(program.id, week, day, { startTime }));
   }
 
   // Build weeks structure
@@ -142,9 +138,10 @@ export function ProgramEditor({ program, templates }: Props) {
           isCurrent={program.isActive && week === program.currentWeek}
           currentDay={program.currentDay}
           onSlotClick={(day) => setEditingSlot({ week, day })}
-          onAddDay={() => handleAddDay(week)}
+          onAddDay={(day) => handleAddDay(week, day)}
           onDeleteDay={(day) => handleDeleteDay(week, day)}
           onUpdateLabel={(day, label) => handleUpdateLabel(week, day, label)}
+          onUpdateTime={(day, time) => handleUpdateTime(week, day, time)}
           isPending={isPending}
         />
       ))}

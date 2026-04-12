@@ -60,6 +60,7 @@ export async function getProgramById(
       id: s.id,
       week: s.week,
       day: s.day,
+      startTime: s.startTime,
       label: s.label,
       templateId: s.templateId,
       templateName: s.template?.name ?? null,
@@ -98,6 +99,8 @@ export async function getActiveProgram(
     currentSlot: currentSlotData
       ? {
           id: currentSlotData.id,
+          day: currentSlotData.day,
+          startTime: currentSlotData.startTime,
           label: currentSlotData.label,
           templateId: currentSlotData.templateId,
           templateName: currentSlotData.template?.name ?? null,

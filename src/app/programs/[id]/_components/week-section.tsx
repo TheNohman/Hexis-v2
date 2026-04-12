@@ -1,6 +1,7 @@
 "use client";
 
 import type { ProgramDetail } from "@/lib/programs/types";
+import { DAY_NAMES } from "@/lib/programs/utils";
 import { SlotCard } from "./slot-card";
 
 type Slot = ProgramDetail["slots"][number];
@@ -11,9 +12,10 @@ type Props = {
   isCurrent: boolean;
   currentDay: number;
   onSlotClick: (day: number) => void;
-  onAddDay: () => void;
+  onAddDay: (day: number) => void;
   onDeleteDay: (day: number) => void;
   onUpdateLabel: (day: number, label: string | null) => void;
+  onUpdateTime: (day: number, startTime: string | null) => void;
   isPending: boolean;
 };
 
@@ -26,8 +28,11 @@ export function WeekSection({
   onAddDay,
   onDeleteDay,
   onUpdateLabel,
+  onUpdateTime,
   isPending,
 }: Props) {
+  const usedDays = new Set(slots.map((s) => s.day));
+
   return (
     <section className="space-y-2">
       <div className="flex items-center justify-between">
@@ -41,6 +46,7 @@ export function WeekSection({
         </h2>
       </div>
 
+      {/* Slots existants */}
       <div className="space-y-1.5">
         {slots.length === 0 ? (
           <div className="rounded-xl border border-dashed border-border p-4 text-center">
@@ -55,20 +61,32 @@ export function WeekSection({
               onClick={() => onSlotClick(slot.day)}
               onDelete={() => onDeleteDay(slot.day)}
               onUpdateLabel={(label) => onUpdateLabel(slot.day, label)}
+              onUpdateTime={(time) => onUpdateTime(slot.day, time)}
               isPending={isPending}
             />
           ))
         )}
       </div>
 
-      <button
-        type="button"
-        onClick={onAddDay}
-        disabled={isPending}
-        className="w-full rounded-lg border border-dashed border-border py-2.5 text-xs text-muted hover:text-foreground hover:border-accent transition-colors cursor-pointer disabled:opacity-50"
-      >
-        + Ajouter un jour
-      </button>
+      {/* Ajouter un jour — afficher les jours disponibles */}
+      {usedDays.size < 7 && (
+        <div className="flex flex-wrap gap-1.5">
+          {DAY_NAMES.map((name, dayIndex) => {
+            if (usedDays.has(dayIndex)) return null;
+            return (
+              <button
+                key={dayIndex}
+                type="button"
+                onClick={() => onAddDay(dayIndex)}
+                disabled={isPending}
+                className="rounded-lg border border-dashed border-border px-3 py-2 text-xs text-muted hover:text-foreground hover:border-accent transition-colors cursor-pointer disabled:opacity-50"
+              >
+                + {name.slice(0, 3)}
+              </button>
+            );
+          })}
+        </div>
+      )}
     </section>
   );
 }

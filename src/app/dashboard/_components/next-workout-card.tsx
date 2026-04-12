@@ -3,11 +3,16 @@
 import { useTransition } from "react";
 import { startProgramWorkoutAction, skipSlotAction } from "@/app/programs/actions";
 import type { ActiveProgramInfo } from "@/lib/programs/types";
+import { formatSlotTime } from "@/lib/programs/utils";
 
 type Props = { info: ActiveProgramInfo };
 
 export function NextWorkoutCard({ info }: Props) {
   const [isPending, startTransition] = useTransition();
+
+  const slotLabel = info.currentSlot
+    ? formatSlotTime(info.currentSlot.day, info.currentSlot.startTime)
+    : `Semaine ${info.currentWeek + 1}`;
 
   if (!info.currentSlot?.templateId) {
     return (
@@ -15,7 +20,7 @@ export function NextWorkoutCard({ info }: Props) {
         <div>
           <p className="text-xs text-muted font-medium">{info.programName}</p>
           <p className="text-sm text-subtle mt-0.5">
-            Semaine {info.currentWeek + 1} &bull; Jour {info.currentDay + 1}
+            {slotLabel}
             {info.currentSlot?.label && ` — ${info.currentSlot.label}`}
           </p>
         </div>
@@ -37,7 +42,7 @@ export function NextWorkoutCard({ info }: Props) {
       <div>
         <p className="text-xs text-accent font-medium">{info.programName}</p>
         <p className="text-sm text-muted mt-0.5">
-          Semaine {info.currentWeek + 1} &bull; Jour {info.currentDay + 1}
+          {slotLabel}
           {info.currentSlot.label && ` — ${info.currentSlot.label}`}
         </p>
       </div>

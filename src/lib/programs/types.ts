@@ -15,7 +15,8 @@ export type ProgramListItem = {
 export type ProgramSlotDetail = {
   id: string;
   week: number;
-  day: number;
+  day: number; // 0=Lundi … 6=Dimanche
+  startTime: string | null; // "HH:mm"
   label: string | null;
   templateId: string | null;
   templateName: string | null;
@@ -41,6 +42,8 @@ export type ActiveProgramInfo = {
   currentDay: number;
   currentSlot: {
     id: string;
+    day: number;
+    startTime: string | null;
     label: string | null;
     templateId: string | null;
     templateName: string | null;

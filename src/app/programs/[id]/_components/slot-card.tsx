@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { ProgramDetail } from "@/lib/programs/types";
+import { dayLabel, dayShort } from "@/lib/programs/utils";
 
 type Slot = ProgramDetail["slots"][number];
 
@@ -11,10 +12,11 @@ type Props = {
   onClick: () => void;
   onDelete: () => void;
   onUpdateLabel: (label: string | null) => void;
+  onUpdateTime: (startTime: string | null) => void;
   isPending: boolean;
 };
 
-export function SlotCard({ slot, isCurrentSlot, onClick, onDelete, onUpdateLabel, isPending }: Props) {
+export function SlotCard({ slot, isCurrentSlot, onClick, onDelete, onUpdateLabel, onUpdateTime, isPending }: Props) {
   const [editingLabel, setEditingLabel] = useState(false);
 
   return (
@@ -25,10 +27,13 @@ export function SlotCard({ slot, isCurrentSlot, onClick, onDelete, onUpdateLabel
     >
       <div className="flex items-center gap-3 p-3.5">
         {/* Day indicator */}
-        <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold shrink-0 ${
+        <div className={`min-w-[48px] rounded-lg flex flex-col items-center justify-center py-1.5 px-2 text-center shrink-0 ${
           isCurrentSlot ? "bg-accent text-white" : "bg-surface-hover text-muted"
         }`}>
-          J{slot.day + 1}
+          <span className="text-[10px] font-semibold uppercase">{dayShort(slot.day)}</span>
+          {slot.startTime && (
+            <span className="text-[10px] opacity-80">{slot.startTime}</span>
+          )}
         </div>
 
         {/* Content */}
@@ -50,14 +55,17 @@ export function SlotCard({ slot, isCurrentSlot, onClick, onDelete, onUpdateLabel
             />
           ) : (
             <>
-              {slot.label && (
-                <p
-                  className="text-xs text-muted font-medium cursor-pointer hover:text-accent transition-colors"
-                  onClick={(e) => { e.stopPropagation(); setEditingLabel(true); }}
-                >
-                  {slot.label}
-                </p>
-              )}
+              <div className="flex items-center gap-2">
+                <p className="text-xs text-muted">{dayLabel(slot.day)}</p>
+                {slot.label && (
+                  <span
+                    className="text-xs text-accent font-medium cursor-pointer hover:underline"
+                    onClick={(e) => { e.stopPropagation(); setEditingLabel(true); }}
+                  >
+                    {slot.label}
+                  </span>
+                )}
+              </div>
               {slot.templateName ? (
                 <p className="text-sm font-medium truncate">{slot.templateName}</p>
               ) : (
@@ -69,11 +77,23 @@ export function SlotCard({ slot, isCurrentSlot, onClick, onDelete, onUpdateLabel
 
         {/* Actions */}
         <div className="flex items-center gap-1 shrink-0">
+          {/* Time picker */}
+          <input
+            type="time"
+            value={slot.startTime ?? ""}
+            onChange={(e) => {
+              const val = e.target.value || null;
+              onUpdateTime(val);
+            }}
+            onClick={(e) => e.stopPropagation()}
+            className="w-[70px] rounded-lg border border-border bg-background px-1.5 py-1 text-[11px] text-center focus:outline-none focus:border-accent transition-colors tabular-nums"
+          />
+          {/* Label edit */}
           {!slot.label && !editingLabel && (
             <button
               type="button"
               onClick={(e) => { e.stopPropagation(); setEditingLabel(true); }}
-              className="min-h-[36px] min-w-[36px] flex items-center justify-center text-subtle hover:text-muted cursor-pointer transition-colors"
+              className="min-h-[32px] min-w-[32px] flex items-center justify-center text-subtle hover:text-muted cursor-pointer transition-colors"
               title="Ajouter un label"
             >
               <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
@@ -81,11 +101,12 @@ export function SlotCard({ slot, isCurrentSlot, onClick, onDelete, onUpdateLabel
               </svg>
             </button>
           )}
+          {/* Delete */}
           <button
             type="button"
             onClick={(e) => { e.stopPropagation(); onDelete(); }}
             disabled={isPending}
-            className="min-h-[36px] min-w-[36px] flex items-center justify-center text-subtle hover:text-danger cursor-pointer transition-colors disabled:opacity-50"
+            className="min-h-[32px] min-w-[32px] flex items-center justify-center text-subtle hover:text-danger cursor-pointer transition-colors disabled:opacity-50"
             title="Supprimer ce jour"
           >
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">

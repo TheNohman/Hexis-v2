@@ -350,7 +350,8 @@ model ProgramSlot {
   id         String  @id @default(cuid())
   programId  String
   week       Int     // 0-indexed (0..weekCount-1)
-  day        Int     // 0-indexed dans la semaine
+  day        Int     // jour de la semaine : 0=Lundi, 1=Mardi … 6=Dimanche
+  startTime  String? // heure de début "HH:mm" (ex: "18:00")
   label      String? // label optionnel : "Push", "Pull", etc.
 
   templateId String?

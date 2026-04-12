@@ -3,6 +3,7 @@ import { getCurrentUserId } from "@/lib/auth-helpers";
 import { listPrograms } from "@/lib/programs/queries";
 import { listTemplates } from "@/lib/templates/queries";
 import { createProgramAction } from "@/app/programs/actions";
+import { dayLabel } from "@/lib/programs/utils";
 import { createTemplateAction } from "@/app/templates/actions";
 
 export const dynamic = "force-dynamic";
@@ -106,7 +107,7 @@ async function ProgramsTab({ userId }: { userId: string }) {
                   {p.isActive && (
                     <div className="text-right shrink-0 ml-4">
                       <p className="text-xs text-muted">
-                        Sem. {p.currentWeek + 1} &bull; Jour {p.currentDay + 1}
+                        Sem. {p.currentWeek + 1} &bull; {dayLabel(p.currentDay)}
                       </p>
                     </div>
                   )}

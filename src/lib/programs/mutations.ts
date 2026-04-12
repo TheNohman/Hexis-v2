@@ -67,11 +67,12 @@ export async function upsertSlot(
   userId: string,
   week: number,
   day: number,
-  data: { templateId?: string | null; label?: string | null },
+  data: { templateId?: string | null; label?: string | null; startTime?: string | null },
 ) {
   const program = await prisma.program.findUnique({ where: { id: programId } });
   if (!program || program.userId !== userId) throw new Error("Forbidden");
   if (week < 0 || week >= program.weekCount) throw new Error("Invalid week");
+  if (day < 0 || day > 6) throw new Error("Invalid day");
 
   return prisma.programSlot.upsert({
     where: { programId_week_day: { programId, week, day } },
@@ -81,10 +82,12 @@ export async function upsertSlot(
       day,
       templateId: data.templateId ?? null,
       label: data.label ?? null,
+      startTime: data.startTime ?? null,
     },
     update: {
       templateId: data.templateId !== undefined ? data.templateId : undefined,
       label: data.label !== undefined ? data.label : undefined,
+      startTime: data.startTime !== undefined ? data.startTime : undefined,
     },
   });
 }
@@ -321,25 +324,21 @@ export async function advanceCursor(programId: string) {
 
   let { currentWeek, currentDay } = program;
 
-  // Try to find the next slot with a template
-  const maxAttempts = program.weekCount * 20; // safety limit
+  // Slots with templates, sorted by week then day-of-week
+  const filledSlots = program.slots.filter((s) => s.templateId != null);
+  if (filledSlots.length === 0) return program;
+
+  // Find next slot after current (week, day) — day is 0=Mon..6=Sun
+  const maxAttempts = program.weekCount * 7 + 1;
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
-    // Move to next day
     currentDay++;
-
-    // Find max day for this week
-    const weekSlots = program.slots.filter((s) => s.week === currentWeek);
-    const maxDay = weekSlots.length > 0 ? Math.max(...weekSlots.map((s) => s.day)) : -1;
-
-    if (currentDay > maxDay) {
-      // Move to next week
-      currentWeek = (currentWeek + 1) % program.weekCount;
+    if (currentDay > 6) {
       currentDay = 0;
+      currentWeek = (currentWeek + 1) % program.weekCount;
     }
 
-    // Check if this slot has a template
-    const nextSlot = program.slots.find(
-      (s) => s.week === currentWeek && s.day === currentDay && s.templateId != null,
+    const nextSlot = filledSlots.find(
+      (s) => s.week === currentWeek && s.day === currentDay,
     );
     if (nextSlot) break;
   }

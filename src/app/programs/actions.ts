@@ -53,7 +53,7 @@ export async function upsertSlotAction(
   programId: string,
   week: number,
   day: number,
-  data: { templateId?: string | null; label?: string | null },
+  data: { templateId?: string | null; label?: string | null; startTime?: string | null },
 ) {
   const userId = await getCurrentUserId();
   await upsertSlot(programId, userId, week, day, data);
