@@ -130,7 +130,7 @@ export function SetRow({ workoutId, entry, setNumber, onValidated }: Props) {
           <input
             type="text"
             defaultValue={entry.notes ?? ""}
-            placeholder="Notes (ex: tempo 3-1-2, barre guid\u00e9e...)"
+            placeholder="Notes (ex: tempo 3-1-2, barre guidée...)"
             onBlur={handleNotesBlur}
             onKeyDown={(e) => { if (e.key === "Enter") (e.target as HTMLInputElement).blur(); }}
             className="w-full text-xs text-muted bg-transparent border-none outline-none placeholder:text-subtle"
