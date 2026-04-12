@@ -200,7 +200,7 @@ model WorkoutEntry {
   blockId          String
   exerciseId       String
   displayOrder     Int         @default(0)
-  status           EntryStatus @default(DONE)
+  status           EntryStatus @default(PLANNED)
   completedAt      DateTime?
   restDurationSecs Int? // repos prévu après cette entrée (hérité du template)
 
