@@ -89,11 +89,7 @@ export default async function ProfilePage() {
           >
             <div className="space-y-1.5">
               {/* Body weight row */}
-              <Link
-                href="/profile/poids"
-                onClick={(e) => e.stopPropagation()}
-                className="flex items-center justify-between rounded-lg bg-background/50 px-3 py-2 hover:bg-background transition-colors"
-              >
+              <div className="flex items-center justify-between rounded-lg bg-background/50 px-3 py-2">
                 <span className="text-sm text-muted">Poids</span>
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-medium tabular-nums">
@@ -109,7 +105,7 @@ export default async function ProfilePage() {
                     </span>
                   )}
                 </div>
-              </Link>
+              </div>
 
               {/* Each measurement type row */}
               {typeConfigs.map((config) => {
