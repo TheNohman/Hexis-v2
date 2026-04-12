@@ -61,7 +61,7 @@ export async function buildMentorContext(userId: string): Promise<MentorContext>
       }),
       getWorkoutStats(userId),
       getRecentWellnessLogs(userId, 14),
-      listBodyWeightEntries(userId, 1), // last month
+      listBodyWeightEntries(userId),
       prisma.program.findFirst({
         where: { userId, isActive: true },
         include: {
