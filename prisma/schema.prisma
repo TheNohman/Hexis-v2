@@ -22,9 +22,10 @@ model User {
   workouts         Workout[]
   exercises        Exercise[]
   workoutTemplates WorkoutTemplate[]
-  bodyWeightEntries BodyWeightEntry[]
-  programs         Program[]
-  wellnessLogs     WellnessLog[]
+  bodyWeightEntries  BodyWeightEntry[]
+  bodyMeasurements   BodyMeasurement[]
+  programs           Program[]
+  wellnessLogs       WellnessLog[]
 
   // Profile / preferences
   unitSystem       String   @default("metric") // "metric" | "imperial"
@@ -251,6 +252,24 @@ model BodyWeightEntry {
 
   @@unique([userId, date])
   @@index([userId])
+  @@index([date])
+}
+
+/// Mesures corporelles (tour de taille, bras, etc.)
+model BodyMeasurement {
+  id      String   @id @default(cuid())
+  userId  String
+  type    String   // "tour_de_taille", "tour_de_bras", etc.
+  valueCm Float
+  date    DateTime @db.Date
+  notes   String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId, type, date])
+  @@index([userId, type])
   @@index([date])
 }
 

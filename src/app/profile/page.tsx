@@ -4,9 +4,11 @@ import { getUserProfile } from "@/lib/profile/mutations";
 import { listBodyWeightEntries } from "@/lib/bodyweight/queries";
 import { getRecentWellnessLogs } from "@/lib/wellness/queries";
 import { getWorkoutStats } from "@/lib/stats/queries";
+import { listAllMeasurements } from "@/lib/measurements/queries";
 import { formatDuration } from "@/lib/format";
 import { ProfileForm } from "./_components/profile-form";
 import { BodyWeightSection } from "./_components/bodyweight-section";
+import { MeasurementsSection } from "./_components/measurements-section";
 import { WellnessHistorySection } from "./_components/wellness-history";
 import { ActivitySummary } from "./_components/activity-summary";
 
@@ -14,9 +16,10 @@ export const dynamic = "force-dynamic";
 
 export default async function ProfilePage() {
   const userId = await getCurrentUserId();
-  const [profile, bodyWeightEntries, wellnessLogs, stats] = await Promise.all([
+  const [profile, bodyWeightEntries, measurements, wellnessLogs, stats] = await Promise.all([
     getUserProfile(userId),
     listBodyWeightEntries(userId),
+    listAllMeasurements(userId),
     getRecentWellnessLogs(userId, 30),
     getWorkoutStats(userId),
   ]);
@@ -46,6 +49,7 @@ export default async function ProfilePage() {
 
         <ProfileForm profile={profile} />
         <BodyWeightSection entries={bodyWeightEntries} />
+        <MeasurementsSection entries={measurements} />
         <WellnessHistorySection logs={wellnessLogs} />
       </div>
     </main>
