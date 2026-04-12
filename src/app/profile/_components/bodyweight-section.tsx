@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useMemo } from "react";
 import { addBodyWeightAction, deleteBodyWeightAction } from "@/app/bodyweight/actions";
 
 type Entry = {
@@ -14,9 +14,39 @@ type Props = {
   entries: Entry[];
 };
 
+type Period = "1m" | "3m" | "6m" | "1y" | "all";
+
+const PERIODS: { key: Period; label: string }[] = [
+  { key: "1m", label: "1M" },
+  { key: "3m", label: "3M" },
+  { key: "6m", label: "6M" },
+  { key: "1y", label: "1A" },
+  { key: "all", label: "Tout" },
+];
+
+function monthsAgo(months: number): Date {
+  const d = new Date();
+  d.setMonth(d.getMonth() - months);
+  return d;
+}
+
+function filterByPeriod(entries: Entry[], period: Period): Entry[] {
+  if (period === "all") return entries;
+  const since =
+    period === "1m" ? monthsAgo(1) :
+    period === "3m" ? monthsAgo(3) :
+    period === "6m" ? monthsAgo(6) :
+    monthsAgo(12);
+  return entries.filter((e) => new Date(e.date) >= since);
+}
+
+const dateFmt = new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "short" });
+const dateFmtFull = new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "short", year: "numeric" });
+
 export function BodyWeightSection({ entries }: Props) {
   const [showForm, setShowForm] = useState(false);
   const [isPending, startTransition] = useTransition();
+  const [period, setPeriod] = useState<Period>("6m");
 
   function handleAdd(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -33,22 +63,24 @@ export function BodyWeightSection({ entries }: Props) {
     });
   }
 
-  // Calculate 7-day rolling average
-  const sortedEntries = [...entries].sort(
-    (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
+  // Filter entries by period
+  const filtered = useMemo(() => filterByPeriod(entries, period), [entries, period]);
+
+  // Sort chronologically for chart
+  const sortedEntries = useMemo(
+    () => [...filtered].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()),
+    [filtered],
   );
-  const latestWeight = entries.length > 0 ? entries[0].weightKg : null;
+
+  const latestWeight = filtered.length > 0 ? filtered[0].weightKg : null;
   const weights = sortedEntries.map((e) => e.weightKg);
   const avg7d =
     weights.length >= 2
       ? weights.slice(-7).reduce((s, w) => s + w, 0) / Math.min(7, weights.length)
       : null;
 
-  // Mini chart (last 30 entries)
+  // Chart data
   const chartData = sortedEntries.slice(-30);
-  const minWeight = chartData.length > 0 ? Math.min(...chartData.map((e) => e.weightKg)) : 0;
-  const maxWeight = chartData.length > 0 ? Math.max(...chartData.map((e) => e.weightKg)) : 1;
-  const range = maxWeight - minWeight || 1;
 
   return (
     <section className="space-y-4">
@@ -85,102 +117,39 @@ export function BodyWeightSection({ entries }: Props) {
         </div>
       )}
 
+      {/* Period selector */}
+      <div className="flex gap-1 rounded-lg bg-surface border border-border p-1">
+        {PERIODS.map((p) => (
+          <button
+            key={p.key}
+            type="button"
+            onClick={() => setPeriod(p.key)}
+            className={`flex-1 text-xs font-medium py-1.5 rounded-md transition-colors cursor-pointer ${
+              period === p.key
+                ? "bg-accent text-white"
+                : "text-muted hover:text-foreground"
+            }`}
+          >
+            {p.label}
+          </button>
+        ))}
+      </div>
+
       {/* Chart with axes */}
-      {chartData.length >= 2 && (() => {
-        const dateFmt = new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "short" });
-        // Layout constants
-        const leftPad = 44;  // space for Y-axis labels
-        const rightPad = 12;
-        const topPad = 12;
-        const bottomPad = 28; // space for X-axis labels
-        const totalW = 400;
-        const totalH = 180;
-        const plotW = totalW - leftPad - rightPad;
-        const plotH = totalH - topPad - bottomPad;
+      {chartData.length >= 2 && <WeightChart data={chartData} />}
 
-        // Y-axis: round to nice values with padding
-        const weightPad = range * 0.15;
-        const yMin = Math.floor((minWeight - weightPad) * 2) / 2;
-        const yMax = Math.ceil((maxWeight + weightPad) * 2) / 2;
-        const yRange = yMax - yMin || 1;
+      {chartData.length === 0 && (
+        <div className="rounded-xl border border-dashed border-border p-6 text-center">
+          <p className="text-sm text-muted">Aucune donnée sur cette période.</p>
+        </div>
+      )}
 
-        // Build ~4 horizontal grid lines
-        const yTickCount = 4;
-        const yStep = yRange / yTickCount;
-        const yTicks: number[] = [];
-        for (let i = 0; i <= yTickCount; i++) {
-          yTicks.push(Math.round((yMin + i * yStep) * 10) / 10);
-        }
-
-        // X positions based on actual dates (proportional spacing)
-        const t0 = new Date(chartData[0].date).getTime();
-        const t1 = new Date(chartData[chartData.length - 1].date).getTime();
-        const tRange = t1 - t0 || 1;
-
-        const toX = (d: Date) => leftPad + ((new Date(d).getTime() - t0) / tRange) * plotW;
-        const toY = (w: number) => topPad + plotH - ((w - yMin) / yRange) * plotH;
-
-        // Pick ~4-5 evenly spaced date labels
-        const xLabelCount = Math.min(chartData.length, 5);
-        const xLabelStep = Math.max(1, Math.floor((chartData.length - 1) / (xLabelCount - 1)));
-        const xLabels: number[] = [];
-        for (let i = 0; i < chartData.length; i += xLabelStep) xLabels.push(i);
-        if (xLabels[xLabels.length - 1] !== chartData.length - 1) xLabels.push(chartData.length - 1);
-
-        return (
-          <div className="rounded-xl border border-border bg-surface p-4">
-            <svg viewBox={`0 0 ${totalW} ${totalH}`} className="w-full" style={{ height: "auto", aspectRatio: `${totalW}/${totalH}` }}>
-              {/* Horizontal grid + Y labels */}
-              {yTicks.map((tick) => {
-                const y = toY(tick);
-                return (
-                  <g key={tick}>
-                    <line x1={leftPad} x2={totalW - rightPad} y1={y} y2={y} stroke="var(--border)" strokeWidth="0.5" />
-                    <text x={leftPad - 6} y={y + 3.5} textAnchor="end" fill="var(--muted)" fontSize="9" fontFamily="var(--font-mono, monospace)">
-                      {tick.toFixed(1)}
-                    </text>
-                  </g>
-                );
-              })}
-
-              {/* Line */}
-              <polyline
-                fill="none"
-                stroke="var(--accent)"
-                strokeWidth="2"
-                strokeLinejoin="round"
-                strokeLinecap="round"
-                points={chartData.map((e) => `${toX(new Date(e.date))},${toY(e.weightKg)}`).join(" ")}
-              />
-
-              {/* Data points with weight labels */}
-              {chartData.map((e) => {
-                const cx = toX(new Date(e.date));
-                const cy = toY(e.weightKg);
-                return (
-                  <g key={e.id}>
-                    <circle cx={cx} cy={cy} r="3.5" fill="var(--accent)" />
-                    <text x={cx} y={cy - 7} textAnchor="middle" fill="var(--foreground)" fontSize="8.5" fontFamily="var(--font-mono, monospace)" fontWeight="600">
-                      {e.weightKg.toFixed(1)}
-                    </text>
-                  </g>
-                );
-              })}
-
-              {/* X-axis date labels */}
-              {xLabels.map((i) => {
-                const e = chartData[i];
-                const x = toX(new Date(e.date));
-                return (
-                  <text key={i} x={x} y={totalH - 4} textAnchor="middle" fill="var(--muted)" fontSize="9">
-                    {dateFmt.format(new Date(e.date))}
-                  </text>
-                );
-              })}
-            </svg>
-          </div>
-        );
-      })()}
+      {chartData.length === 1 && (
+        <div className="rounded-xl border border-border bg-surface p-4 text-center">
+          <p className="text-lg font-display font-bold tabular-nums">{chartData[0].weightKg.toFixed(1)} kg</p>
+          <p className="text-xs text-muted mt-1">{dateFmtFull.format(new Date(chartData[0].date))}</p>
+        </div>
+      )}
 
       {/* Add form */}
       {showForm && (
@@ -227,10 +196,10 @@ export function BodyWeightSection({ entries }: Props) {
       )}
 
       {/* History list — all entries with delta */}
-      {entries.length > 0 && (
+      {filtered.length > 0 && (
         <ul className="space-y-1.5">
-          {entries.map((entry, idx) => {
-            const prev = entries[idx + 1]; // previous chronologically (entries are desc)
+          {filtered.map((entry, idx) => {
+            const prev = filtered[idx + 1]; // previous chronologically (entries are desc)
             const delta = prev ? entry.weightKg - prev.weightKg : null;
             return (
               <li
@@ -252,11 +221,7 @@ export function BodyWeightSection({ entries }: Props) {
                     </span>
                   )}
                   <span className="text-xs text-muted shrink-0">
-                    {new Intl.DateTimeFormat("fr-FR", {
-                      day: "numeric",
-                      month: "short",
-                      year: "numeric",
-                    }).format(new Date(entry.date))}
+                    {dateFmtFull.format(new Date(entry.date))}
                   </span>
                   {entry.notes && (
                     <span className="text-xs text-subtle truncate">{entry.notes}</span>
@@ -279,5 +244,122 @@ export function BodyWeightSection({ entries }: Props) {
         </ul>
       )}
     </section>
+  );
+}
+
+/** SVG chart with Y-axis (weight) and X-axis (dates) */
+function WeightChart({ data }: { data: Entry[] }) {
+  const leftPad = 44;
+  const rightPad = 16;
+  const topPad = 16;
+  const bottomPad = 28;
+  const totalW = 400;
+  const totalH = 180;
+  const plotW = totalW - leftPad - rightPad;
+  const plotH = totalH - topPad - bottomPad;
+
+  const minW = Math.min(...data.map((e) => e.weightKg));
+  const maxW = Math.max(...data.map((e) => e.weightKg));
+  const wRange = maxW - minW;
+  const pad = wRange > 0 ? wRange * 0.2 : 1;
+  const yMin = Math.floor((minW - pad) * 2) / 2;
+  const yMax = Math.ceil((maxW + pad) * 2) / 2;
+  const yRange = yMax - yMin || 1;
+
+  // Y ticks (4 lines)
+  const yTickCount = 4;
+  const yTicks: number[] = [];
+  for (let i = 0; i <= yTickCount; i++) {
+    yTicks.push(Math.round((yMin + (i * yRange) / yTickCount) * 10) / 10);
+  }
+
+  // X positions based on date
+  const t0 = new Date(data[0].date).getTime();
+  const t1 = new Date(data[data.length - 1].date).getTime();
+  const tRange = t1 - t0 || 1;
+
+  const toX = (d: Date) => leftPad + ((new Date(d).getTime() - t0) / tRange) * plotW;
+  const toY = (w: number) => topPad + plotH - ((w - yMin) / yRange) * plotH;
+
+  // Pick evenly spaced date labels (max 5, avoid overlap)
+  const maxLabels = Math.min(data.length, 5);
+  const step = Math.max(1, Math.floor((data.length - 1) / (maxLabels - 1)));
+  const xLabelIdxs: number[] = [];
+  for (let i = 0; i < data.length; i += step) xLabelIdxs.push(i);
+  if (xLabelIdxs[xLabelIdxs.length - 1] !== data.length - 1) xLabelIdxs.push(data.length - 1);
+
+  // Gradient fill
+  const areaPoints = [
+    `${toX(new Date(data[0].date))},${topPad + plotH}`,
+    ...data.map((e) => `${toX(new Date(e.date))},${toY(e.weightKg)}`),
+    `${toX(new Date(data[data.length - 1].date))},${topPad + plotH}`,
+  ].join(" ");
+
+  return (
+    <div className="rounded-xl border border-border bg-surface p-4">
+      <svg viewBox={`0 0 ${totalW} ${totalH}`} className="w-full" style={{ aspectRatio: `${totalW}/${totalH}` }}>
+        <defs>
+          <linearGradient id="weightFill" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="var(--accent)" stopOpacity="0.2" />
+            <stop offset="100%" stopColor="var(--accent)" stopOpacity="0" />
+          </linearGradient>
+        </defs>
+
+        {/* Horizontal grid + Y labels */}
+        {yTicks.map((tick) => {
+          const y = toY(tick);
+          return (
+            <g key={tick}>
+              <line x1={leftPad} x2={totalW - rightPad} y1={y} y2={y} stroke="var(--border)" strokeWidth="0.5" />
+              <text x={leftPad - 6} y={y + 3.5} textAnchor="end" fill="var(--muted)" fontSize="9" fontFamily="var(--font-mono, monospace)">
+                {tick.toFixed(1)}
+              </text>
+            </g>
+          );
+        })}
+
+        {/* Area fill */}
+        <polygon points={areaPoints} fill="url(#weightFill)" />
+
+        {/* Line */}
+        <polyline
+          fill="none"
+          stroke="var(--accent)"
+          strokeWidth="2"
+          strokeLinejoin="round"
+          strokeLinecap="round"
+          points={data.map((e) => `${toX(new Date(e.date))},${toY(e.weightKg)}`).join(" ")}
+        />
+
+        {/* Data points with weight labels */}
+        {data.map((e, i) => {
+          const cx = toX(new Date(e.date));
+          const cy = toY(e.weightKg);
+          // Alternate label position to avoid overlap with neighbors
+          const prevCy = i > 0 ? toY(data[i - 1].weightKg) : cy + 20;
+          const labelAbove = cy <= prevCy;
+          const labelY = labelAbove ? cy - 8 : cy + 13;
+          return (
+            <g key={e.id}>
+              <circle cx={cx} cy={cy} r="3" fill="var(--accent)" />
+              <text x={cx} y={labelY} textAnchor="middle" fill="var(--foreground)" fontSize="8" fontFamily="var(--font-mono, monospace)" fontWeight="600">
+                {e.weightKg.toFixed(1)}
+              </text>
+            </g>
+          );
+        })}
+
+        {/* X-axis date labels */}
+        {xLabelIdxs.map((i) => {
+          const e = data[i];
+          const x = toX(new Date(e.date));
+          return (
+            <text key={`x-${i}`} x={x} y={totalH - 4} textAnchor="middle" fill="var(--muted)" fontSize="8.5">
+              {dateFmt.format(new Date(e.date))}
+            </text>
+          );
+        })}
+      </svg>
+    </div>
   );
 }
