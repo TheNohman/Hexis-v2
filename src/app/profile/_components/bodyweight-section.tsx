@@ -85,47 +85,102 @@ export function BodyWeightSection({ entries }: Props) {
         </div>
       )}
 
-      {/* Mini chart */}
-      {chartData.length >= 2 && (
-        <div className="rounded-xl border border-border bg-surface p-4">
-          <svg viewBox={`0 0 ${chartData.length * 12} 80`} className="w-full h-20" preserveAspectRatio="none">
-            <polyline
-              fill="none"
-              stroke="var(--accent)"
-              strokeWidth="2"
-              strokeLinejoin="round"
-              strokeLinecap="round"
-              points={chartData
-                .map(
-                  (e, i) =>
-                    `${i * 12 + 6},${75 - ((e.weightKg - minWeight) / range) * 65}`,
-                )
-                .join(" ")}
-            />
-            {chartData.map((e, i) => (
-              <circle
-                key={e.id}
-                cx={i * 12 + 6}
-                cy={75 - ((e.weightKg - minWeight) / range) * 65}
-                r="2.5"
-                fill="var(--accent)"
+      {/* Chart with axes */}
+      {chartData.length >= 2 && (() => {
+        const dateFmt = new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "short" });
+        // Layout constants
+        const leftPad = 44;  // space for Y-axis labels
+        const rightPad = 12;
+        const topPad = 12;
+        const bottomPad = 28; // space for X-axis labels
+        const totalW = 400;
+        const totalH = 180;
+        const plotW = totalW - leftPad - rightPad;
+        const plotH = totalH - topPad - bottomPad;
+
+        // Y-axis: round to nice values with padding
+        const weightPad = range * 0.15;
+        const yMin = Math.floor((minWeight - weightPad) * 2) / 2;
+        const yMax = Math.ceil((maxWeight + weightPad) * 2) / 2;
+        const yRange = yMax - yMin || 1;
+
+        // Build ~4 horizontal grid lines
+        const yTickCount = 4;
+        const yStep = yRange / yTickCount;
+        const yTicks: number[] = [];
+        for (let i = 0; i <= yTickCount; i++) {
+          yTicks.push(Math.round((yMin + i * yStep) * 10) / 10);
+        }
+
+        // X positions based on actual dates (proportional spacing)
+        const t0 = new Date(chartData[0].date).getTime();
+        const t1 = new Date(chartData[chartData.length - 1].date).getTime();
+        const tRange = t1 - t0 || 1;
+
+        const toX = (d: Date) => leftPad + ((new Date(d).getTime() - t0) / tRange) * plotW;
+        const toY = (w: number) => topPad + plotH - ((w - yMin) / yRange) * plotH;
+
+        // Pick ~4-5 evenly spaced date labels
+        const xLabelCount = Math.min(chartData.length, 5);
+        const xLabelStep = Math.max(1, Math.floor((chartData.length - 1) / (xLabelCount - 1)));
+        const xLabels: number[] = [];
+        for (let i = 0; i < chartData.length; i += xLabelStep) xLabels.push(i);
+        if (xLabels[xLabels.length - 1] !== chartData.length - 1) xLabels.push(chartData.length - 1);
+
+        return (
+          <div className="rounded-xl border border-border bg-surface p-4">
+            <svg viewBox={`0 0 ${totalW} ${totalH}`} className="w-full" style={{ height: "auto", aspectRatio: `${totalW}/${totalH}` }}>
+              {/* Horizontal grid + Y labels */}
+              {yTicks.map((tick) => {
+                const y = toY(tick);
+                return (
+                  <g key={tick}>
+                    <line x1={leftPad} x2={totalW - rightPad} y1={y} y2={y} stroke="var(--border)" strokeWidth="0.5" />
+                    <text x={leftPad - 6} y={y + 3.5} textAnchor="end" fill="var(--muted)" fontSize="9" fontFamily="var(--font-mono, monospace)">
+                      {tick.toFixed(1)}
+                    </text>
+                  </g>
+                );
+              })}
+
+              {/* Line */}
+              <polyline
+                fill="none"
+                stroke="var(--accent)"
+                strokeWidth="2"
+                strokeLinejoin="round"
+                strokeLinecap="round"
+                points={chartData.map((e) => `${toX(new Date(e.date))},${toY(e.weightKg)}`).join(" ")}
               />
-            ))}
-          </svg>
-          <div className="flex justify-between text-[10px] text-subtle mt-1">
-            <span>
-              {new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "short" }).format(
-                new Date(chartData[0].date),
-              )}
-            </span>
-            <span>
-              {new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "short" }).format(
-                new Date(chartData[chartData.length - 1].date),
-              )}
-            </span>
+
+              {/* Data points with weight labels */}
+              {chartData.map((e) => {
+                const cx = toX(new Date(e.date));
+                const cy = toY(e.weightKg);
+                return (
+                  <g key={e.id}>
+                    <circle cx={cx} cy={cy} r="3.5" fill="var(--accent)" />
+                    <text x={cx} y={cy - 7} textAnchor="middle" fill="var(--foreground)" fontSize="8.5" fontFamily="var(--font-mono, monospace)" fontWeight="600">
+                      {e.weightKg.toFixed(1)}
+                    </text>
+                  </g>
+                );
+              })}
+
+              {/* X-axis date labels */}
+              {xLabels.map((i) => {
+                const e = chartData[i];
+                const x = toX(new Date(e.date));
+                return (
+                  <text key={i} x={x} y={totalH - 4} textAnchor="middle" fill="var(--muted)" fontSize="9">
+                    {dateFmt.format(new Date(e.date))}
+                  </text>
+                );
+              })}
+            </svg>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* Add form */}
       {showForm && (
