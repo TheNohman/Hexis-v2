@@ -47,13 +47,11 @@ export function UnifiedSession({ workout, exercises }: Props) {
     durationSecs: number;
   } | null>(null);
 
-  // Optimistic block ordering
   const [optimisticBlocks, setOptimisticBlocks] = useState(workout.blocks);
   useEffect(() => {
     setOptimisticBlocks(workout.blocks);
   }, [workout.blocks]);
 
-  // Progress tracking for template-based sessions
   const allEntries = workout.blocks.flatMap((b) => b.entries);
   const hasPlanned = allEntries.some((e) => e.status === "PLANNED");
   const completedCount = allEntries.filter(
@@ -127,8 +125,8 @@ export function UnifiedSession({ workout, exercises }: Props) {
   return (
     <main className="flex-1 flex flex-col px-4 py-6">
       <div
-        className="max-w-2xl w-full mx-auto space-y-5"
-        style={{ paddingBottom: restTimer ? 72 : 0 }}
+        className="max-w-2xl w-full mx-auto space-y-6"
+        style={{ paddingBottom: restTimer ? 80 : 0 }}
       >
         {/* Header */}
         <header className="flex items-start justify-between gap-3">
@@ -150,35 +148,35 @@ export function UnifiedSession({ workout, exercises }: Props) {
                 if (e.key === "Enter") (e.target as HTMLInputElement).blur();
                 if (e.key === "Escape") setIsEditingName(false);
               }}
-              className="flex-1 text-2xl font-bold bg-transparent outline-none border-b border-foreground/30"
+              className="flex-1 text-2xl font-display font-bold bg-transparent outline-none border-b-2 border-accent/50"
             />
           ) : (
             <button
               type="button"
               onClick={() => setIsEditingName(true)}
-              className="text-2xl font-bold cursor-pointer text-left hover:text-foreground/80"
+              className="text-2xl font-display font-bold cursor-pointer text-left hover:text-accent transition-colors"
             >
               {workout.name}
             </button>
           )}
           <Link
             href="/dashboard"
-            className="text-xs text-foreground/60 hover:text-foreground whitespace-nowrap p-2 -mr-2"
+            className="text-xs text-subtle hover:text-foreground whitespace-nowrap px-3 py-2 rounded-lg hover:bg-surface-hover transition-colors"
           >
-            ← Dashboard
+            &larr; Retour
           </Link>
         </header>
 
-        {/* Progress bar for template-based sessions */}
+        {/* Progress bar */}
         {hasPlanned && totalCount > 0 && (
-          <div className="space-y-1">
-            <div className="w-full h-2 bg-foreground/10 rounded-full overflow-hidden">
+          <div className="space-y-1.5">
+            <div className="w-full h-2 bg-surface-hover rounded-full overflow-hidden">
               <div
-                className="h-full bg-green-500 rounded-full transition-all duration-300"
+                className="h-full bg-accent rounded-full transition-all duration-500"
                 style={{ width: `${progress * 100}%` }}
               />
             </div>
-            <p className="text-xs text-foreground/40 text-right">
+            <p className="text-xs text-subtle text-right tabular-nums font-medium">
               {completedCount} / {totalCount}
             </p>
           </div>
@@ -188,7 +186,7 @@ export function UnifiedSession({ workout, exercises }: Props) {
         {showNotes ? (
           <textarea
             defaultValue={workout.notes ?? ""}
-            placeholder="Notes sur cette séance..."
+            placeholder="Notes sur cette s\u00e9ance..."
             rows={2}
             onBlur={(e) => {
               const val = e.target.value.trim();
@@ -196,20 +194,20 @@ export function UnifiedSession({ workout, exercises }: Props) {
                 startTransition(() => updateNotesAction(workout.id, val));
               }
             }}
-            className="w-full rounded-xl border border-foreground/10 bg-foreground/[0.02] px-4 py-3 text-sm resize-none focus:outline-none focus:border-foreground/30"
+            className="w-full rounded-2xl border border-surface-border bg-surface px-4 py-3 text-sm resize-none focus:outline-none focus:border-accent/50 transition-colors"
           />
         ) : (
           <button
             type="button"
             onClick={() => setShowNotes(true)}
-            className="text-xs text-foreground/40 hover:text-foreground/70 cursor-pointer transition-colors"
+            className="text-xs text-subtle hover:text-accent cursor-pointer transition-colors"
           >
             + Ajouter des notes
           </button>
         )}
 
         {/* Blocks */}
-        <div className="space-y-4">
+        <div className="space-y-5">
           <DndContext
             sensors={sensors}
             collisionDetection={closestCenter}
@@ -232,8 +230,8 @@ export function UnifiedSession({ workout, exercises }: Props) {
           </DndContext>
 
           {optimisticBlocks.length === 0 && !showNewBlockInput && (
-            <div className="rounded-xl border border-dashed border-foreground/20 p-6 text-center">
-              <p className="text-sm text-foreground/60">
+            <div className="rounded-2xl border border-dashed border-surface-border p-8 text-center">
+              <p className="text-sm text-muted">
                 Commence en ajoutant un premier bloc.
               </p>
             </div>
@@ -254,13 +252,13 @@ export function UnifiedSession({ workout, exercises }: Props) {
                   }
                 }}
                 autoFocus
-                className="flex-1 rounded-xl border border-foreground/20 bg-transparent px-4 py-3 text-sm outline-none focus:border-foreground/50"
+                className="flex-1 rounded-xl border border-surface-border bg-surface px-4 py-3 text-sm outline-none focus:border-accent/50 transition-colors"
               />
               <button
                 type="button"
                 onClick={handleAddBlock}
                 disabled={isPending}
-                className="rounded-xl bg-foreground text-background px-4 text-sm font-medium disabled:opacity-50 cursor-pointer"
+                className="rounded-xl bg-accent text-background px-5 text-sm font-bold disabled:opacity-50 cursor-pointer hover:bg-accent-dark transition-colors"
               >
                 Ajouter
               </button>
@@ -269,7 +267,7 @@ export function UnifiedSession({ workout, exercises }: Props) {
             <button
               type="button"
               onClick={() => setShowNewBlockInput(true)}
-              className="w-full rounded-xl border border-dashed border-foreground/20 px-4 py-3 text-sm text-foreground/60 hover:bg-foreground/5 cursor-pointer transition-colors"
+              className="w-full rounded-2xl border border-dashed border-surface-border px-4 py-4 text-sm text-subtle hover:text-accent hover:border-accent/30 cursor-pointer transition-colors"
             >
               + Ajouter un bloc
             </button>
@@ -282,14 +280,13 @@ export function UnifiedSession({ workout, exercises }: Props) {
             type="button"
             onClick={handleFinishClick}
             disabled={isPending}
-            className="w-full rounded-xl bg-green-600 text-white py-3 font-semibold hover:opacity-90 transition-opacity cursor-pointer disabled:opacity-50"
+            className="w-full rounded-2xl bg-done text-white py-4 font-bold tracking-wide hover:bg-done/90 transition-colors cursor-pointer disabled:opacity-50 uppercase"
           >
-            Terminer la séance
+            Terminer la s&eacute;ance
           </button>
         </div>
       </div>
 
-      {/* Compact rest timer */}
       {restTimer && (
         <CompactRestTimer
           durationSecs={restTimer.durationSecs}
@@ -299,11 +296,11 @@ export function UnifiedSession({ workout, exercises }: Props) {
 
       <ConfirmDialog
         open={confirmFinish}
-        title="Terminer la séance"
+        title="Terminer la s\u00e9ance"
         message={
           allEntries.length === 0
-            ? "Cette séance est vide. Terminer quand même ?"
-            : `Il reste ${allEntries.filter((e) => e.status === "PLANNED").length} entrée(s) non validée(s). Terminer ?`
+            ? "Cette s\u00e9ance est vide. Terminer quand m\u00eame ?"
+            : `Il reste ${allEntries.filter((e) => e.status === "PLANNED").length} entr\u00e9e(s) non valid\u00e9e(s). Terminer ?`
         }
         confirmLabel="Terminer"
         onConfirm={handleFinishConfirmed}

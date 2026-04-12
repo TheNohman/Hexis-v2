@@ -42,39 +42,39 @@ export function ConfirmDialog({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4"
       role="dialog"
       aria-modal="true"
       aria-labelledby="confirm-title"
       onClick={onCancel}
     >
       <div
-        className="bg-background border border-foreground/10 rounded-2xl p-6 max-w-sm w-full shadow-xl"
+        className="bg-background border border-surface-border rounded-2xl p-6 max-w-sm w-full shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         <h2
           id="confirm-title"
-          className="text-lg font-semibold"
+          className="text-lg font-display font-bold"
         >
           {title}
         </h2>
-        <p className="text-sm text-foreground/60 mt-2">{message}</p>
+        <p className="text-sm text-muted mt-2 leading-relaxed">{message}</p>
         <div className="flex gap-3 mt-6">
           <button
             ref={cancelRef}
             type="button"
             onClick={onCancel}
-            className="flex-1 rounded-xl border border-foreground/20 py-2.5 text-sm font-medium cursor-pointer hover:bg-foreground/5 transition-colors"
+            className="flex-1 rounded-xl border border-surface-border py-3 text-sm font-semibold cursor-pointer hover:bg-surface-hover transition-colors"
           >
             {cancelLabel}
           </button>
           <button
             type="button"
             onClick={onConfirm}
-            className={`flex-1 rounded-xl py-2.5 text-sm font-medium cursor-pointer transition-opacity hover:opacity-90 ${
+            className={`flex-1 rounded-xl py-3 text-sm font-semibold cursor-pointer transition-colors ${
               destructive
-                ? "bg-red-500 text-white"
-                : "bg-foreground text-background"
+                ? "bg-danger text-white hover:bg-danger/90"
+                : "bg-accent text-background hover:bg-accent-dark"
             }`}
           >
             {confirmLabel}

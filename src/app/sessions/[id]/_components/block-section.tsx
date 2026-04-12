@@ -64,8 +64,6 @@ export function BlockSection({
   };
 
   const groups = groupEntriesByExercise(block.entries);
-
-  // For DnD, we use the first entry ID of each group as the sortable item ID
   const groupIds = groups.map((g) => g.sets[0].id);
 
   const sensors = useSensors(
@@ -80,7 +78,6 @@ export function BlockSection({
 
   function handleExerciseDragEnd(_event: DragEndEvent) {
     // TODO: implement exercise group reordering
-    // This requires moving all entries of a group together
   }
 
   return (
@@ -90,12 +87,19 @@ export function BlockSection({
         <div className="flex items-center gap-2 min-w-0 flex-1">
           <button
             type="button"
-            className="cursor-grab touch-none text-foreground/30 hover:text-foreground/60 shrink-0 p-3 -ml-3"
-            aria-label="Réorganiser le bloc"
+            className="cursor-grab touch-none text-subtle hover:text-muted shrink-0 p-3 -ml-3 transition-colors"
+            aria-label="R\u00e9organiser le bloc"
             {...attributes}
             {...listeners}
           >
-            ⠿
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor">
+              <circle cx="4" cy="3" r="1.2" />
+              <circle cx="10" cy="3" r="1.2" />
+              <circle cx="4" cy="7" r="1.2" />
+              <circle cx="10" cy="7" r="1.2" />
+              <circle cx="4" cy="11" r="1.2" />
+              <circle cx="10" cy="11" r="1.2" />
+            </svg>
           </button>
           {isEditingName ? (
             <input
@@ -115,13 +119,13 @@ export function BlockSection({
                 if (e.key === "Enter") (e.target as HTMLInputElement).blur();
                 if (e.key === "Escape") setIsEditingName(false);
               }}
-              className="text-sm font-semibold bg-transparent outline-none border-b border-foreground/30 px-1 min-w-0 flex-1"
+              className="text-sm font-bold bg-transparent outline-none border-b-2 border-accent/50 px-1 min-w-0 flex-1 uppercase tracking-wide"
             />
           ) : (
             <button
               type="button"
               onClick={() => setIsEditingName(true)}
-              className="text-sm font-semibold cursor-pointer hover:text-foreground/80"
+              className="text-xs font-bold cursor-pointer hover:text-accent transition-colors uppercase tracking-widest"
             >
               {block.name}
             </button>
@@ -135,7 +139,7 @@ export function BlockSection({
               startTransition(() => deleteBlockAction(workoutId, block.id));
             }
           }}
-          className="text-xs text-foreground/50 hover:text-red-500 cursor-pointer disabled:opacity-50 p-2 -mr-2"
+          className="text-xs text-subtle hover:text-danger cursor-pointer disabled:opacity-50 p-2 -mr-2 transition-colors"
         >
           Supprimer
         </button>
@@ -153,8 +157,8 @@ export function BlockSection({
         >
           <div className="space-y-3">
             {groups.length === 0 ? (
-              <div className="rounded-xl border border-dashed border-foreground/20 px-3 py-4 text-center text-xs text-foreground/40">
-                Aucun exercice — ajoute ton premier exercice
+              <div className="rounded-2xl border border-dashed border-surface-border px-4 py-6 text-center text-xs text-subtle">
+                Aucun exercice &mdash; ajoute ton premier exercice
               </div>
             ) : (
               groups.map((group) => (
@@ -175,7 +179,7 @@ export function BlockSection({
       <button
         type="button"
         onClick={() => setPickerOpen(true)}
-        className="w-full rounded-xl border border-dashed border-foreground/20 px-4 py-3 text-sm text-foreground/60 hover:bg-foreground/5 cursor-pointer transition-colors"
+        className="w-full rounded-2xl border border-dashed border-surface-border px-4 py-4 text-sm text-subtle hover:text-accent hover:border-accent/30 cursor-pointer transition-colors"
       >
         + Ajouter un exercice
       </button>
@@ -187,7 +191,6 @@ export function BlockSection({
         multiSet
         onPick={async (exercise, values, setCount) => {
           const count = setCount ?? 1;
-          // Sequential to preserve displayOrder
           for (let i = 0; i < count; i++) {
             await addEntryAction(workoutId, block.id, exercise.id, values);
           }

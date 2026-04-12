@@ -53,27 +53,30 @@ export function ExerciseCard({
   }
 
   return (
-    <div className="rounded-xl border border-foreground/10 overflow-hidden">
+    <div className="rounded-2xl border border-surface-border bg-surface overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between p-3 border-b border-foreground/10 bg-foreground/[0.02]">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-surface-border">
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-semibold truncate">
+          <p className="text-sm font-bold truncate">
             {group.exerciseName}
           </p>
-          <p className="text-xs text-foreground/40 mt-0.5">
-            {group.sets.length} série{group.sets.length > 1 ? "s" : ""}
+          <p className="text-[11px] text-subtle mt-0.5 font-medium">
+            {group.sets.length} s&eacute;rie{group.sets.length > 1 ? "s" : ""}
           </p>
         </div>
 
-        {/* Menu button (always visible, no hover-only) */}
         <div className="relative">
           <button
             type="button"
             onClick={() => setMenuOpen(!menuOpen)}
-            className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg text-foreground/40 hover:text-foreground/70 hover:bg-foreground/5 cursor-pointer transition-colors"
+            className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl text-subtle hover:text-foreground hover:bg-surface-hover cursor-pointer transition-colors"
             aria-label="Options de l'exercice"
           >
-            ···
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+              <circle cx="8" cy="3" r="1.5" />
+              <circle cx="8" cy="8" r="1.5" />
+              <circle cx="8" cy="13" r="1.5" />
+            </svg>
           </button>
           {menuOpen && (
             <>
@@ -81,7 +84,7 @@ export function ExerciseCard({
                 className="fixed inset-0 z-40"
                 onClick={() => setMenuOpen(false)}
               />
-              <div className="absolute right-0 top-full z-50 mt-1 w-48 rounded-xl border border-foreground/10 bg-background shadow-lg py-1">
+              <div className="absolute right-0 top-full z-50 mt-1 w-48 rounded-xl border border-surface-border bg-background shadow-2xl py-1">
                 <button
                   type="button"
                   disabled={isPending}
@@ -89,9 +92,9 @@ export function ExerciseCard({
                     setMenuOpen(false);
                     setConfirmDelete(true);
                   }}
-                  className="w-full px-4 py-2.5 text-left text-sm text-red-500 hover:bg-red-500/10 cursor-pointer disabled:opacity-50"
+                  className="w-full px-4 py-3 text-left text-sm text-danger hover:bg-danger-surface cursor-pointer disabled:opacity-50 transition-colors"
                 >
-                  Supprimer l'exercice
+                  Supprimer l&apos;exercice
                 </button>
               </div>
             </>
@@ -100,7 +103,7 @@ export function ExerciseCard({
       </div>
 
       {/* Sets */}
-      <div className="divide-y divide-foreground/5">
+      <div className="divide-y divide-surface-border/50">
         {group.sets.map((set, i) => (
           <SetRow
             key={set.id}
@@ -112,19 +115,19 @@ export function ExerciseCard({
         ))}
       </div>
 
-      {/* Add set button */}
+      {/* Add set */}
       <button
         type="button"
         onClick={handleAddSet}
         disabled={isPending}
-        className="w-full px-3 py-3 text-sm text-foreground/50 hover:bg-foreground/5 border-t border-foreground/10 cursor-pointer transition-colors disabled:opacity-50"
+        className="w-full px-4 py-3 text-sm text-subtle hover:text-accent border-t border-surface-border cursor-pointer transition-colors disabled:opacity-50 font-medium"
       >
-        + Série
+        + S&eacute;rie
       </button>
 
       {/* Rest indicator */}
       {group.restDurationSecs != null && group.restDurationSecs > 0 && (
-        <div className="px-3 py-2 border-t border-foreground/5 text-xs text-foreground/30">
+        <div className="px-4 py-2 border-t border-surface-border/50 text-xs text-subtle">
           Repos : {formatDuration(group.restDurationSecs)}
         </div>
       )}
@@ -132,7 +135,7 @@ export function ExerciseCard({
       <ConfirmDialog
         open={confirmDelete}
         title="Supprimer l'exercice"
-        message={`Supprimer toutes les séries de "${group.exerciseName}" ?`}
+        message={`Supprimer toutes les s\u00e9ries de "${group.exerciseName}" ?`}
         confirmLabel="Supprimer"
         destructive
         onConfirm={handleDeleteAll}

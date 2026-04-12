@@ -43,23 +43,23 @@ export function CompactRestTimer({ durationSecs, onComplete }: Props) {
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50">
       {/* Progress bar */}
-      <div className="h-1 bg-foreground/10">
+      <div className="h-1 bg-surface-hover">
         <div
-          className="h-full bg-blue-500 transition-all duration-1000 ease-linear"
+          className="h-full bg-accent transition-all duration-1000 ease-linear"
           style={{ width: `${progress * 100}%` }}
         />
       </div>
 
       {/* Timer bar */}
-      <div className="flex items-center justify-between px-4 h-14 bg-blue-600 text-white">
-        <span className="text-sm font-medium">Repos</span>
-        <span className="text-xl font-bold tabular-nums">
+      <div className="flex items-center justify-between px-5 h-16 bg-background border-t border-surface-border backdrop-blur-xl">
+        <span className="text-sm font-bold text-muted uppercase tracking-wide">Repos</span>
+        <span className="text-2xl font-display font-black tabular-nums text-accent">
           {formatDuration(remaining)}
         </span>
         <button
           type="button"
           onClick={skip}
-          className="min-h-[44px] min-w-[44px] flex items-center justify-center text-sm text-white/70 hover:text-white cursor-pointer transition-colors"
+          className="min-h-[44px] min-w-[44px] flex items-center justify-center text-sm text-subtle hover:text-foreground cursor-pointer transition-colors font-medium"
         >
           Passer
         </button>

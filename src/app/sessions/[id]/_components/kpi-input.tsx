@@ -13,19 +13,16 @@ type Props = {
   autoFocus?: boolean;
 };
 
-/**
- * Inputs that adapt to the KPI data type.
- * - INTEGER/DECIMAL => numeric input stored in valueNumeric
- * - DURATION => text input parsed into seconds stored in valueNumeric
- * - TEXT => free text stored in valueText
- */
+const inputClasses =
+  "rounded-xl bg-surface-hover border border-transparent px-3 py-3 text-sm focus:outline-none focus:border-accent/40 tabular-nums transition-colors";
+
 export function KpiInput({ kpi, valueNumeric, valueText, onChange, autoFocus }: Props) {
   if (kpi.dataType === "DURATION") {
     return (
-      <label className="flex flex-col gap-1 min-w-0">
-        <span className="text-[10px] uppercase tracking-wide text-foreground/50">
+      <label className="flex flex-col gap-1.5 min-w-0">
+        <span className="text-[10px] uppercase tracking-widest text-subtle font-medium">
           {kpi.name}
-          {kpi.isRequired ? "" : " ·"}
+          {kpi.isRequired ? "" : " \u00b7"}
         </span>
         <input
           type="time"
@@ -38,7 +35,7 @@ export function KpiInput({ kpi, valueNumeric, valueText, onChange, autoFocus }: 
               valueText: null,
             })
           }
-          className="rounded-lg bg-foreground/5 border border-foreground/10 px-3 py-2 text-sm focus:outline-none focus:border-foreground/40"
+          className={inputClasses}
         />
       </label>
     );
@@ -46,10 +43,10 @@ export function KpiInput({ kpi, valueNumeric, valueText, onChange, autoFocus }: 
 
   if (kpi.dataType === "TEXT") {
     return (
-      <label className="flex flex-col gap-1 min-w-0">
-        <span className="text-[10px] uppercase tracking-wide text-foreground/50">
+      <label className="flex flex-col gap-1.5 min-w-0">
+        <span className="text-[10px] uppercase tracking-widest text-subtle font-medium">
           {kpi.name}
-          {kpi.isRequired ? "" : " ·"}
+          {kpi.isRequired ? "" : " \u00b7"}
         </span>
         <input
           type="text"
@@ -58,20 +55,19 @@ export function KpiInput({ kpi, valueNumeric, valueText, onChange, autoFocus }: 
           onBlur={(e) =>
             onChange({ valueNumeric: null, valueText: e.target.value || null })
           }
-          className="rounded-lg bg-foreground/5 border border-foreground/10 px-3 py-2 text-sm focus:outline-none focus:border-foreground/40"
+          className={inputClasses}
         />
       </label>
     );
   }
 
-  // INTEGER / DECIMAL
   const step = kpi.dataType === "INTEGER" ? "1" : "any";
   return (
-    <label className="flex flex-col gap-1 min-w-0">
-      <span className="text-[10px] uppercase tracking-wide text-foreground/50">
+    <label className="flex flex-col gap-1.5 min-w-0">
+      <span className="text-[10px] uppercase tracking-widest text-subtle font-medium">
         {kpi.name}
         {kpi.unit ? ` (${kpi.unit})` : ""}
-        {kpi.isRequired ? "" : " ·"}
+        {kpi.isRequired ? "" : " \u00b7"}
       </span>
       <input
         type="number"
@@ -87,7 +83,7 @@ export function KpiInput({ kpi, valueNumeric, valueText, onChange, autoFocus }: 
             valueText: null,
           });
         }}
-        className="rounded-lg bg-foreground/5 border border-foreground/10 px-3 py-2 text-sm focus:outline-none focus:border-foreground/40"
+        className={inputClasses}
       />
     </label>
   );

@@ -13,19 +13,21 @@ export default async function TemplatesPage() {
     <main className="flex-1 flex flex-col items-center px-4 py-8">
       <div className="max-w-2xl w-full space-y-8">
         <header className="flex items-start justify-between gap-3">
-          <h1 className="text-2xl font-bold">Templates</h1>
+          <h1 className="font-display text-3xl font-black tracking-tight">
+            TEMPLATES
+          </h1>
           <Link
             href="/dashboard"
-            className="text-xs text-foreground/60 hover:text-foreground whitespace-nowrap"
+            className="text-xs text-subtle hover:text-foreground whitespace-nowrap px-3 py-2 rounded-lg hover:bg-surface-hover transition-colors"
           >
-            ← Dashboard
+            &larr; Retour
           </Link>
         </header>
 
         <form action={createTemplateAction}>
           <button
             type="submit"
-            className="w-full rounded-xl bg-foreground text-background py-4 text-lg font-semibold hover:opacity-90 transition-opacity cursor-pointer"
+            className="w-full rounded-2xl bg-accent text-background py-4 text-base font-bold tracking-wide hover:bg-accent-dark transition-colors cursor-pointer uppercase"
           >
             + Nouveau template
           </button>
@@ -33,12 +35,12 @@ export default async function TemplatesPage() {
 
         <section className="space-y-3">
           {templates.length === 0 ? (
-            <div className="rounded-xl border border-dashed border-foreground/20 p-8 text-center">
-              <p className="text-foreground/60">
+            <div className="rounded-2xl border border-dashed border-surface-border p-8 text-center">
+              <p className="text-muted">
                 Aucun template pour le moment.
               </p>
-              <p className="text-sm text-foreground/40 mt-1">
-                Crée un template pour planifier tes séances à l'avance.
+              <p className="text-sm text-subtle mt-2">
+                Cr&eacute;e un template pour planifier tes s&eacute;ances &agrave; l&apos;avance.
               </p>
             </div>
           ) : (
@@ -47,13 +49,15 @@ export default async function TemplatesPage() {
                 <li key={t.id}>
                   <Link
                     href={`/templates/${t.id}`}
-                    className="block rounded-xl border border-foreground/10 hover:border-foreground/30 hover:bg-foreground/5 transition-colors p-4"
+                    className="group block rounded-2xl border border-surface-border bg-surface hover:bg-surface-hover hover:border-surface-border-hover transition-all p-4"
                   >
                     <div className="flex items-center justify-between">
-                      <div>
-                        <p className="font-medium">{t.name}</p>
-                        <p className="text-xs text-foreground/60 mt-0.5">
-                          Modifié le{" "}
+                      <div className="min-w-0 flex-1">
+                        <p className="font-semibold truncate group-hover:text-accent transition-colors">
+                          {t.name}
+                        </p>
+                        <p className="text-xs text-subtle mt-1">
+                          Modifi&eacute; le{" "}
                           {new Intl.DateTimeFormat("fr-FR", {
                             day: "numeric",
                             month: "short",
@@ -62,11 +66,11 @@ export default async function TemplatesPage() {
                           }).format(t.updatedAt)}
                         </p>
                       </div>
-                      <div className="text-right">
-                        <p className="text-sm font-medium">
-                          {t.entryCount} entrée{t.entryCount > 1 ? "s" : ""}
+                      <div className="text-right shrink-0 ml-4">
+                        <p className="text-sm font-semibold tabular-nums">
+                          {t.entryCount} entr&eacute;e{t.entryCount > 1 ? "s" : ""}
                         </p>
-                        <p className="text-xs text-foreground/60 mt-0.5">
+                        <p className="text-xs text-subtle mt-1">
                           {t.blockCount} bloc{t.blockCount > 1 ? "s" : ""}
                         </p>
                       </div>

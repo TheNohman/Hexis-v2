@@ -14,7 +14,6 @@ type Props = {
   open: boolean;
   onClose: () => void;
   exercises: ExerciseListItem[];
-  /** If true, shows a set count stepper (default 3) and creates N entries */
   multiSet?: boolean;
   onPick: (
     exercise: ExerciseListItem,
@@ -27,17 +26,10 @@ type Props = {
   ) => Promise<void>;
 };
 
-/**
- * Two-step drawer: first pick an exercise, then enter its KPI values.
- * The drawer stays mounted so the "values" phase can use fresh DOM state.
- */
 export function ExercisePicker({ open, onClose, exercises, multiSet, onPick }: Props) {
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState<ExerciseListItem | null>(null);
   const [values, setValues] = useState<KpiValueState>({});
-  // Mirror of `values` updated synchronously so that handleSubmit can read
-  // the freshest data even when a blur-triggered onChange hasn't been
-  // committed to React state yet (blur → click race).
   const valuesRef = useRef<KpiValueState>({});
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -61,7 +53,6 @@ export function ExercisePicker({ open, onClose, exercises, multiSet, onPick }: P
 
   function handleSelectExercise(ex: ExerciseListItem) {
     setSelected(ex);
-    // Initialise empty values for each KPI
     const init: KpiValueState = {};
     for (const k of ex.kpis) {
       init[k.kpiDefinitionId] = { valueNumeric: null, valueText: null };
@@ -90,14 +81,11 @@ export function ExercisePicker({ open, onClose, exercises, multiSet, onPick }: P
 
   function handleSubmit() {
     if (!selected) return;
-    // Force any currently-focused input to blur so its onBlur handler runs
-    // and commits its value through updateValue() before we read valuesRef.
     if (typeof document !== "undefined") {
       const active = document.activeElement;
       if (active instanceof HTMLElement) active.blur();
     }
     const current = valuesRef.current;
-    // Validate required KPIs
     for (const kpi of selected.kpis) {
       if (!kpi.isRequired) continue;
       const v = current[kpi.kpiDefinitionId];
@@ -120,7 +108,6 @@ export function ExercisePicker({ open, onClose, exercises, multiSet, onPick }: P
           })),
           multiSet ? setCount : undefined,
         );
-        // Don't auto-close — user may want to add another exercise
         handleBack();
       } catch (e) {
         setError(e instanceof Error ? e.message : "Erreur");
@@ -131,18 +118,18 @@ export function ExercisePicker({ open, onClose, exercises, multiSet, onPick }: P
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm">
-      <div className="w-full sm:max-w-lg bg-background border-t sm:border sm:rounded-2xl border-foreground/10 max-h-[90vh] flex flex-col">
-        <header className="flex items-center justify-between p-4 border-b border-foreground/10">
-          <h2 className="text-base font-semibold">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm">
+      <div className="w-full sm:max-w-lg bg-background border-t sm:border sm:rounded-2xl border-surface-border max-h-[90vh] flex flex-col shadow-2xl">
+        <header className="flex items-center justify-between p-5 border-b border-surface-border">
+          <h2 className="text-base font-display font-bold">
             {selected ? selected.name : "Choisir un exercice"}
           </h2>
           <button
             type="button"
             onClick={selected ? handleBack : handleClose}
-            className="text-sm text-foreground/60 hover:text-foreground cursor-pointer"
+            className="text-sm text-subtle hover:text-foreground cursor-pointer px-3 py-1.5 rounded-lg hover:bg-surface-hover transition-colors"
           >
-            {selected ? "← Retour" : "Annuler"}
+            {selected ? "\u2190 Retour" : "Annuler"}
           </button>
         </header>
 
@@ -151,16 +138,16 @@ export function ExercisePicker({ open, onClose, exercises, multiSet, onPick }: P
             <div className="p-4">
               <input
                 type="search"
-                placeholder="Rechercher un exercice…"
+                placeholder="Rechercher un exercice\u2026"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 autoFocus
-                className="w-full rounded-lg bg-foreground/5 border border-foreground/10 px-4 py-2 text-sm focus:outline-none focus:border-foreground/40"
+                className="w-full rounded-xl bg-surface-hover border border-transparent px-4 py-3 text-sm focus:outline-none focus:border-accent/40 transition-colors"
               />
             </div>
             <ul className="flex-1 overflow-y-auto px-2 pb-4">
               {filtered.length === 0 ? (
-                <li className="px-4 py-8 text-center text-sm text-foreground/50">
+                <li className="px-4 py-8 text-center text-sm text-subtle">
                   Aucun exercice
                 </li>
               ) : (
@@ -169,11 +156,11 @@ export function ExercisePicker({ open, onClose, exercises, multiSet, onPick }: P
                     <button
                       type="button"
                       onClick={() => handleSelectExercise(ex)}
-                      className="w-full text-left px-3 py-2.5 rounded-lg hover:bg-foreground/5 transition-colors cursor-pointer"
+                      className="w-full text-left px-4 py-3 rounded-xl hover:bg-surface-hover transition-colors cursor-pointer"
                     >
                       <div className="flex items-center justify-between">
-                        <span className="font-medium">{ex.name}</span>
-                        <span className="text-[10px] uppercase tracking-wide text-foreground/50">
+                        <span className="font-semibold">{ex.name}</span>
+                        <span className="text-[10px] uppercase tracking-widest text-subtle font-medium">
                           {formatExerciseType(ex.type)}
                         </span>
                       </div>
@@ -186,7 +173,7 @@ export function ExercisePicker({ open, onClose, exercises, multiSet, onPick }: P
         )}
 
         {selected && (
-          <div className="flex-1 overflow-y-auto p-4 space-y-4">
+          <div className="flex-1 overflow-y-auto p-5 space-y-5">
             <div className="grid grid-cols-2 gap-3">
               {selected.kpis.map((kpi, idx) => (
                 <KpiInput
@@ -200,23 +187,23 @@ export function ExercisePicker({ open, onClose, exercises, multiSet, onPick }: P
               ))}
             </div>
             {multiSet && (
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-foreground/70">Nombre de séries</span>
+              <div className="flex items-center justify-between rounded-2xl bg-surface p-4">
+                <span className="text-sm text-muted font-medium">Nombre de s&eacute;ries</span>
                 <div className="flex items-center gap-3">
                   <button
                     type="button"
                     onClick={() => setSetCount((c) => Math.max(1, c - 1))}
-                    className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg border border-foreground/20 text-lg font-medium cursor-pointer hover:bg-foreground/5"
+                    className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl border border-surface-border text-lg font-bold cursor-pointer hover:bg-surface-hover hover:text-accent transition-colors"
                   >
-                    −
+                    &minus;
                   </button>
-                  <span className="text-lg font-semibold tabular-nums w-6 text-center">
+                  <span className="text-xl font-display font-black tabular-nums w-8 text-center text-accent">
                     {setCount}
                   </span>
                   <button
                     type="button"
                     onClick={() => setSetCount((c) => Math.min(10, c + 1))}
-                    className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg border border-foreground/20 text-lg font-medium cursor-pointer hover:bg-foreground/5"
+                    className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl border border-surface-border text-lg font-bold cursor-pointer hover:bg-surface-hover hover:text-accent transition-colors"
                   >
                     +
                   </button>
@@ -224,15 +211,15 @@ export function ExercisePicker({ open, onClose, exercises, multiSet, onPick }: P
               </div>
             )}
             {error && (
-              <p className="text-sm text-red-500">{error}</p>
+              <p className="text-sm text-danger font-medium">{error}</p>
             )}
             <button
               type="button"
               onClick={handleSubmit}
               disabled={isPending}
-              className="w-full rounded-xl bg-foreground text-background py-3 font-medium hover:opacity-90 transition-opacity cursor-pointer disabled:opacity-50"
+              className="w-full rounded-xl bg-accent text-background py-4 font-bold tracking-wide hover:bg-accent-dark transition-colors cursor-pointer disabled:opacity-50 uppercase"
             >
-              {isPending ? "Ajout…" : "Ajouter à la séance"}
+              {isPending ? "Ajout\u2026" : "Ajouter \u00e0 la s\u00e9ance"}
             </button>
           </div>
         )}
