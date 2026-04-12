@@ -9,7 +9,6 @@ export default async function StatsPage() {
   const userId = await getCurrentUserId();
   const stats = await getWorkoutStats(userId);
 
-  const maxExerciseCount = stats.topExercises[0]?.count ?? 1;
   const maxWeekCount = Math.max(...stats.weeklyActivity.map((w) => w.count), 1);
   const maxWeekVolume = Math.max(...stats.weeklyVolume.map((w) => w.volume), 1);
 
@@ -56,36 +55,40 @@ export default async function StatsPage() {
           </section>
         )}
 
-        {/* Top exercises */}
+        {/* Recent exercises */}
         <section className="space-y-3">
-          <h2 className="text-xs font-semibold text-muted uppercase tracking-wider">
-            Top 5 exercices
-          </h2>
-          {stats.topExercises.length === 0 ? (
-            <p className="text-sm text-subtle">Aucune donn&eacute;e.</p>
+          <div className="flex items-center justify-between">
+            <h2 className="text-xs font-semibold text-muted uppercase tracking-wider">
+              Derniers exercices
+            </h2>
+            <Link
+              href="/exercises"
+              className="text-xs text-accent hover:text-accent/80 font-medium transition-colors"
+            >
+              Voir tout &rarr;
+            </Link>
+          </div>
+          {stats.recentExercises.length === 0 ? (
+            <p className="text-sm text-subtle">Aucune donnée.</p>
           ) : (
             <ul className="space-y-2">
-              {stats.topExercises.map((ex) => (
-                <li key={ex.exerciseId}>
-                  <Link
-                    href={`/exercises/${ex.exerciseId}`}
-                    className="block rounded-xl border border-border bg-surface p-3.5 hover:bg-surface-hover transition-colors"
-                  >
-                    <div className="flex items-center justify-between mb-2">
+              {stats.recentExercises.map((ex) => {
+                const dateLabel = new Intl.DateTimeFormat("fr-FR", {
+                  day: "numeric",
+                  month: "short",
+                }).format(new Date(ex.lastUsedAt));
+                return (
+                  <li key={ex.exerciseId}>
+                    <Link
+                      href={`/exercises/${ex.exerciseId}`}
+                      className="flex items-center justify-between rounded-xl border border-border bg-surface p-3.5 hover:bg-surface-hover transition-colors"
+                    >
                       <span className="text-sm font-medium">{ex.name}</span>
-                      <span className="text-xs text-muted tabular-nums">
-                        {ex.count} s&eacute;rie{ex.count > 1 ? "s" : ""}
-                      </span>
-                    </div>
-                    <div className="h-1.5 rounded-full bg-border overflow-hidden">
-                      <div
-                        className="h-full rounded-full bg-accent transition-all duration-500"
-                        style={{ width: `${(ex.count / maxExerciseCount) * 100}%` }}
-                      />
-                    </div>
-                  </Link>
-                </li>
-              ))}
+                      <span className="text-xs text-muted">{dateLabel}</span>
+                    </Link>
+                  </li>
+                );
+              })}
             </ul>
           )}
         </section>

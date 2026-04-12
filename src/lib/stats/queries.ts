@@ -2,10 +2,10 @@ import { prisma } from "@/lib/prisma";
 
 // --------------- Types ---------------
 
-export type TopExercise = {
+export type RecentExercise = {
   exerciseId: string;
   name: string;
-  count: number;
+  lastUsedAt: Date;
 };
 
 export type WeekActivity = {
@@ -26,7 +26,7 @@ export type WorkoutStats = {
   totalSetsDone: number;
   avgDurationMins: number | null;
   totalVolume: number;
-  topExercises: TopExercise[];
+  recentExercises: RecentExercise[];
   weeklyActivity: WeekActivity[];
   weeklyVolume: WeekVolume[];
 };
@@ -54,27 +54,33 @@ export async function getWorkoutStats(
     }),
   ]);
 
-  // 3. Top 5 exercises by entry count
-  const topRows = await prisma.workoutEntry.groupBy({
-    by: ["exerciseId"],
-    where: { block: { workout: { userId } } },
-    _count: { id: true },
-    orderBy: { _count: { id: "desc" } },
-    take: 5,
-  });
+  // 3. Last 5 recently used exercises
+  const recentRows = await prisma.$queryRaw<
+    { exerciseId: string; last_used: Date }[]
+  >`
+    SELECT e."exerciseId", MAX(wo."startedAt") AS last_used
+    FROM   "WorkoutEntry" e
+    JOIN   "WorkoutBlock" b ON b."id" = e."blockId"
+    JOIN   "Workout" wo ON wo."id" = b."workoutId"
+    WHERE  wo."userId" = ${userId}
+      AND  e."status" = 'DONE'
+    GROUP BY e."exerciseId"
+    ORDER BY last_used DESC
+    LIMIT 5
+  `;
 
-  let topExercises: TopExercise[] = [];
-  if (topRows.length > 0) {
-    const exerciseIds = topRows.map((r) => r.exerciseId);
+  let recentExercises: RecentExercise[] = [];
+  if (recentRows.length > 0) {
+    const exerciseIds = recentRows.map((r) => r.exerciseId);
     const exercises = await prisma.exercise.findMany({
       where: { id: { in: exerciseIds } },
       select: { id: true, name: true },
     });
     const nameMap = new Map(exercises.map((e) => [e.id, e.name]));
-    topExercises = topRows.map((r) => ({
+    recentExercises = recentRows.map((r) => ({
       exerciseId: r.exerciseId,
       name: nameMap.get(r.exerciseId) ?? "Inconnu",
-      count: r._count.id,
+      lastUsedAt: r.last_used,
     }));
   }
 
@@ -192,7 +198,7 @@ export async function getWorkoutStats(
     totalSetsDone,
     avgDurationMins,
     totalVolume,
-    topExercises,
+    recentExercises,
     weeklyActivity,
     weeklyVolume,
   };

@@ -73,9 +73,12 @@ export default async function ExercisesPage() {
         ) : (
           Array.from(grouped.entries()).map(([type, items]) => (
             <section key={type} className="space-y-2">
-              <h2 className="text-xs font-semibold text-muted uppercase tracking-wider">
-                {formatExerciseType(type)}
-              </h2>
+              <div>
+                <h2 className="text-xs font-semibold text-muted uppercase tracking-wider">
+                  {formatExerciseType(type)}
+                </h2>
+                <p className="text-[11px] text-subtle mt-0.5">{exerciseTypeDescription(type)}</p>
+              </div>
               <ul className="space-y-1.5">
                 {items.map((exercise) => (
                   <li key={exercise.id} className="rounded-xl border border-border bg-surface hover:bg-surface-hover transition-colors">
@@ -114,6 +117,21 @@ export default async function ExercisesPage() {
       </div>
     </main>
   );
+}
+
+function exerciseTypeDescription(type: ExerciseType): string {
+  switch (type) {
+    case "STRENGTH":
+      return "Exercices avec charges — suivi du poids, répétitions et RPE";
+    case "BODYWEIGHT":
+      return "Exercices au poids de corps — suivi des répétitions et RPE";
+    case "CARDIO":
+      return "Exercices d'endurance — suivi de la durée, distance et fréquence cardiaque";
+    case "MOBILITY":
+      return "Exercices de mobilité et souplesse — suivi de la durée";
+    case "REST":
+      return "Temps de repos entre les exercices";
+  }
 }
 
 function DeleteButton({ exerciseId }: { exerciseId: string }) {
