@@ -16,7 +16,7 @@ export default async function ProfilePage() {
   const userId = await getCurrentUserId();
   const [profile, bodyWeightEntries, wellnessLogs, stats] = await Promise.all([
     getUserProfile(userId),
-    listBodyWeightEntries(userId, 6),
+    listBodyWeightEntries(userId),
     getRecentWellnessLogs(userId, 30),
     getWorkoutStats(userId),
   ]);

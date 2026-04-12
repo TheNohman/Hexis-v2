@@ -171,42 +171,56 @@ export function BodyWeightSection({ entries }: Props) {
         </form>
       )}
 
-      {/* History list */}
+      {/* History list — all entries with delta */}
       {entries.length > 0 && (
         <ul className="space-y-1.5">
-          {entries.slice(0, 20).map((entry) => (
-            <li
-              key={entry.id}
-              className="flex items-center justify-between rounded-lg border border-border bg-surface px-4 py-2.5"
-            >
-              <div className="flex items-center gap-3">
-                <span className="text-sm font-medium tabular-nums">
-                  {entry.weightKg.toFixed(1)} kg
-                </span>
-                <span className="text-xs text-muted">
-                  {new Intl.DateTimeFormat("fr-FR", {
-                    day: "numeric",
-                    month: "short",
-                    year: "numeric",
-                  }).format(new Date(entry.date))}
-                </span>
-                {entry.notes && (
-                  <span className="text-xs text-subtle">{entry.notes}</span>
-                )}
-              </div>
-              <button
-                type="button"
-                disabled={isPending}
-                onClick={() => startTransition(() => deleteBodyWeightAction(entry.id))}
-                className="text-xs text-subtle hover:text-danger cursor-pointer transition-colors disabled:opacity-50"
+          {entries.map((entry, idx) => {
+            const prev = entries[idx + 1]; // previous chronologically (entries are desc)
+            const delta = prev ? entry.weightKg - prev.weightKg : null;
+            return (
+              <li
+                key={entry.id}
+                className="flex items-center justify-between rounded-lg border border-border bg-surface px-4 py-2.5"
               >
-                <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
-                  <line x1="1" y1="1" x2="11" y2="11" />
-                  <line x1="11" y1="1" x2="1" y2="11" />
-                </svg>
-              </button>
-            </li>
-          ))}
+                <div className="flex items-center gap-3 min-w-0">
+                  <span className="text-sm font-medium tabular-nums shrink-0">
+                    {entry.weightKg.toFixed(1)} kg
+                  </span>
+                  {delta != null && (
+                    <span
+                      className={`text-xs font-medium tabular-nums shrink-0 ${
+                        delta > 0 ? "text-danger" : delta < 0 ? "text-done" : "text-muted"
+                      }`}
+                    >
+                      {delta > 0 ? "+" : ""}
+                      {delta.toFixed(1)}
+                    </span>
+                  )}
+                  <span className="text-xs text-muted shrink-0">
+                    {new Intl.DateTimeFormat("fr-FR", {
+                      day: "numeric",
+                      month: "short",
+                      year: "numeric",
+                    }).format(new Date(entry.date))}
+                  </span>
+                  {entry.notes && (
+                    <span className="text-xs text-subtle truncate">{entry.notes}</span>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  disabled={isPending}
+                  onClick={() => startTransition(() => deleteBodyWeightAction(entry.id))}
+                  className="text-xs text-subtle hover:text-danger cursor-pointer transition-colors disabled:opacity-50 shrink-0 ml-2"
+                >
+                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+                    <line x1="1" y1="1" x2="11" y2="11" />
+                    <line x1="11" y1="1" x2="1" y2="11" />
+                  </svg>
+                </button>
+              </li>
+            );
+          })}
         </ul>
       )}
     </section>

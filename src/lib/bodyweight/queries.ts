@@ -13,16 +13,9 @@ export type BodyWeightData = {
 
 export async function listBodyWeightEntries(
   userId: string,
-  months = 6,
 ): Promise<BodyWeightData[]> {
-  const since = new Date();
-  since.setMonth(since.getMonth() - months);
-
   const entries = await prisma.bodyWeightEntry.findMany({
-    where: {
-      userId,
-      date: { gte: since },
-    },
+    where: { userId },
     orderBy: { date: "desc" },
   });
 
