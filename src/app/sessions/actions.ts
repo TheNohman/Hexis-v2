@@ -12,6 +12,7 @@ import {
   deleteEntry,
   duplicateEntry,
   finishWorkout,
+  finishStaleWorkouts,
   renameBlock,
   reorderBlocks,
   reorderEntries,
@@ -30,6 +31,12 @@ export async function createWorkoutAction() {
   const userId = await getCurrentUserId();
   const workout = await createWorkout(userId);
   redirect(`/sessions/${workout.id}`);
+}
+
+export async function finishStaleWorkoutsAction() {
+  const userId = await getCurrentUserId();
+  await finishStaleWorkouts(userId);
+  revalidatePath("/dashboard");
 }
 
 export async function renameWorkoutAction(workoutId: string, name: string) {

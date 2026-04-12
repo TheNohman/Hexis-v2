@@ -84,6 +84,24 @@ export async function listRecentWorkouts(
 }
 
 /**
+ * Returns stale workouts: started more than 6 hours ago but never finished.
+ */
+export async function listStaleWorkouts(
+  userId: string,
+): Promise<{ id: string; name: string; startedAt: Date }[]> {
+  const sixHoursAgo = new Date(Date.now() - 6 * 60 * 60 * 1000);
+  return prisma.workout.findMany({
+    where: {
+      userId,
+      finishedAt: null,
+      startedAt: { lt: sixHoursAgo },
+    },
+    orderBy: { startedAt: "desc" },
+    select: { id: true, name: true, startedAt: true },
+  });
+}
+
+/**
  * Returns all workouts for the user, optionally limited.
  */
 export async function listAllWorkouts(

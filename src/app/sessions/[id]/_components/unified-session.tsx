@@ -19,9 +19,9 @@ import { CompactRestTimer } from "./compact-rest-timer";
 import { ConfirmDialog } from "@/app/_components/confirm-dialog";
 
 type Entry = WorkoutDetail["blocks"][number]["entries"][number];
-type Props = { workout: WorkoutDetail; exercises: ExerciseListItem[] };
+type Props = { workout: WorkoutDetail; exercises: ExerciseListItem[]; defaultRestSecs?: number };
 
-export function UnifiedSession({ workout, exercises }: Props) {
+export function UnifiedSession({ workout, exercises, defaultRestSecs = 90 }: Props) {
   const [isEditingName, setIsEditingName] = useState(false);
   const [newBlockName, setNewBlockName] = useState("");
   const [showNewBlockInput, setShowNewBlockInput] = useState(false);
@@ -76,9 +76,11 @@ export function UnifiedSession({ workout, exercises }: Props) {
   }
 
   const handleEntryValidated = useCallback((entry: Entry) => {
-    if (entry.restDurationSecs && entry.restDurationSecs > 0)
-      setRestTimer({ durationSecs: entry.restDurationSecs });
-  }, []);
+    const rest = (entry.restDurationSecs && entry.restDurationSecs > 0)
+      ? entry.restDurationSecs
+      : defaultRestSecs;
+    if (rest > 0) setRestTimer({ durationSecs: rest });
+  }, [defaultRestSecs]);
 
   const handleRestComplete = useCallback(() => { setRestTimer(null); }, []);
 

@@ -41,7 +41,7 @@ export default function RootLayout({
       lang="fr"
       className={`${dmSans.variable} ${outfit.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col pt-[env(safe-area-inset-top)] pb-[calc(60px+env(safe-area-inset-bottom))]">
+      <body className="min-h-dvh pt-[env(safe-area-inset-top)] pb-[calc(60px+env(safe-area-inset-bottom))]">
         {children}
         <BottomNav />
       </body>

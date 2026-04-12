@@ -19,6 +19,12 @@ export type WeekVolume = {
   volume: number;
 };
 
+export type PersonalRecord = {
+  exerciseId: string;
+  name: string;
+  maxWeight: number;
+};
+
 export type WorkoutStats = {
   totalWorkouts: number;
   totalFinished: number;
@@ -29,6 +35,7 @@ export type WorkoutStats = {
   recentExercises: RecentExercise[];
   weeklyActivity: WeekActivity[];
   weeklyVolume: WeekVolume[];
+  personalRecords: PersonalRecord[];
 };
 
 // --------------- Query ---------------
@@ -191,6 +198,41 @@ export async function getWorkoutStats(
     volCursor.setDate(volCursor.getDate() + 7);
   }
 
+  // 8. Personal records (top 3 exercises by max weight)
+  const prRows = await prisma.$queryRaw<
+    { exerciseId: string; max_weight: number }[]
+  >`
+    SELECT e."exerciseId", MAX(w_val."valueNumeric") AS max_weight
+    FROM   "WorkoutEntry" e
+    JOIN   "WorkoutBlock" b ON b."id" = e."blockId"
+    JOIN   "Workout" wo ON wo."id" = b."workoutId"
+    JOIN   "EntryKpiValue" w_val ON w_val."entryId" = e."id"
+    JOIN   "KpiDefinition" w_kpi ON w_kpi."id" = w_val."kpiDefinitionId" AND w_kpi."slug" = 'weight_kg'
+    WHERE  wo."userId" = ${userId}
+      AND  e."status" = 'DONE'
+      AND  e."isWarmup" = false
+      AND  w_val."valueNumeric" IS NOT NULL
+      AND  w_val."valueNumeric" > 0
+    GROUP BY e."exerciseId"
+    ORDER BY max_weight DESC
+    LIMIT 5
+  `;
+
+  let personalRecords: PersonalRecord[] = [];
+  if (prRows.length > 0) {
+    const prIds = prRows.map((r) => r.exerciseId);
+    const prExercises = await prisma.exercise.findMany({
+      where: { id: { in: prIds } },
+      select: { id: true, name: true },
+    });
+    const prNameMap = new Map(prExercises.map((e) => [e.id, e.name]));
+    personalRecords = prRows.map((r) => ({
+      exerciseId: r.exerciseId,
+      name: prNameMap.get(r.exerciseId) ?? "Inconnu",
+      maxWeight: Number(r.max_weight),
+    }));
+  }
+
   return {
     totalWorkouts,
     totalFinished,
@@ -201,5 +243,60 @@ export async function getWorkoutStats(
     recentExercises,
     weeklyActivity,
     weeklyVolume,
+    personalRecords,
   };
+}
+
+// --------------- Wellness x Performance correlation ---------------
+
+export type WellnessPerformancePoint = {
+  date: string;
+  mood: number;
+  sleep: number;
+  energy: number;
+  stress: number;
+  volume: number;
+};
+
+export async function getWellnessPerformanceCorrelation(
+  userId: string,
+  days = 30,
+): Promise<WellnessPerformancePoint[]> {
+  const since = new Date();
+  since.setDate(since.getDate() - days);
+
+  const rows = await prisma.$queryRaw<WellnessPerformancePoint[]>`
+    SELECT
+      wl."date"::text AS date,
+      wl."mood", wl."sleep", wl."energy", wl."stress",
+      COALESCE(perf.volume, 0) AS volume
+    FROM "WellnessLog" wl
+    LEFT JOIN LATERAL (
+      SELECT COALESCE(SUM(w_val."valueNumeric" * r_val."valueNumeric"), 0) AS volume
+      FROM "Workout" wo
+      JOIN "WorkoutBlock" b ON b."workoutId" = wo."id"
+      JOIN "WorkoutEntry" e ON e."blockId" = b."id"
+      JOIN "EntryKpiValue" w_val ON w_val."entryId" = e."id"
+      JOIN "KpiDefinition" w_kpi ON w_kpi."id" = w_val."kpiDefinitionId" AND w_kpi."slug" = 'weight_kg'
+      JOIN "EntryKpiValue" r_val ON r_val."entryId" = e."id"
+      JOIN "KpiDefinition" r_kpi ON r_kpi."id" = r_val."kpiDefinitionId" AND r_kpi."slug" = 'reps'
+      WHERE wo."userId" = ${userId}
+        AND wo."startedAt"::date = wl."date"
+        AND e."status" = 'DONE'
+        AND w_val."valueNumeric" IS NOT NULL
+        AND r_val."valueNumeric" IS NOT NULL
+    ) perf ON true
+    WHERE wl."userId" = ${userId}
+      AND wl."date" >= ${since}
+    ORDER BY wl."date" ASC
+  `;
+
+  return rows.map((r) => ({
+    date: String(r.date).slice(0, 10),
+    mood: Number(r.mood),
+    sleep: Number(r.sleep),
+    energy: Number(r.energy),
+    stress: Number(r.stress),
+    volume: Number(r.volume),
+  }));
 }

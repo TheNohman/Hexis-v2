@@ -68,9 +68,49 @@ export default async function PlanningPage(props: Props) {
 
 async function ProgramsTab({ userId, mentorEnabled }: { userId: string; mentorEnabled: boolean }) {
   const programs = await listPrograms(userId);
+  const templates = await listTemplates(userId);
+  const isNewUser = programs.length === 0 && templates.length === 0;
 
   return (
     <div className="space-y-4">
+      {/* Onboarding guide for new users */}
+      {isNewUser && (
+        <div className="rounded-xl border border-accent/20 bg-accent/5 p-5 space-y-4">
+          <h3 className="text-sm font-semibold text-accent">Comment d&eacute;marrer ?</h3>
+          <div className="space-y-3">
+            <div className="flex items-start gap-3">
+              <span className="shrink-0 w-6 h-6 rounded-full bg-accent/15 text-accent text-xs font-bold flex items-center justify-center">1</span>
+              <div>
+                <p className="text-sm font-medium">Cr&eacute;e tes s&eacute;ances types (Templates)</p>
+                <p className="text-xs text-muted mt-0.5">Un template = une s&eacute;ance r&eacute;utilisable (ex: &laquo; Upper Body &raquo;, &laquo; Jambes &raquo;)</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3">
+              <span className="shrink-0 w-6 h-6 rounded-full bg-accent/15 text-accent text-xs font-bold flex items-center justify-center">2</span>
+              <div>
+                <p className="text-sm font-medium">Organise-les dans un Programme</p>
+                <p className="text-xs text-muted mt-0.5">Assigne tes templates aux jours de la semaine</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3">
+              <span className="shrink-0 w-6 h-6 rounded-full bg-accent/15 text-accent text-xs font-bold flex items-center justify-center">3</span>
+              <div>
+                <p className="text-sm font-medium">Active le programme</p>
+                <p className="text-xs text-muted mt-0.5">Ta prochaine s&eacute;ance appara&icirc;tra sur le dashboard</p>
+              </div>
+            </div>
+          </div>
+          {mentorEnabled && (
+            <Link
+              href="/programs/create-ai"
+              className="block w-full rounded-xl bg-accent text-white py-3 text-center text-sm font-semibold hover:bg-accent-hover transition-colors"
+            >
+              Ou g&eacute;n&egrave;re un programme complet avec l&rsquo;IA
+            </Link>
+          )}
+        </div>
+      )}
+
       <div className="flex gap-2">
         <form action={createProgramAction} className="flex-1">
           <button
@@ -83,24 +123,26 @@ async function ProgramsTab({ userId, mentorEnabled }: { userId: string; mentorEn
         {mentorEnabled && (
           <Link
             href="/programs/create-ai"
-            className="shrink-0 rounded-xl border border-accent/30 bg-accent/5 px-4 py-3.5 flex items-center gap-2 hover:bg-accent/10 transition-colors text-sm font-medium text-accent"
+            className="shrink-0 rounded-xl bg-accent/15 border border-accent/30 px-5 py-3.5 flex items-center gap-2 hover:bg-accent/25 transition-colors text-sm font-semibold text-accent"
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M12 2a7 7 0 017 7c0 3-2 5.5-4 7l-1 2H10l-1-2c-2-1.5-4-4-4-7a7 7 0 017-7z" />
               <line x1="10" y1="22" x2="14" y2="22" />
             </svg>
-            IA
+            G&eacute;n&eacute;rer avec l&rsquo;IA
           </Link>
         )}
       </div>
 
       {programs.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-border p-8 text-center">
-          <p className="text-muted">Aucun programme pour le moment.</p>
-          <p className="text-sm text-subtle mt-1">
-            Cr&eacute;e un programme pour planifier tes semaines d&rsquo;entra&icirc;nement.
-          </p>
-        </div>
+        !isNewUser && (
+          <div className="rounded-xl border border-dashed border-border p-8 text-center">
+            <p className="text-muted">Aucun programme pour le moment.</p>
+            <p className="text-sm text-subtle mt-1">
+              Cr&eacute;e un programme pour planifier tes semaines d&rsquo;entra&icirc;nement.
+            </p>
+          </div>
+        )
       ) : (
         <ul className="space-y-2">
           {programs.map((p) => (

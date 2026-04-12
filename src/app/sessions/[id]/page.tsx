@@ -4,6 +4,7 @@ import {
   getWorkoutById,
   listExercisesForUser,
 } from "@/lib/workouts/queries";
+import { prisma } from "@/lib/prisma";
 import { UnifiedSession } from "./_components/unified-session";
 import { WorkoutReadonly } from "./_components/workout-readonly";
 
@@ -28,6 +29,13 @@ export default async function SessionPage({
   }
 
   // All active workouts (free-form and template-based) use the unified session.
-  const exercises = await listExercisesForUser(userId);
-  return <UnifiedSession workout={workout} exercises={exercises} />;
+  const [exercises, userSettings] = await Promise.all([
+    listExercisesForUser(userId),
+    prisma.user.findUnique({
+      where: { id: userId },
+      select: { defaultRestSecs: true },
+    }),
+  ]);
+  const defaultRestSecs = userSettings?.defaultRestSecs ?? 90;
+  return <UnifiedSession workout={workout} exercises={exercises} defaultRestSecs={defaultRestSecs} />;
 }

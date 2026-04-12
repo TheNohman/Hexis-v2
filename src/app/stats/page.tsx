@@ -1,13 +1,16 @@
 import Link from "next/link";
 import { getCurrentUserId } from "@/lib/auth-helpers";
-import { getWorkoutStats } from "@/lib/stats/queries";
+import { getWorkoutStats, getWellnessPerformanceCorrelation } from "@/lib/stats/queries";
 import { formatDuration } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
 
 export default async function StatsPage() {
   const userId = await getCurrentUserId();
-  const stats = await getWorkoutStats(userId);
+  const [stats, wellnessPerf] = await Promise.all([
+    getWorkoutStats(userId),
+    getWellnessPerformanceCorrelation(userId, 30),
+  ]);
 
   const maxWeekCount = Math.max(...stats.weeklyActivity.map((w) => w.count), 1);
   const maxWeekVolume = Math.max(...stats.weeklyVolume.map((w) => w.volume), 1);
@@ -55,6 +58,82 @@ export default async function StatsPage() {
           </section>
         )}
 
+        {/* Personal Records */}
+        {stats.personalRecords.length > 0 && (
+          <section className="space-y-3">
+            <h2 className="text-xs font-semibold text-muted uppercase tracking-wider">
+              Records personnels
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {stats.personalRecords.map((pr) => (
+                <Link
+                  key={pr.exerciseId}
+                  href={`/exercises/${pr.exerciseId}`}
+                  className="rounded-xl border border-border bg-surface p-3.5 flex items-center justify-between hover:bg-surface-hover transition-colors"
+                >
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium truncate">{pr.name}</p>
+                    <p className="text-[10px] text-subtle mt-0.5">Charge max</p>
+                  </div>
+                  <p className="text-lg font-display font-bold text-done tabular-nums shrink-0 ml-3">
+                    {pr.maxWeight} kg
+                  </p>
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* Wellness x Performance */}
+        {wellnessPerf.length >= 3 && (
+          <section className="space-y-3">
+            <h2 className="text-xs font-semibold text-muted uppercase tracking-wider">
+              Bien-&ecirc;tre &amp; performance (30 jours)
+            </h2>
+            <div className="rounded-xl border border-border bg-surface p-4 space-y-3">
+              {(() => {
+                const withWorkout = wellnessPerf.filter((p) => p.volume > 0);
+                const withoutWorkout = wellnessPerf.filter((p) => p.volume === 0);
+                if (withWorkout.length === 0) {
+                  return <p className="text-sm text-subtle text-center">Pas assez de donn&eacute;es crois&eacute;es.</p>;
+                }
+                const avgEnergyTraining = withWorkout.reduce((s, p) => s + p.energy, 0) / withWorkout.length;
+                const avgSleepTraining = withWorkout.reduce((s, p) => s + p.sleep, 0) / withWorkout.length;
+                const avgStressTraining = withWorkout.reduce((s, p) => s + p.stress, 0) / withWorkout.length;
+                const avgEnergyRest = withoutWorkout.length > 0
+                  ? withoutWorkout.reduce((s, p) => s + p.energy, 0) / withoutWorkout.length : null;
+                const avgSleepRest = withoutWorkout.length > 0
+                  ? withoutWorkout.reduce((s, p) => s + p.sleep, 0) / withoutWorkout.length : null;
+
+                const metrics = [
+                  { label: "\u00c9nergie", icon: "\u26a1", training: avgEnergyTraining, rest: avgEnergyRest },
+                  { label: "Sommeil", icon: "\ud83d\ude34", training: avgSleepTraining, rest: avgSleepRest },
+                  { label: "Stress", icon: "\ud83e\uddd8", training: avgStressTraining, rest: null },
+                ];
+
+                return (
+                  <div className="space-y-2">
+                    <div className="grid grid-cols-3 gap-3">
+                      {metrics.map((m) => (
+                        <div key={m.label} className="text-center">
+                          <span className="text-lg">{m.icon}</span>
+                          <p className="text-xl font-display font-bold tabular-nums mt-1">{m.training.toFixed(1)}</p>
+                          <p className="text-[10px] text-muted">{m.label}</p>
+                          <p className="text-[10px] text-subtle">jours d&rsquo;entra&icirc;nement</p>
+                        </div>
+                      ))}
+                    </div>
+                    <p className="text-[10px] text-subtle text-center mt-2">
+                      Bas&eacute; sur {withWorkout.length} jour{withWorkout.length > 1 ? "s" : ""} d&rsquo;entra&icirc;nement
+                      {avgSleepRest != null && ` vs ${withoutWorkout.length} jour${withoutWorkout.length > 1 ? "s" : ""} de repos`}
+                    </p>
+                  </div>
+                );
+              })()}
+            </div>
+          </section>
+        )}
+
         {/* Recent exercises */}
         <section className="space-y-3">
           <div className="flex items-center justify-between">
@@ -69,7 +148,7 @@ export default async function StatsPage() {
             </Link>
           </div>
           {stats.recentExercises.length === 0 ? (
-            <p className="text-sm text-subtle">Aucune donnée.</p>
+            <p className="text-sm text-subtle">Aucune donn&eacute;e.</p>
           ) : (
             <ul className="space-y-2">
               {stats.recentExercises.map((ex) => {
@@ -99,7 +178,7 @@ export default async function StatsPage() {
             S&eacute;ances par semaine
           </h2>
           <div className="rounded-xl border border-border bg-surface p-4">
-            <div className="flex items-end gap-2 h-32">
+            <div className="flex items-end gap-2 h-36">
               {stats.weeklyActivity.map((week) => {
                 const pct = (week.count / maxWeekCount) * 100;
                 const label = new Intl.DateTimeFormat("fr-FR", {
@@ -108,19 +187,19 @@ export default async function StatsPage() {
                 }).format(new Date(week.weekStart));
                 return (
                   <div key={week.weekStart} className="flex-1 flex flex-col items-center gap-1">
-                    <span className="text-xs text-muted tabular-nums">
+                    <span className="text-xs font-semibold text-accent tabular-nums">
                       {week.count || ""}
                     </span>
-                    <div className="w-full flex items-end h-20">
+                    <div className="w-full flex items-end h-24">
                       <div
-                        className="w-full rounded bg-accent transition-all duration-500"
+                        className="w-full rounded-md bg-accent transition-all duration-500"
                         style={{
-                          height: week.count > 0 ? `${Math.max(pct, 10)}%` : "3px",
-                          opacity: week.count > 0 ? 0.8 : 0.2,
+                          height: week.count > 0 ? `${Math.max(pct, 12)}%` : "4px",
+                          opacity: week.count > 0 ? 1 : 0.15,
                         }}
                       />
                     </div>
-                    <span className="text-[10px] text-subtle">{label}</span>
+                    <span className="text-[10px] text-muted">{label}</span>
                   </div>
                 );
               })}
@@ -135,28 +214,31 @@ export default async function StatsPage() {
               Volume par semaine (kg)
             </h2>
             <div className="rounded-xl border border-border bg-surface p-4">
-              <div className="flex items-end gap-2 h-32">
+              <div className="flex items-end gap-2 h-36">
                 {stats.weeklyVolume.map((week) => {
                   const pct = (week.volume / maxWeekVolume) * 100;
                   const label = new Intl.DateTimeFormat("fr-FR", {
                     day: "numeric",
                     month: "short",
                   }).format(new Date(week.weekStart));
+                  const volLabel = week.volume >= 1000
+                    ? `${(week.volume / 1000).toFixed(1)}k`
+                    : week.volume > 0 ? `${Math.round(week.volume)}` : "";
                   return (
                     <div key={week.weekStart} className="flex-1 flex flex-col items-center gap-1">
-                      <span className="text-[10px] text-muted tabular-nums">
-                        {week.volume > 0 ? `${Math.round(week.volume / 1000)}k` : ""}
+                      <span className="text-[10px] font-semibold text-done tabular-nums">
+                        {volLabel}
                       </span>
-                      <div className="w-full flex items-end h-20">
+                      <div className="w-full flex items-end h-24">
                         <div
-                          className="w-full rounded bg-done transition-all duration-500"
+                          className="w-full rounded-md bg-done transition-all duration-500"
                           style={{
-                            height: week.volume > 0 ? `${Math.max(pct, 10)}%` : "3px",
-                            opacity: week.volume > 0 ? 0.7 : 0.15,
+                            height: week.volume > 0 ? `${Math.max(pct, 12)}%` : "4px",
+                            opacity: week.volume > 0 ? 0.9 : 0.15,
                           }}
                         />
                       </div>
-                      <span className="text-[10px] text-subtle">{label}</span>
+                      <span className="text-[10px] text-muted">{label}</span>
                     </div>
                   );
                 })}

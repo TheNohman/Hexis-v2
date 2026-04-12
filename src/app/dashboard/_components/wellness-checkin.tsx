@@ -89,13 +89,21 @@ export function WellnessCheckin({ existingLog }: Props) {
   }
 
   if (saved && !expanded) {
+    const todayLabel = new Intl.DateTimeFormat("fr-FR", {
+      weekday: "short",
+      day: "numeric",
+      month: "short",
+    }).format(new Date());
     return (
       <button
         type="button"
         onClick={() => setExpanded(true)}
         className="w-full rounded-xl border border-border bg-surface p-3.5 flex items-center justify-between hover:bg-surface-hover transition-colors cursor-pointer"
       >
-        <span className="text-xs text-muted">Bien-&ecirc;tre du jour</span>
+        <div className="flex flex-col items-start gap-0.5">
+          <span className="text-xs text-muted">Bien-&ecirc;tre du jour</span>
+          <span className="text-[10px] text-subtle">{todayLabel}</span>
+        </div>
         <span className="text-sm">
           {MOOD_EMOJI[mood]} {SLEEP_EMOJI[sleep]} {ENERGY_EMOJI[energy]} {STRESS_EMOJI[stress]}
         </span>

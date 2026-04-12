@@ -38,6 +38,18 @@ export async function finishWorkout(workoutId: string, userId: string) {
   });
 }
 
+export async function finishStaleWorkouts(userId: string) {
+  const sixHoursAgo = new Date(Date.now() - 6 * 60 * 60 * 1000);
+  return prisma.workout.updateMany({
+    where: {
+      userId,
+      finishedAt: null,
+      startedAt: { lt: sixHoursAgo },
+    },
+    data: { finishedAt: new Date() },
+  });
+}
+
 export async function updateWorkoutName(
   workoutId: string,
   userId: string,
