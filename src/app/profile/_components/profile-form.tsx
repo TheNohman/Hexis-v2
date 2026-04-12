@@ -7,7 +7,6 @@ type Props = {
   profile: {
     unitSystem: string;
     defaultRestSecs: number | null;
-    bodyWeightKg: number | null;
     mentorEnabled: boolean;
     email: string | null;
     name: string | null;
@@ -22,17 +21,14 @@ export function ProfileForm({ profile }: Props) {
     const form = new FormData(e.currentTarget);
     const unitSystem = form.get("unitSystem") as string;
     const restVal = form.get("defaultRestSecs") as string;
-    const weightVal = form.get("bodyWeightKg") as string;
     const mentorEnabled = form.get("mentorEnabled") === "on";
 
     const defaultRestSecs = restVal ? parseInt(restVal, 10) : null;
-    const bodyWeightKg = weightVal ? parseFloat(weightVal) : null;
 
     startTransition(() =>
       updateProfileAction({
         unitSystem,
         defaultRestSecs: defaultRestSecs && !Number.isNaN(defaultRestSecs) ? defaultRestSecs : null,
-        bodyWeightKg: bodyWeightKg && !Number.isNaN(bodyWeightKg) ? bodyWeightKg : null,
         mentorEnabled,
       }),
     );
@@ -70,18 +66,6 @@ export function ProfileForm({ profile }: Props) {
           />
         </label>
 
-        <label className="flex flex-col gap-1.5">
-          <span className="text-xs text-muted">Poids de corps (kg)</span>
-          <input
-            type="number"
-            name="bodyWeightKg"
-            step="0.1"
-            min={0}
-            defaultValue={profile.bodyWeightKg ?? ""}
-            placeholder="ex: 75.0"
-            className="rounded-lg border border-border bg-background px-3 py-2.5 text-sm focus:outline-none focus:border-accent transition-colors tabular-nums"
-          />
-        </label>
       </div>
 
       <label className="flex items-center gap-3 py-2">

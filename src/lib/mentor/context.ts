@@ -57,7 +57,7 @@ export async function buildMentorContext(userId: string): Promise<MentorContext>
     await Promise.all([
       prisma.user.findUnique({
         where: { id: userId },
-        select: { name: true, bodyWeightKg: true, unitSystem: true },
+        select: { name: true, unitSystem: true },
       }),
       getWorkoutStats(userId),
       getRecentWellnessLogs(userId, 14),
@@ -99,7 +99,7 @@ export async function buildMentorContext(userId: string): Promise<MentorContext>
   return {
     user: {
       name: user?.name ?? null,
-      bodyWeightKg: user?.bodyWeightKg ?? null,
+      bodyWeightKg: bodyWeightEntries.length > 0 ? bodyWeightEntries[0].weightKg : null,
       unitSystem: user?.unitSystem ?? "metric",
     },
     stats: {

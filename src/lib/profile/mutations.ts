@@ -5,7 +5,6 @@ export async function updateUserProfile(
   data: {
     unitSystem?: string;
     defaultRestSecs?: number | null;
-    bodyWeightKg?: number | null;
     mentorEnabled?: boolean;
   },
 ): Promise<void> {
@@ -15,9 +14,6 @@ export async function updateUserProfile(
       ...(data.unitSystem !== undefined && { unitSystem: data.unitSystem }),
       ...(data.defaultRestSecs !== undefined && {
         defaultRestSecs: data.defaultRestSecs,
-      }),
-      ...(data.bodyWeightKg !== undefined && {
-        bodyWeightKg: data.bodyWeightKg,
       }),
       ...(data.mentorEnabled !== undefined && {
         mentorEnabled: data.mentorEnabled,
@@ -29,7 +25,6 @@ export async function updateUserProfile(
 export async function getUserProfile(userId: string): Promise<{
   unitSystem: string;
   defaultRestSecs: number | null;
-  bodyWeightKg: number | null;
   mentorEnabled: boolean;
   email: string | null;
   name: string | null;
@@ -39,7 +34,6 @@ export async function getUserProfile(userId: string): Promise<{
     select: {
       unitSystem: true,
       defaultRestSecs: true,
-      bodyWeightKg: true,
       mentorEnabled: true,
       email: true,
       name: true,
@@ -51,7 +45,6 @@ export async function getUserProfile(userId: string): Promise<{
   return {
     unitSystem: user.unitSystem,
     defaultRestSecs: user.defaultRestSecs,
-    bodyWeightKg: user.bodyWeightKg,
     mentorEnabled: user.mentorEnabled,
     email: user.email,
     name: user.name,
