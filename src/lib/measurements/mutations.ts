@@ -2,21 +2,21 @@ import { prisma } from "@/lib/prisma";
 
 export async function upsertMeasurement(
   userId: string,
-  data: { type: string; date: Date; valueCm: number; notes?: string | null },
+  data: { type: string; date: Date; value: number; notes?: string | null },
 ): Promise<void> {
   await prisma.bodyMeasurement.upsert({
     where: {
       userId_type_date: { userId, type: data.type, date: data.date },
     },
     update: {
-      valueCm: data.valueCm,
+      value: data.value,
       notes: data.notes ?? null,
     },
     create: {
       userId,
       type: data.type,
       date: data.date,
-      valueCm: data.valueCm,
+      value: data.value,
       notes: data.notes ?? null,
     },
   });

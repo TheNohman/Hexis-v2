@@ -16,6 +16,7 @@ export async function addBodyWeightAction(data: {
     notes: data.notes ?? null,
   });
   revalidatePath("/profile");
+  revalidatePath("/profile/poids");
   revalidatePath("/stats");
 }
 
@@ -23,5 +24,6 @@ export async function deleteBodyWeightAction(entryId: string) {
   const userId = await getCurrentUserId();
   await deleteBodyWeight(entryId, userId);
   revalidatePath("/profile");
+  revalidatePath("/profile/poids");
   revalidatePath("/stats");
 }

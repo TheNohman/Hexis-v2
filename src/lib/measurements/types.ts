@@ -1,27 +1,29 @@
-export const MEASUREMENT_TYPES = [
-  "tour_de_taille",
-  "tour_de_bras",
-  "tour_de_hanches",
-  "tour_de_poitrine",
-  "tour_de_cuisses",
-  "tour_de_mollets",
+/** Suggestions par défaut pour les nouveaux utilisateurs */
+export const DEFAULT_MEASUREMENT_SUGGESTIONS = [
+  { slug: "tour_de_taille", label: "Tour de taille", unit: "cm" },
+  { slug: "tour_de_bras", label: "Tour de bras", unit: "cm" },
+  { slug: "tour_de_hanches", label: "Tour de hanches", unit: "cm" },
+  { slug: "tour_de_poitrine", label: "Tour de poitrine", unit: "cm" },
+  { slug: "tour_de_cuisses", label: "Tour de cuisses", unit: "cm" },
+  { slug: "tour_de_mollets", label: "Tour de mollets", unit: "cm" },
 ] as const;
 
-export type MeasurementType = (typeof MEASUREMENT_TYPES)[number];
-
-export const MEASUREMENT_LABELS: Record<MeasurementType, string> = {
-  tour_de_taille: "Tour de taille",
-  tour_de_bras: "Tour de bras",
-  tour_de_hanches: "Tour de hanches",
-  tour_de_poitrine: "Tour de poitrine",
-  tour_de_cuisses: "Tour de cuisses",
-  tour_de_mollets: "Tour de mollets",
-};
+export const COMMON_UNITS = ["cm", "mm", "kg", "%", "in"] as const;
 
 export type MeasurementData = {
   id: string;
   type: string;
   date: Date;
-  valueCm: number;
+  value: number;
   notes: string | null;
+};
+
+export type MeasurementTypeConfigData = {
+  id: string;
+  slug: string;
+  label: string;
+  unit: string;
+  color: string | null;
+  sortOrder: number;
+  archived: boolean;
 };

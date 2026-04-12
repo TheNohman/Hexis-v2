@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import type { MeasurementData } from "./types";
 
-/** All measurements for a user, grouped by type (most recent first). */
+/** All measurements for a user (most recent first). */
 export async function listAllMeasurements(
   userId: string,
 ): Promise<MeasurementData[]> {
@@ -14,7 +14,7 @@ export async function listAllMeasurements(
     id: e.id,
     type: e.type,
     date: e.date,
-    valueCm: e.valueCm,
+    value: e.value,
     notes: e.notes,
   }));
 }

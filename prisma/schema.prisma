@@ -23,8 +23,9 @@ model User {
   exercises        Exercise[]
   workoutTemplates WorkoutTemplate[]
   bodyWeightEntries  BodyWeightEntry[]
-  bodyMeasurements   BodyMeasurement[]
-  programs           Program[]
+  bodyMeasurements       BodyMeasurement[]
+  measurementTypeConfigs MeasurementTypeConfig[]
+  programs               Program[]
   wellnessLogs       WellnessLog[]
 
   // Profile / preferences
@@ -257,12 +258,12 @@ model BodyWeightEntry {
 
 /// Mesures corporelles (tour de taille, bras, etc.)
 model BodyMeasurement {
-  id      String   @id @default(cuid())
-  userId  String
-  type    String   // "tour_de_taille", "tour_de_bras", etc.
-  valueCm Float
-  date    DateTime @db.Date
-  notes   String?
+  id     String   @id @default(cuid())
+  userId String
+  type   String   // slug du type de mesure
+  value  Float    @map("value") // valeur dans l'unité du type
+  date   DateTime @db.Date
+  notes  String?
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -271,6 +272,24 @@ model BodyMeasurement {
   @@unique([userId, type, date])
   @@index([userId, type])
   @@index([date])
+}
+
+/// Configuration des types de mesures corporelles par utilisateur
+model MeasurementTypeConfig {
+  id        String   @id @default(cuid())
+  userId    String
+  slug      String
+  label     String
+  unit      String   @default("cm")
+  color     String?
+  sortOrder Int      @default(0)
+  archived  Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, slug])
+  @@index([userId])
 }
 
 /// Template de séance réutilisable
