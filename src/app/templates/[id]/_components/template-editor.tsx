@@ -79,7 +79,7 @@ export function TemplateEditor({ template, exercises }: Props) {
   }
 
   function handleDelete() {
-    if (!confirm(`Supprimer le template "${template.name}" ?`)) return;
+    if (!confirm(`Supprimer le mod\u00e8le "${template.name}" ?`)) return;
     startTransition(() => deleteTemplateAction(template.id));
   }
 
@@ -128,7 +128,7 @@ export function TemplateEditor({ template, exercises }: Props) {
             href="/templates"
             className="text-xs text-subtle hover:text-foreground whitespace-nowrap px-3 py-2 rounded-lg hover:bg-surface transition-colors"
           >
-            &larr; Templates
+            &larr; Mod&egrave;les
           </Link>
         </header>
 
@@ -213,7 +213,7 @@ export function TemplateEditor({ template, exercises }: Props) {
             disabled={isPending}
             className="w-full rounded-2xl border border-border text-muted py-3 text-sm font-medium hover:bg-surface transition-colors cursor-pointer disabled:opacity-50"
           >
-            Dupliquer ce template
+            Dupliquer ce mod&egrave;le
           </button>
           <button
             type="button"
@@ -221,7 +221,7 @@ export function TemplateEditor({ template, exercises }: Props) {
             disabled={isPending}
             className="w-full rounded-2xl border border-danger/30 text-danger py-3 text-sm font-bold hover:bg-danger-light transition-colors cursor-pointer disabled:opacity-50"
           >
-            Supprimer ce template
+            Supprimer ce mod&egrave;le
           </button>
         </div>
       </div>

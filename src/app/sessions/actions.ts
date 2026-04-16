@@ -25,6 +25,7 @@ import {
   validateEntry,
 } from "@/lib/workouts/mutations";
 import { createTemplateFromWorkout } from "@/lib/templates/from-workout";
+import { clearAdviceCache } from "@/lib/mentor/advice";
 import type { KpiValueInput } from "@/lib/workouts/types";
 
 export async function createWorkoutAction() {
@@ -158,6 +159,8 @@ export async function updateNotesAction(workoutId: string, notes: string) {
 export async function finishWorkoutAction(workoutId: string) {
   const userId = await getCurrentUserId();
   await finishWorkout(workoutId, userId);
+  // Session just ended → the next mentor advice should reflect it.
+  await clearAdviceCache(userId);
   revalidatePath("/dashboard");
   redirect("/dashboard");
 }

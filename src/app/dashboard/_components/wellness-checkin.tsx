@@ -18,10 +18,11 @@ const SLEEP_LABELS = ["", "Tr\u00e8s mal", "Mal", "Correct", "Bien", "Excellent"
 const ENERGY_LABELS = ["", "\u00c9puis\u00e9", "Fatigu\u00e9", "Normal", "\u00c9nergique", "Plein d'\u00e9nergie"];
 const STRESS_LABELS = ["", "Tr\u00e8s stress\u00e9", "Stress\u00e9", "Normal", "D\u00e9tendu", "Tr\u00e8s d\u00e9tendu"];
 
+// Emojis picked for monotonic progression (worst \u2192 best) and distinctness.
 const MOOD_EMOJI = ["", "\ud83d\ude2b", "\ud83d\ude1f", "\ud83d\ude10", "\ud83d\ude0a", "\ud83d\ude04"];
-const SLEEP_EMOJI = ["", "\ud83d\ude34", "\ud83d\ude25", "\ud83d\ude0c", "\ud83d\ude34", "\u2b50"];
-const ENERGY_EMOJI = ["", "\ud83e\udead", "\ud83e\udd71", "\ud83d\ude10", "\u26a1", "\ud83d\udd25"];
-const STRESS_EMOJI = ["", "\ud83d\ude30", "\ud83d\ude1f", "\ud83d\ude10", "\ud83d\ude0c", "\ud83e\uddd8"];
+const SLEEP_EMOJI = ["", "\ud83d\ude35", "\ud83d\ude2a", "\ud83d\ude34", "\ud83d\ude0c", "\u2728"];
+const ENERGY_EMOJI = ["", "\ud83e\udd74", "\ud83d\ude2a", "\ud83d\ude10", "\u26a1", "\ud83d\udd25"];
+const STRESS_EMOJI = ["", "\ud83d\ude30", "\ud83d\ude23", "\ud83d\ude10", "\ud83d\ude0c", "\ud83e\uddd8"];
 
 function RatingRow({
   label,
@@ -38,25 +39,34 @@ function RatingRow({
 }) {
   return (
     <div className="space-y-1.5">
-      <div className="flex items-center justify-between">
-        <span className="text-xs text-muted">{label}</span>
-        <span className="text-xs text-subtle">{labels[value]}</span>
-      </div>
+      <span className="text-xs text-muted">{label}</span>
       <div className="flex gap-1.5">
-        {[1, 2, 3, 4, 5].map((n) => (
-          <button
-            key={n}
-            type="button"
-            onClick={() => onChange(n)}
-            className={`flex-1 rounded-lg py-2 text-center text-base cursor-pointer transition-all ${
-              n === value
-                ? "bg-accent/15 border-2 border-accent scale-105"
-                : "bg-surface border border-border hover:border-accent/50"
-            }`}
-          >
-            {emojis[n]}
-          </button>
-        ))}
+        {[1, 2, 3, 4, 5].map((n) => {
+          const isActive = n === value;
+          return (
+            <button
+              key={n}
+              type="button"
+              onClick={() => onChange(n)}
+              aria-label={`${label} : ${labels[n]}`}
+              aria-pressed={isActive}
+              className={`flex-1 rounded-lg py-1.5 px-1 flex flex-col items-center gap-0.5 cursor-pointer transition-all ${
+                isActive
+                  ? "bg-accent/15 border-2 border-accent scale-105"
+                  : "bg-surface border border-border hover:border-accent/50"
+              }`}
+            >
+              <span className="text-base leading-none">{emojis[n]}</span>
+              <span
+                className={`text-[9px] leading-tight text-center ${
+                  isActive ? "text-accent font-semibold" : "text-subtle"
+                }`}
+              >
+                {labels[n]}
+              </span>
+            </button>
+          );
+        })}
       </div>
     </div>
   );
@@ -143,12 +153,12 @@ export function WellnessCheckin({ existingLog }: Props) {
       <RatingRow label="&Eacute;nergie" emojis={ENERGY_EMOJI} labels={ENERGY_LABELS} value={energy} onChange={setEnergy} />
       <RatingRow label="Stress" emojis={STRESS_EMOJI} labels={STRESS_LABELS} value={stress} onChange={setStress} />
 
-      <input
-        type="text"
+      <textarea
         value={notes}
         onChange={(e) => setNotes(e.target.value)}
-        placeholder="Notes (optionnel)"
-        className="w-full rounded-lg border border-border bg-background px-3 py-2.5 text-sm focus:outline-none focus:border-accent transition-colors"
+        placeholder="Note du jour (optionnel) \u2014 ex: bas du dos tendu, pr\u00e9sentation stressante demain, cycle J3\u2026"
+        rows={2}
+        className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:border-accent transition-colors resize-none"
       />
 
       <button

@@ -15,6 +15,7 @@ type Props = {
   onClose: () => void;
   exercises: ExerciseListItem[];
   multiSet?: boolean;
+  addLabel?: string;
   onPick: (
     exercise: ExerciseListItem,
     values: {
@@ -26,7 +27,7 @@ type Props = {
   ) => Promise<void>;
 };
 
-export function ExercisePicker({ open, onClose, exercises, multiSet, onPick }: Props) {
+export function ExercisePicker({ open, onClose, exercises, multiSet, addLabel, onPick }: Props) {
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState<ExerciseListItem | null>(null);
   const [values, setValues] = useState<KpiValueState>({});
@@ -138,7 +139,7 @@ export function ExercisePicker({ open, onClose, exercises, multiSet, onPick }: P
             <div className="p-4">
               <input
                 type="search"
-                placeholder="Rechercher un exercice\u2026"
+                placeholder="Rechercher un exercice…"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 autoFocus
@@ -219,7 +220,7 @@ export function ExercisePicker({ open, onClose, exercises, multiSet, onPick }: P
               disabled={isPending}
               className="w-full rounded-xl bg-accent text-background py-4 font-bold tracking-wide hover:bg-accent-hover transition-colors cursor-pointer disabled:opacity-50 uppercase"
             >
-              {isPending ? "Ajout\u2026" : "Ajouter \u00e0 la s\u00e9ance"}
+              {isPending ? "Ajout\u2026" : addLabel ?? "Ajouter \u00e0 la s\u00e9ance"}
             </button>
           </div>
         )}

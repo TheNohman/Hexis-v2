@@ -14,7 +14,7 @@ export default async function TemplatesPage() {
       <div className="max-w-2xl w-full space-y-6">
         <header className="flex items-start justify-between gap-3">
           <h1 className="text-2xl font-display font-bold tracking-tight">
-            Templates
+            Mod&egrave;les
           </h1>
           <Link
             href="/dashboard"
@@ -29,16 +29,16 @@ export default async function TemplatesPage() {
             type="submit"
             className="w-full rounded-xl bg-accent text-white py-3.5 font-semibold hover:bg-accent-hover transition-colors cursor-pointer shadow-sm"
           >
-            + Nouveau template
+            + Nouveau mod&egrave;le
           </button>
         </form>
 
         <section className="space-y-2">
           {templates.length === 0 ? (
             <div className="rounded-xl border border-dashed border-border p-8 text-center">
-              <p className="text-muted">Aucun template pour le moment.</p>
+              <p className="text-muted">Aucun mod&egrave;le pour le moment.</p>
               <p className="text-sm text-subtle mt-1">
-                Cr&eacute;e un template pour planifier tes s&eacute;ances.
+                Cr&eacute;e un mod&egrave;le pour planifier tes s&eacute;ances.
               </p>
             </div>
           ) : (

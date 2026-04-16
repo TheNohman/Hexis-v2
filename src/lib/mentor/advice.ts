@@ -10,15 +10,19 @@ const ADVICE_SYSTEM_PROMPT = `Tu es un coach sportif expert et bienveillant. À 
 
 Règles :
 - Maximum 2 phrases, sois concis et direct
-- Personnalise selon : programme actuel, dernières séances, bien-être récent, progression
-- Si le stress/fatigue est élevé, recommande d'adapter l'intensité
-- Si la progression stagne, suggère un ajustement concret
-- Si tout va bien, encourage et donne un focus précis
+- OBLIGATOIRE : appuie-toi sur au moins une donnée concrète de l'utilisateur (dernière charge vue, tendance sommeil/stress sur les jours récents, exercice précis du programme, séance en cours). Cite le chiffre ou le nom.
+- Ne donne JAMAIS un conseil générique du type "commence doucement", "travaille ta technique", sans ancrage.
+- Si une séance est en cours, le conseil doit concerner CETTE séance (poids à tenter, repos, fin de séance)
+- Si sommeil < 3 ou stress > 3 sur les 3 derniers jours → suggère décharge concrète (ex : réduire volume -20%, baisser l'intensité sur exercices lourds)
+- Si aucune séance récente et aucune donnée wellness → encourage à faire le check-in et lancer la première séance
 - Tutoie l'utilisateur
 - Pas de formules de politesse, va droit au but
 - Réponds en français`;
 
-const CACHE_DURATION_MS = 24 * 60 * 60 * 1000; // 24h
+// Cache court pour que les check-in wellness et les séances tout juste
+// terminées se reflètent vite. Les actions (wellness, fin de séance)
+// invalident aussi explicitement via clearAdviceCache().
+const CACHE_DURATION_MS = 4 * 60 * 60 * 1000; // 4h
 
 /**
  * Get session advice, using cached version if fresh enough.
@@ -80,5 +84,21 @@ export async function getSessionAdvice(userId: string): Promise<string | null> {
     console.error("[mentor-advice]", error);
     // Return stale cache if available
     return user.lastAdvice ?? null;
+  }
+}
+
+/**
+ * Invalidate the cached mentor advice so the next call regenerates it.
+ * Called from actions that meaningfully change the user's state (wellness
+ * check-in, session finished).
+ */
+export async function clearAdviceCache(userId: string): Promise<void> {
+  try {
+    await prisma.user.update({
+      where: { id: userId },
+      data: { lastAdviceAt: null },
+    });
+  } catch (error) {
+    console.error("[mentor-advice] clearAdviceCache", error);
   }
 }

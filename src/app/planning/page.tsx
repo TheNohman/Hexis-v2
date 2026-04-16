@@ -52,7 +52,7 @@ export default async function PlanningPage(props: Props) {
                 : "border-transparent text-muted hover:text-foreground"
             }`}
           >
-            Templates
+            Mod&egrave;les
           </Link>
         </div>
 
@@ -81,15 +81,15 @@ async function ProgramsTab({ userId, mentorEnabled }: { userId: string; mentorEn
             <div className="flex items-start gap-3">
               <span className="shrink-0 w-6 h-6 rounded-full bg-accent/15 text-accent text-xs font-bold flex items-center justify-center">1</span>
               <div>
-                <p className="text-sm font-medium">Cr&eacute;e tes s&eacute;ances types (Templates)</p>
-                <p className="text-xs text-muted mt-0.5">Un template = une s&eacute;ance r&eacute;utilisable (ex: &laquo; Upper Body &raquo;, &laquo; Jambes &raquo;)</p>
+                <p className="text-sm font-medium">Cr&eacute;e tes s&eacute;ances types (Mod&egrave;les)</p>
+                <p className="text-xs text-muted mt-0.5">Un mod&egrave;le = une s&eacute;ance r&eacute;utilisable (ex: &laquo; Upper Body &raquo;, &laquo; Jambes &raquo;)</p>
               </div>
             </div>
             <div className="flex items-start gap-3">
               <span className="shrink-0 w-6 h-6 rounded-full bg-accent/15 text-accent text-xs font-bold flex items-center justify-center">2</span>
               <div>
                 <p className="text-sm font-medium">Organise-les dans un Programme</p>
-                <p className="text-xs text-muted mt-0.5">Assigne tes templates aux jours de la semaine</p>
+                <p className="text-xs text-muted mt-0.5">Assigne tes mod&egrave;les aux jours de la semaine</p>
               </div>
             </div>
             <div className="flex items-start gap-3">
@@ -185,15 +185,15 @@ async function TemplatesTab({ userId }: { userId: string }) {
           type="submit"
           className="w-full rounded-xl bg-accent text-white py-3.5 font-semibold hover:bg-accent-hover transition-colors cursor-pointer shadow-sm"
         >
-          + Nouveau template
+          + Nouveau mod&egrave;le
         </button>
       </form>
 
       {templates.length === 0 ? (
         <div className="rounded-xl border border-dashed border-border p-8 text-center">
-          <p className="text-muted">Aucun template pour le moment.</p>
+          <p className="text-muted">Aucun mod&egrave;le pour le moment.</p>
           <p className="text-sm text-subtle mt-1">
-            Cr&eacute;e un template pour planifier tes s&eacute;ances.
+            Cr&eacute;e un mod&egrave;le pour planifier tes s&eacute;ances.
           </p>
         </div>
       ) : (

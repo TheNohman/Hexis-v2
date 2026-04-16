@@ -84,6 +84,45 @@ export async function listRecentWorkouts(
 }
 
 /**
+ * Returns the currently active workout (not finished) if any.
+ * Used by the persistent in-progress banner.
+ */
+export async function getActiveWorkout(userId: string): Promise<{
+  id: string;
+  name: string;
+  startedAt: Date;
+  completedEntries: number;
+  totalEntries: number;
+} | null> {
+  const workout = await prisma.workout.findFirst({
+    where: { userId, finishedAt: null },
+    orderBy: { startedAt: "desc" },
+    include: {
+      blocks: {
+        include: {
+          entries: {
+            select: { id: true, status: true },
+          },
+        },
+      },
+    },
+  });
+
+  if (!workout) return null;
+
+  const allEntries = workout.blocks.flatMap((b) => b.entries);
+  const completed = allEntries.filter((e) => e.status === "DONE").length;
+
+  return {
+    id: workout.id,
+    name: workout.name,
+    startedAt: workout.startedAt,
+    completedEntries: completed,
+    totalEntries: allEntries.length,
+  };
+}
+
+/**
  * Returns all workouts for the user, optionally limited.
  */
 export async function listAllWorkouts(

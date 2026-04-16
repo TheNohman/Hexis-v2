@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { auth, signOut } from "@/auth";
 import { getCurrentUserId } from "@/lib/auth-helpers";
-import { listRecentWorkouts } from "@/lib/workouts/queries";
+import { listRecentWorkouts, getActiveWorkout } from "@/lib/workouts/queries";
 import { getActiveProgram } from "@/lib/programs/queries";
 import { getTodayWellnessLog } from "@/lib/wellness/queries";
 import { createWorkoutAction } from "@/app/sessions/actions";
@@ -14,10 +14,11 @@ export const dynamic = "force-dynamic";
 export default async function Dashboard() {
   const session = await auth();
   const userId = await getCurrentUserId();
-  const [workouts, activeProgram, todayWellness] = await Promise.all([
+  const [workouts, activeProgram, todayWellness, activeWorkout] = await Promise.all([
     listRecentWorkouts(userId, 10),
     getActiveProgram(userId),
     getTodayWellnessLog(userId),
+    getActiveWorkout(userId),
   ]);
 
   return (
@@ -57,8 +58,30 @@ export default async function Dashboard() {
 
         <WellnessCheckin existingLog={todayWellness} />
 
-        {/* Next workout or program prompt */}
-        {activeProgram ? (
+        {/* Active workout takes priority over next-workout suggestion */}
+        {activeWorkout ? (
+          <Link
+            href={`/sessions/${activeWorkout.id}`}
+            className="block rounded-2xl border border-accent/40 bg-accent/10 p-5 hover:bg-accent/15 transition-colors"
+          >
+            <div className="flex items-center gap-2 mb-1">
+              <span className="relative flex h-2 w-2">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent opacity-60" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-accent" />
+              </span>
+              <p className="text-[11px] uppercase tracking-wider font-semibold text-accent">
+                S&eacute;ance en cours
+              </p>
+            </div>
+            <p className="text-lg font-display font-bold">{activeWorkout.name}</p>
+            <p className="text-xs text-muted mt-0.5 tabular-nums">
+              {activeWorkout.completedEntries} / {activeWorkout.totalEntries} s&eacute;ries valid&eacute;es
+            </p>
+            <p className="text-sm font-semibold text-accent mt-3">
+              Reprendre la s&eacute;ance &rarr;
+            </p>
+          </Link>
+        ) : activeProgram ? (
           <NextWorkoutCard info={activeProgram} />
         ) : (
           <Link

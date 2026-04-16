@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { getCurrentUserId } from "@/lib/auth-helpers";
 import { upsertWellnessLog, deleteWellnessLog } from "@/lib/wellness/mutations";
+import { clearAdviceCache } from "@/lib/mentor/advice";
 
 export async function upsertWellnessLogAction(data: {
   date: string;
@@ -14,6 +15,8 @@ export async function upsertWellnessLogAction(data: {
 }) {
   const userId = await getCurrentUserId();
   await upsertWellnessLog(userId, data);
+  // Wellness change materially shifts the advice context; invalidate cache.
+  await clearAdviceCache(userId);
   revalidatePath("/profile");
   revalidatePath("/dashboard");
 }

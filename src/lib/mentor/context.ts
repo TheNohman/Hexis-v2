@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { getWorkoutStats } from "@/lib/stats/queries";
 import { getRecentWellnessLogs } from "@/lib/wellness/queries";
 import { listBodyWeightEntries } from "@/lib/bodyweight/queries";
+import { getActiveWorkout } from "@/lib/workouts/queries";
 
 export type MentorContext = {
   user: {
@@ -48,12 +49,25 @@ export type MentorContext = {
     stress: number;
     notes: string | null;
   }[];
+  wellnessTrends: {
+    avgSleepLast3Days: number | null;
+    avgStressLast3Days: number | null;
+    avgEnergyLast3Days: number | null;
+    poorSleepNightsLast7: number;
+    highStressDaysLast7: number;
+  };
   bodyWeight: { date: string; weightKg: number }[];
+  activeWorkout: {
+    name: string;
+    startedAt: string;
+    completedEntries: number;
+    totalEntries: number;
+  } | null;
 };
 
 export async function buildMentorContext(userId: string): Promise<MentorContext> {
   // Fetch all data in parallel
-  const [user, stats, wellnessLogs, bodyWeightEntries, activeProgram, recentWorkouts] =
+  const [user, stats, wellnessLogs, bodyWeightEntries, activeProgram, recentWorkouts, activeWorkout] =
     await Promise.all([
       prisma.user.findUnique({
         where: { id: userId },
@@ -94,7 +108,22 @@ export async function buildMentorContext(userId: string): Promise<MentorContext>
           },
         },
       }),
+      getActiveWorkout(userId),
     ]);
+
+  // Compute wellness trends up-front so the prompt doesn't need to
+  // re-average the raw array.
+  const last3 = wellnessLogs.slice(0, 3);
+  const last7 = wellnessLogs.slice(0, 7);
+  const avg = (arr: number[]) =>
+    arr.length ? Math.round((arr.reduce((s, n) => s + n, 0) / arr.length) * 10) / 10 : null;
+  const wellnessTrends = {
+    avgSleepLast3Days: avg(last3.map((l) => l.sleep)),
+    avgStressLast3Days: avg(last3.map((l) => l.stress)),
+    avgEnergyLast3Days: avg(last3.map((l) => l.energy)),
+    poorSleepNightsLast7: last7.filter((l) => l.sleep <= 2).length,
+    highStressDaysLast7: last7.filter((l) => l.stress <= 2).length, // stress: 1=très stressé, 5=très détendu
+  };
 
   return {
     user: {
@@ -182,5 +211,14 @@ export async function buildMentorContext(userId: string): Promise<MentorContext>
       date: e.date instanceof Date ? e.date.toISOString().slice(0, 10) : String(e.date),
       weightKg: e.weightKg,
     })),
+    wellnessTrends,
+    activeWorkout: activeWorkout
+      ? {
+          name: activeWorkout.name,
+          startedAt: activeWorkout.startedAt.toISOString(),
+          completedEntries: activeWorkout.completedEntries,
+          totalEntries: activeWorkout.totalEntries,
+        }
+      : null,
   };
 }
