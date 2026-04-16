@@ -59,7 +59,8 @@ export function ProfileForm({ profile }: Props) {
             type="number"
             name="defaultRestSecs"
             min={0}
-            step={5}
+            step={1}
+            inputMode="numeric"
             defaultValue={profile.defaultRestSecs ?? ""}
             placeholder="ex: 90"
             className="rounded-lg border border-border bg-background px-3 py-2.5 text-sm focus:outline-none focus:border-accent transition-colors tabular-nums"

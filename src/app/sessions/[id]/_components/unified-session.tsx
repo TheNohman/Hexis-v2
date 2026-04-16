@@ -16,6 +16,7 @@ import {
 } from "@/app/sessions/actions";
 import { BlockSection } from "./block-section";
 import { CompactRestTimer } from "./compact-rest-timer";
+import { SessionTimer } from "./session-timer";
 import { ConfirmDialog } from "@/app/_components/confirm-dialog";
 
 type Entry = WorkoutDetail["blocks"][number]["entries"][number];
@@ -89,26 +90,29 @@ export function UnifiedSession({ workout, exercises, defaultRestSecs = 90 }: Pro
       <div className="max-w-2xl w-full mx-auto space-y-5" style={{ paddingBottom: restTimer ? 80 : 0 }}>
         {/* Header */}
         <header className="flex items-start justify-between gap-3">
-          {isEditingName ? (
-            <input type="text" defaultValue={workout.name} autoFocus
-              onBlur={(e) => {
-                const next = e.target.value.trim();
-                if (next && next !== workout.name) startTransition(() => renameWorkoutAction(workout.id, next));
-                setIsEditingName(false);
-              }}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") (e.target as HTMLInputElement).blur();
-                if (e.key === "Escape") setIsEditingName(false);
-              }}
-              className="flex-1 text-xl font-display font-bold bg-transparent outline-none border-b-2 border-accent"
-            />
-          ) : (
-            <button type="button" onClick={() => setIsEditingName(true)}
-              className="text-xl font-display font-bold cursor-pointer text-left hover:text-accent transition-colors">
-              {workout.name}
-            </button>
-          )}
-          <Link href="/dashboard" className="text-xs text-muted hover:text-foreground transition-colors py-1">
+          <div className="flex-1 min-w-0 space-y-1">
+            {isEditingName ? (
+              <input type="text" defaultValue={workout.name} autoFocus
+                onBlur={(e) => {
+                  const next = e.target.value.trim();
+                  if (next && next !== workout.name) startTransition(() => renameWorkoutAction(workout.id, next));
+                  setIsEditingName(false);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+                  if (e.key === "Escape") setIsEditingName(false);
+                }}
+                className="w-full text-xl font-display font-bold bg-transparent outline-none border-b-2 border-accent"
+              />
+            ) : (
+              <button type="button" onClick={() => setIsEditingName(true)}
+                className="text-xl font-display font-bold cursor-pointer text-left hover:text-accent transition-colors block max-w-full truncate">
+                {workout.name}
+              </button>
+            )}
+            {!workout.finishedAt && <SessionTimer startedAt={workout.startedAt} />}
+          </div>
+          <Link href="/dashboard" className="text-xs text-muted hover:text-foreground transition-colors py-1 whitespace-nowrap">
             &larr; Retour
           </Link>
         </header>

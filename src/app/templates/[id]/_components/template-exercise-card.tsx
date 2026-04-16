@@ -134,7 +134,8 @@ export function TemplateExerciseCard({ templateId, blockId, group }: Props) {
           <input
             type="number"
             min={0}
-            step={5}
+            step={1}
+            inputMode="numeric"
             placeholder="Repos (sec)"
             defaultValue={group.restDurationSecs ?? ""}
             autoFocus={editingRest}
