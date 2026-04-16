@@ -215,15 +215,16 @@ export function IntervalRunner({ workoutId, block, onClose }: Props) {
     setSecondsLeft(0);
   }
 
-  // Colors per phase.
+  // Colors per phase. Fully opaque so the session underneath doesn't
+  // bleed through the full-screen overlay.
   const bg =
     phase === "WORK"
-      ? "bg-[color:var(--done,#22c55e)]/90"
+      ? "bg-[color:var(--done,#22c55e)]"
       : phase === "REST"
-        ? "bg-orange-500/90"
+        ? "bg-orange-500"
         : phase === "GET_READY"
-          ? "bg-accent/80"
-          : "bg-foreground/10";
+          ? "bg-accent"
+          : "bg-background";
   const label =
     phase === "WORK"
       ? "EFFORT"
