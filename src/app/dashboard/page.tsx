@@ -5,11 +5,13 @@ import { getCurrentUserId } from "@/lib/auth-helpers";
 import { listRecentWorkouts, getActiveWorkout } from "@/lib/workouts/queries";
 import { getActiveProgram } from "@/lib/programs/queries";
 import { getTodayWellnessLog } from "@/lib/wellness/queries";
-import { needsOnboarding } from "@/lib/profile/onboarding";
+import { getSportProfile, needsOnboarding } from "@/lib/profile/onboarding";
 import { createWorkoutAction } from "@/app/sessions/actions";
 import { formatDuration } from "@/lib/format";
 import { NextWorkoutCard } from "./_components/next-workout-card";
 import { WellnessCheckin } from "./_components/wellness-checkin";
+import { SportHero } from "./_components/sport-hero";
+import { BeginnerTip } from "./_components/beginner-tip";
 
 export const dynamic = "force-dynamic";
 
@@ -17,12 +19,15 @@ export default async function Dashboard() {
   const session = await auth();
   const userId = await getCurrentUserId();
   if (await needsOnboarding(userId)) redirect("/onboarding");
-  const [workouts, activeProgram, todayWellness, activeWorkout] = await Promise.all([
+  const [workouts, activeProgram, todayWellness, activeWorkout, profile] = await Promise.all([
     listRecentWorkouts(userId, 10),
     getActiveProgram(userId),
     getTodayWellnessLog(userId),
     getActiveWorkout(userId),
+    getSportProfile(userId),
   ]);
+  const firstName = session?.user?.name?.split(" ")[0] ?? null;
+  const isBeginner = profile.sportLevel === "BEGINNER";
 
   return (
     <main className="flex-1 flex flex-col items-center px-4 py-8">
@@ -59,7 +64,21 @@ export default async function Dashboard() {
           </div>
         </header>
 
+        <SportHero
+          firstName={firstName}
+          primarySport={profile.primarySport}
+          sportLevel={profile.sportLevel}
+          sportObjective={profile.sportObjective}
+        />
+
         <WellnessCheckin existingLog={todayWellness} />
+
+        {isBeginner && (
+          <BeginnerTip
+            primarySport={profile.primarySport}
+            hasWorkouts={workouts.length > 0}
+          />
+        )}
 
         {/* Active workout takes priority over next-workout suggestion */}
         {activeWorkout ? (
