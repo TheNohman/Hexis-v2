@@ -16,6 +16,7 @@ import {
   updateNotesAction,
 } from "@/app/sessions/actions";
 import { BlockSection } from "./block-section";
+import { IntervalBlockSection } from "./interval-block-section";
 import { CompactRestTimer } from "./compact-rest-timer";
 import { SessionTimer } from "./session-timer";
 import { ConfirmDialog } from "@/app/_components/confirm-dialog";
@@ -35,11 +36,16 @@ export function UnifiedSession({ workout, exercises, defaultRestSecs = 90 }: Pro
 
   useEffect(() => { setOptimisticBlocks(workout.blocks); }, [workout.blocks]);
 
+  // Entry-level progress only makes sense for STANDARD blocks. INTERVAL
+  // blocks track completion via completedRounds / roundCount separately.
+  const standardEntries = workout.blocks
+    .filter((b) => b.mode !== "INTERVAL")
+    .flatMap((b) => b.entries);
   const allEntries = workout.blocks.flatMap((b) => b.entries);
-  const hasPlanned = allEntries.some((e) => e.status === "PLANNED");
-  const plannedCount = allEntries.filter((e) => e.status === "PLANNED").length;
-  const completedCount = allEntries.filter((e) => e.status === "DONE" || e.status === "SKIPPED").length;
-  const totalCount = allEntries.length;
+  const hasPlanned = standardEntries.some((e) => e.status === "PLANNED");
+  const plannedCount = standardEntries.filter((e) => e.status === "PLANNED").length;
+  const completedCount = standardEntries.filter((e) => e.status === "DONE" || e.status === "SKIPPED").length;
+  const totalCount = standardEntries.length;
   const progress = totalCount > 0 ? completedCount / totalCount : 0;
 
   // --- Retro logging: backdate + bulk-validate ---
@@ -194,10 +200,23 @@ export function UnifiedSession({ workout, exercises, defaultRestSecs = 90 }: Pro
         <div className="space-y-4">
           <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleBlockDragEnd}>
             <SortableContext items={optimisticBlocks.map((b) => b.id)} strategy={verticalListSortingStrategy}>
-              {optimisticBlocks.map((block) => (
-                <BlockSection key={block.id} workoutId={workout.id} block={block}
-                  exercises={exercises} onEntryValidated={handleEntryValidated} />
-              ))}
+              {optimisticBlocks.map((block) =>
+                block.mode === "INTERVAL" ? (
+                  <IntervalBlockSection
+                    key={block.id}
+                    workoutId={workout.id}
+                    block={block}
+                  />
+                ) : (
+                  <BlockSection
+                    key={block.id}
+                    workoutId={workout.id}
+                    block={block}
+                    exercises={exercises}
+                    onEntryValidated={handleEntryValidated}
+                  />
+                ),
+              )}
             </SortableContext>
           </DndContext>
 

@@ -1,4 +1,10 @@
-import type { ExerciseType, KpiDataType } from "@/generated/prisma/enums";
+import type {
+  BlockMode,
+  ExerciseType,
+  IntervalFormat,
+  KpiDataType,
+  PlaybackOrder,
+} from "@/generated/prisma/enums";
 
 export type TemplateListItem = {
   id: string;
@@ -16,6 +22,13 @@ export type TemplateDetail = {
     id: string;
     name: string;
     displayOrder: number;
+    mode: BlockMode;
+    intervalFormat: IntervalFormat | null;
+    workSecs: number | null;
+    restSecs: number | null;
+    roundCount: number | null;
+    playbackOrder: PlaybackOrder | null;
+    countdownLeadSecs: number;
     entries: {
       id: string;
       displayOrder: number;

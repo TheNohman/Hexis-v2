@@ -67,6 +67,51 @@ export async function updateWorkoutName(
 }
 
 /**
+ * Record the user having completed one more round of an interval (HIIT)
+ * block. Idempotent-ish: bounded by roundCount on the block so you can't
+ * go over (client may still debounce, but server is the source of truth).
+ */
+export async function incrementCompletedRounds(
+  blockId: string,
+  userId: string,
+) {
+  const block = await prisma.workoutBlock.findUnique({
+    where: { id: blockId },
+    include: { workout: { select: { userId: true } } },
+  });
+  if (!block) throw new Error("Not found");
+  if (block.workout.userId !== userId) throw new Error("Forbidden");
+  if (block.mode !== "INTERVAL") throw new Error("Not an interval block");
+
+  const nextCompleted = Math.min(
+    (block.completedRounds ?? 0) + 1,
+    block.roundCount ?? 1,
+  );
+  return prisma.workoutBlock.update({
+    where: { id: blockId },
+    data: { completedRounds: nextCompleted },
+  });
+}
+
+/**
+ * Reset the round counter on an interval block (used if the user wants
+ * to redo the circuit from scratch).
+ */
+export async function resetInterval(blockId: string, userId: string) {
+  const block = await prisma.workoutBlock.findUnique({
+    where: { id: blockId },
+    include: { workout: { select: { userId: true } } },
+  });
+  if (!block) throw new Error("Not found");
+  if (block.workout.userId !== userId) throw new Error("Forbidden");
+
+  return prisma.workoutBlock.update({
+    where: { id: blockId },
+    data: { completedRounds: 0 },
+  });
+}
+
+/**
  * Move a workout's startedAt (and optionally finishedAt) to a different
  * date. Used for retroactive logging: "I did this Tuesday, logging today."
  * If the workout is already finished, we shift finishedAt by the same delta

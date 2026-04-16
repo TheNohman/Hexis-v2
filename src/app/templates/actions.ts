@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getCurrentUserId } from "@/lib/auth-helpers";
 import {
+  addIntervalTemplateBlock,
   addTemplateBlock,
   addTemplateEntry,
   createTemplate,
@@ -50,6 +51,28 @@ export async function addTemplateBlockAction(
 ) {
   const userId = await getCurrentUserId();
   await addTemplateBlock(templateId, userId, name);
+  revalidatePath(`/templates/${templateId}`);
+}
+
+/**
+ * Add an INTERVAL-mode block (HIIT / Tabata) with a configured cadence
+ * and a playlist of exercises. The client sends a resolved config from
+ * its preset (Tabata 20/10×8 or custom intervals).
+ */
+export async function addIntervalTemplateBlockAction(
+  templateId: string,
+  data: {
+    name: string;
+    format: "TABATA" | "INTERVALS";
+    workSecs: number;
+    restSecs: number;
+    roundCount: number;
+    playbackOrder: "CYCLE" | "SAME";
+    exerciseIds: string[];
+  },
+) {
+  const userId = await getCurrentUserId();
+  await addIntervalTemplateBlock(templateId, userId, data);
   revalidatePath(`/templates/${templateId}`);
 }
 

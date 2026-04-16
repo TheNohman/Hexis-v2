@@ -28,6 +28,8 @@ import {
   startSessionFromTemplateAction,
 } from "@/app/templates/actions";
 import { TemplateBlockCard } from "./template-block-card";
+import { TemplateIntervalBlockCard } from "./template-interval-block-card";
+import { IntervalBlockDialog } from "./interval-block-dialog";
 
 type Props = {
   template: TemplateDetail;
@@ -38,6 +40,7 @@ export function TemplateEditor({ template, exercises }: Props) {
   const [isEditingName, setIsEditingName] = useState(false);
   const [newBlockName, setNewBlockName] = useState("");
   const [showNewBlockInput, setShowNewBlockInput] = useState(false);
+  const [showHiitDialog, setShowHiitDialog] = useState(false);
   const [isPending, startTransition] = useTransition();
 
   const [optimisticBlocks, setOptimisticBlocks] = useState(template.blocks);
@@ -142,14 +145,23 @@ export function TemplateEditor({ template, exercises }: Props) {
               items={optimisticBlocks.map((b) => b.id)}
               strategy={verticalListSortingStrategy}
             >
-              {optimisticBlocks.map((block) => (
-                <TemplateBlockCard
-                  key={block.id}
-                  templateId={template.id}
-                  block={block}
-                  exercises={exercises}
-                />
-              ))}
+              {optimisticBlocks.map((block) =>
+                block.mode === "INTERVAL" ? (
+                  <TemplateIntervalBlockCard
+                    key={block.id}
+                    templateId={template.id}
+                    block={block}
+                    exercises={exercises}
+                  />
+                ) : (
+                  <TemplateBlockCard
+                    key={block.id}
+                    templateId={template.id}
+                    block={block}
+                    exercises={exercises}
+                  />
+                ),
+              )}
             </SortableContext>
           </DndContext>
 
@@ -188,13 +200,22 @@ export function TemplateEditor({ template, exercises }: Props) {
               </button>
             </div>
           ) : (
-            <button
-              type="button"
-              onClick={() => setShowNewBlockInput(true)}
-              className="w-full rounded-2xl border border-dashed border-border px-4 py-4 text-sm text-subtle hover:text-accent hover:border-accent/30 cursor-pointer transition-colors"
-            >
-              + Ajouter un bloc
-            </button>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => setShowNewBlockInput(true)}
+                className="rounded-2xl border border-dashed border-border px-4 py-4 text-sm text-subtle hover:text-accent hover:border-accent/30 cursor-pointer transition-colors"
+              >
+                + Bloc muscu
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowHiitDialog(true)}
+                className="rounded-2xl border border-dashed border-accent/30 bg-accent/5 px-4 py-4 text-sm text-accent hover:bg-accent/10 cursor-pointer transition-colors"
+              >
+                🔥 Bloc HIIT
+              </button>
+            </div>
           )}
         </div>
 
@@ -225,6 +246,13 @@ export function TemplateEditor({ template, exercises }: Props) {
           </button>
         </div>
       </div>
+
+      <IntervalBlockDialog
+        open={showHiitDialog}
+        onClose={() => setShowHiitDialog(false)}
+        templateId={template.id}
+        exercises={exercises}
+      />
     </main>
   );
 }

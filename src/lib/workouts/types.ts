@@ -1,7 +1,10 @@
 import type {
+  BlockMode,
   EntryStatus,
   ExerciseType,
+  IntervalFormat,
   KpiDataType,
+  PlaybackOrder,
 } from "@/generated/prisma/enums";
 
 export type KpiValueInput = {
@@ -51,6 +54,14 @@ export type WorkoutDetail = {
     id: string;
     name: string;
     displayOrder: number;
+    mode: BlockMode;
+    intervalFormat: IntervalFormat | null;
+    workSecs: number | null;
+    restSecs: number | null;
+    roundCount: number | null;
+    playbackOrder: PlaybackOrder | null;
+    countdownLeadSecs: number;
+    completedRounds: number;
     entries: {
       id: string;
       displayOrder: number;

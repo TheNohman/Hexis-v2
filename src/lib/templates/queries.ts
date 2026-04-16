@@ -57,6 +57,13 @@ export async function getTemplateById(
       id: b.id,
       name: b.name,
       displayOrder: b.displayOrder,
+      mode: b.mode,
+      intervalFormat: b.intervalFormat,
+      workSecs: b.workSecs,
+      restSecs: b.restSecs,
+      roundCount: b.roundCount,
+      playbackOrder: b.playbackOrder,
+      countdownLeadSecs: b.countdownLeadSecs,
       entries: b.entries.map((e) => ({
         id: e.id,
         displayOrder: e.displayOrder,

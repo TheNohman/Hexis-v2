@@ -59,6 +59,57 @@ export async function addTemplateBlock(
   });
 }
 
+/**
+ * Create an INTERVAL-mode template block with an optional initial playlist
+ * of exercises and a full HIIT configuration. Used by the "+ Bloc HIIT"
+ * button in the template editor. Presets (Tabata, Intervalles libres)
+ * are resolved client-side and passed via the `config` argument.
+ */
+export async function addIntervalTemplateBlock(
+  templateId: string,
+  userId: string,
+  data: {
+    name: string;
+    format: "TABATA" | "INTERVALS";
+    workSecs: number;
+    restSecs: number;
+    roundCount: number;
+    playbackOrder: "CYCLE" | "SAME";
+    exerciseIds: string[];
+  },
+) {
+  const template = await prisma.workoutTemplate.findUnique({
+    where: { id: templateId },
+    include: { blocks: { select: { displayOrder: true } } },
+  });
+  assertOwnership(template, userId);
+
+  const nextOrder =
+    template.blocks.length === 0
+      ? 0
+      : Math.max(...template.blocks.map((b) => b.displayOrder)) + 1;
+
+  return prisma.workoutTemplateBlock.create({
+    data: {
+      templateId,
+      name: data.name.trim() || "Bloc HIIT",
+      displayOrder: nextOrder,
+      mode: "INTERVAL",
+      intervalFormat: data.format,
+      workSecs: data.workSecs,
+      restSecs: data.restSecs,
+      roundCount: data.roundCount,
+      playbackOrder: data.playbackOrder,
+      entries: {
+        create: data.exerciseIds.map((exerciseId, i) => ({
+          exerciseId,
+          displayOrder: i,
+        })),
+      },
+    },
+  });
+}
+
 export async function renameTemplateBlock(
   blockId: string,
   userId: string,
@@ -314,6 +365,15 @@ export async function createWorkoutFromTemplate(
         create: template.blocks.map((block) => ({
           name: block.name,
           displayOrder: block.displayOrder,
+          // Carry over the interval configuration so HIIT blocks defined
+          // in a template stay HIIT blocks in the spawned workout.
+          mode: block.mode,
+          intervalFormat: block.intervalFormat,
+          workSecs: block.workSecs,
+          restSecs: block.restSecs,
+          roundCount: block.roundCount,
+          playbackOrder: block.playbackOrder,
+          countdownLeadSecs: block.countdownLeadSecs,
           entries: {
             create: block.entries.map((entry) => ({
               exerciseId: entry.exerciseId,

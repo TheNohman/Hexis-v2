@@ -15,9 +15,11 @@ import {
   duplicateEntry,
   finishActiveWorkouts,
   finishWorkout,
+  incrementCompletedRounds,
   renameBlock,
   reorderBlocks,
   reorderEntries,
+  resetInterval,
   skipEntry,
   updateEntryValues,
   updateEntryNotes,
@@ -214,6 +216,34 @@ export async function cloneWorkoutAction(
   });
   revalidatePath("/dashboard");
   redirect(`/sessions/${workout.id}`);
+}
+
+/**
+ * Bump the completedRounds counter on an interval block. Called by the
+ * IntervalRunner once per round transition. Server-side bounded by
+ * roundCount so the UI can be fire-and-forget.
+ */
+export async function completeIntervalRoundAction(
+  workoutId: string,
+  blockId: string,
+) {
+  const userId = await getCurrentUserId();
+  const block = await incrementCompletedRounds(blockId, userId);
+  revalidatePath(`/sessions/${workoutId}`);
+  return { completedRounds: block.completedRounds };
+}
+
+/**
+ * Reset the rounds counter on an interval block (user wants to redo
+ * the circuit from the top).
+ */
+export async function resetIntervalBlockAction(
+  workoutId: string,
+  blockId: string,
+) {
+  const userId = await getCurrentUserId();
+  await resetInterval(blockId, userId);
+  revalidatePath(`/sessions/${workoutId}`);
 }
 
 export async function updateEntryNotesAction(
