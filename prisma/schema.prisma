@@ -34,6 +34,16 @@ model User {
   bodyWeightKg     Float?   // dernier poids de corps connu
   mentorEnabled    Boolean  @default(false)     // active le mentor IA
 
+  // Sport profile (filled at onboarding)
+  primarySport         PrimarySport?
+  sportLevel           SportLevel?
+  sportObjective       String?        // free-text objectif principal (tagué via preset)
+  weeklySessionTarget  Int?           // nombre de séances/semaine visées
+  sessionDurationMins  Int?           // durée typique max par séance
+  equipmentAccess      String[]       @default([]) // "gym_full", "gym_basic", "home", "bike", "pool", "running"
+  medicalNotes         String?        // douleurs, contraintes, infos kiné
+  onboardingCompletedAt DateTime?     // null = onboarding pas encore fait
+
   // Mentor advice cache
   lastAdvice       String?
   lastAdviceAt     DateTime?
@@ -98,6 +108,21 @@ enum EntryStatus {
   PLANNED // entrée prévue (créée depuis un template)
   DONE // validée par l'utilisateur
   SKIPPED // sautée
+}
+
+enum PrimarySport {
+  STRENGTH_TRAINING // musculation classique (hypertrophie/esthétique/santé)
+  POWERLIFTING      // powerlifting orienté force S+B+D
+  ENDURANCE         // course, vélo, natation, triathlon
+  CROSSFIT_HIIT     // CrossFit, HIIT, circuits intenses
+  MULTI_SPORT       // mix non catégorisable
+}
+
+enum SportLevel {
+  BEGINNER      // < 6 mois de pratique structurée
+  INTERMEDIATE  // 6 mois - 2 ans
+  ADVANCED      // 2+ ans, autonome
+  COMPETITIVE   // pratique compétition
 }
 
 /// Référentiel de KPIs (poids, reps, durée, distance, allure, %VMA, etc.)

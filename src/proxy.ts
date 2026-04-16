@@ -5,7 +5,8 @@ export default auth((req) => {
   const isProtected =
     pathname.startsWith("/dashboard") ||
     pathname.startsWith("/sessions") ||
-    pathname.startsWith("/templates");
+    pathname.startsWith("/templates") ||
+    pathname.startsWith("/onboarding");
 
   if (!req.auth && isProtected) {
     const newUrl = new URL("/api/auth/signin", req.nextUrl.origin);
@@ -15,5 +16,10 @@ export default auth((req) => {
 });
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/sessions/:path*", "/templates/:path*"],
+  matcher: [
+    "/dashboard/:path*",
+    "/sessions/:path*",
+    "/templates/:path*",
+    "/onboarding/:path*",
+  ],
 };

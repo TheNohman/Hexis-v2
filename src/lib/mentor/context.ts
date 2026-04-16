@@ -9,6 +9,13 @@ export type MentorContext = {
     name: string | null;
     bodyWeightKg: number | null;
     unitSystem: string;
+    primarySport: string | null;
+    sportLevel: string | null;
+    sportObjective: string | null;
+    weeklySessionTarget: number | null;
+    sessionDurationMins: number | null;
+    equipmentAccess: string[];
+    medicalNotes: string | null;
   };
   stats: {
     totalWorkouts: number;
@@ -71,7 +78,17 @@ export async function buildMentorContext(userId: string): Promise<MentorContext>
     await Promise.all([
       prisma.user.findUnique({
         where: { id: userId },
-        select: { name: true, unitSystem: true },
+        select: {
+          name: true,
+          unitSystem: true,
+          primarySport: true,
+          sportLevel: true,
+          sportObjective: true,
+          weeklySessionTarget: true,
+          sessionDurationMins: true,
+          equipmentAccess: true,
+          medicalNotes: true,
+        },
       }),
       getWorkoutStats(userId),
       getRecentWellnessLogs(userId, 14),
@@ -130,6 +147,13 @@ export async function buildMentorContext(userId: string): Promise<MentorContext>
       name: user?.name ?? null,
       bodyWeightKg: bodyWeightEntries.length > 0 ? bodyWeightEntries[0].weightKg : null,
       unitSystem: user?.unitSystem ?? "metric",
+      primarySport: user?.primarySport ?? null,
+      sportLevel: user?.sportLevel ?? null,
+      sportObjective: user?.sportObjective ?? null,
+      weeklySessionTarget: user?.weeklySessionTarget ?? null,
+      sessionDurationMins: user?.sessionDurationMins ?? null,
+      equipmentAccess: user?.equipmentAccess ?? [],
+      medicalNotes: user?.medicalNotes ?? null,
     },
     stats: {
       totalWorkouts: stats.totalWorkouts,

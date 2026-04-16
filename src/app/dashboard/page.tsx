@@ -1,9 +1,11 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { auth, signOut } from "@/auth";
 import { getCurrentUserId } from "@/lib/auth-helpers";
 import { listRecentWorkouts, getActiveWorkout } from "@/lib/workouts/queries";
 import { getActiveProgram } from "@/lib/programs/queries";
 import { getTodayWellnessLog } from "@/lib/wellness/queries";
+import { needsOnboarding } from "@/lib/profile/onboarding";
 import { createWorkoutAction } from "@/app/sessions/actions";
 import { formatDuration } from "@/lib/format";
 import { NextWorkoutCard } from "./_components/next-workout-card";
@@ -14,6 +16,7 @@ export const dynamic = "force-dynamic";
 export default async function Dashboard() {
   const session = await auth();
   const userId = await getCurrentUserId();
+  if (await needsOnboarding(userId)) redirect("/onboarding");
   const [workouts, activeProgram, todayWellness, activeWorkout] = await Promise.all([
     listRecentWorkouts(userId, 10),
     getActiveProgram(userId),
