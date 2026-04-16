@@ -143,7 +143,7 @@ export function TemplateBlockCard({ templateId, block, exercises }: Props) {
         onClose={() => setPickerOpen(false)}
         exercises={exercises}
         multiSet
-        addLabel="Ajouter au mod\u00e8le"
+        addLabel="Ajouter au modèle"
         onPick={async (exercise, values, setCount) => {
           const count = setCount ?? 1;
           for (let i = 0; i < count; i++) {

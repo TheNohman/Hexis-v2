@@ -156,7 +156,7 @@ export function WellnessCheckin({ existingLog }: Props) {
       <textarea
         value={notes}
         onChange={(e) => setNotes(e.target.value)}
-        placeholder="Note du jour (optionnel) \u2014 ex: bas du dos tendu, pr\u00e9sentation stressante demain, cycle J3\u2026"
+        placeholder="Note du jour (optionnel) — ex: bas du dos tendu, présentation stressante demain, cycle J3…"
         rows={2}
         className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:border-accent transition-colors resize-none"
       />
