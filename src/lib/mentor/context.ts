@@ -17,6 +17,11 @@ export type MentorContext = {
     sessionDurationMins: number | null;
     equipmentAccess: string[];
     medicalNotes: string | null;
+    /** Endurance reference values (null if user never set them). */
+    fcMax: number | null;
+    fcResting: number | null;
+    vmaKmh: number | null;
+    ftp: number | null;
   };
   stats: {
     totalWorkouts: number;
@@ -110,6 +115,10 @@ export async function buildMentorContext(userId: string): Promise<MentorContext>
           sessionDurationMins: true,
           equipmentAccess: true,
           medicalNotes: true,
+          fcMax: true,
+          fcResting: true,
+          vmaKmh: true,
+          ftp: true,
         },
       }),
       getWorkoutStats(userId),
@@ -203,6 +212,10 @@ export async function buildMentorContext(userId: string): Promise<MentorContext>
       sessionDurationMins: user?.sessionDurationMins ?? null,
       equipmentAccess: user?.equipmentAccess ?? [],
       medicalNotes: user?.medicalNotes ?? null,
+      fcMax: user?.fcMax ?? null,
+      fcResting: user?.fcResting ?? null,
+      vmaKmh: user?.vmaKmh ?? null,
+      ftp: user?.ftp ?? null,
     },
     stats: {
       totalWorkouts: stats.totalWorkouts,

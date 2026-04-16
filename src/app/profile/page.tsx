@@ -9,6 +9,8 @@ import { listTypeConfigs } from "@/lib/measurements/type-config-queries";
 import { listAllMeasurements } from "@/lib/measurements/queries";
 import { formatDuration } from "@/lib/format";
 import { getSessionAdvice } from "@/lib/mentor/advice";
+import { getSportProfile } from "@/lib/profile/onboarding";
+import { computeHeartRateZones, computePaceZones, formatPace } from "@/lib/endurance/zones";
 import { ProfileForm } from "./_components/profile-form";
 import { HubCard } from "./_components/hub-card";
 
@@ -27,6 +29,7 @@ export default async function ProfilePage() {
     stats,
     activeProgram,
     mentorAdvice,
+    sportProfile,
   ] = await Promise.all([
     getUserProfile(userId),
     listBodyWeightEntries(userId),
@@ -36,7 +39,20 @@ export default async function ProfilePage() {
     getWorkoutStats(userId),
     getActiveProgram(userId),
     getSessionAdvice(userId),
+    getSportProfile(userId),
   ]);
+
+  const showEnduranceRefs =
+    sportProfile.primarySport === "ENDURANCE" ||
+    sportProfile.primarySport === "MULTI_SPORT";
+  const heartZones =
+    showEnduranceRefs && profile.fcMax
+      ? computeHeartRateZones(profile.fcMax, profile.fcResting)
+      : null;
+  const paceZones =
+    showEnduranceRefs && profile.vmaKmh
+      ? computePaceZones(profile.vmaKmh)
+      : null;
 
   // ─── Measurements summary ───
   type MeasureRow = {
@@ -455,8 +471,59 @@ export default async function ProfilePage() {
             </svg>
             Préférences
           </summary>
-          <div className="mt-2">
-            <ProfileForm profile={profile} />
+          <div className="mt-2 space-y-4">
+            <ProfileForm profile={profile} showEnduranceRefs={showEnduranceRefs} />
+
+            {heartZones && (
+              <div className="rounded-xl border border-border bg-surface p-4 space-y-2">
+                <h3 className="text-xs font-semibold text-muted uppercase tracking-wider">
+                  Zones fréquence cardiaque
+                  {heartZones.usedKarvonen && (
+                    <span className="ml-2 text-[10px] text-accent normal-case">Karvonen</span>
+                  )}
+                </h3>
+                <ul className="space-y-1.5">
+                  {heartZones.zones.map((z) => (
+                    <li
+                      key={z.zone}
+                      className="flex items-start justify-between gap-3 rounded-lg border border-border/50 px-3 py-2"
+                    >
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium">{z.label}</p>
+                        <p className="text-[11px] text-muted">{z.description}</p>
+                      </div>
+                      <span className="text-sm font-mono text-accent whitespace-nowrap tabular-nums">
+                        {z.lowBpm}–{z.highBpm} bpm
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {paceZones && (
+              <div className="rounded-xl border border-border bg-surface p-4 space-y-2">
+                <h3 className="text-xs font-semibold text-muted uppercase tracking-wider">
+                  Allures cibles (course)
+                </h3>
+                <ul className="space-y-1.5">
+                  {paceZones.zones.map((z) => (
+                    <li
+                      key={z.zone}
+                      className="flex items-start justify-between gap-3 rounded-lg border border-border/50 px-3 py-2"
+                    >
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium">{z.shortLabel} — {z.label.split(" — ")[1]}</p>
+                        <p className="text-[11px] text-muted">{z.description}</p>
+                      </div>
+                      <span className="text-sm font-mono text-accent whitespace-nowrap tabular-nums">
+                        {formatPace(z.highPaceSecPerKm)} – {formatPace(z.lowPaceSecPerKm)}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </div>
         </details>
       </div>

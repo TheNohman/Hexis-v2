@@ -10,10 +10,16 @@ type Props = {
     mentorEnabled: boolean;
     email: string | null;
     name: string | null;
+    fcMax: number | null;
+    fcResting: number | null;
+    vmaKmh: number | null;
+    ftp: number | null;
   };
+  /** Whether to render the endurance-reference block (FCmax, VMA, FTP). */
+  showEnduranceRefs?: boolean;
 };
 
-export function ProfileForm({ profile }: Props) {
+export function ProfileForm({ profile, showEnduranceRefs = false }: Props) {
   const [isPending, startTransition] = useTransition();
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -25,11 +31,32 @@ export function ProfileForm({ profile }: Props) {
 
     const defaultRestSecs = restVal ? parseInt(restVal, 10) : null;
 
+    const parseIntOrNull = (key: string) => {
+      const raw = (form.get(key) as string | null)?.trim();
+      if (!raw) return null;
+      const n = parseInt(raw, 10);
+      return Number.isNaN(n) ? null : n;
+    };
+    const parseFloatOrNull = (key: string) => {
+      const raw = (form.get(key) as string | null)?.trim();
+      if (!raw) return null;
+      const n = parseFloat(raw.replace(",", "."));
+      return Number.isNaN(n) ? null : n;
+    };
+
     startTransition(() =>
       updateProfileAction({
         unitSystem,
         defaultRestSecs: defaultRestSecs && !Number.isNaN(defaultRestSecs) ? defaultRestSecs : null,
         mentorEnabled,
+        ...(showEnduranceRefs
+          ? {
+              fcMax: parseIntOrNull("fcMax"),
+              fcResting: parseIntOrNull("fcResting"),
+              vmaKmh: parseFloatOrNull("vmaKmh"),
+              ftp: parseIntOrNull("ftp"),
+            }
+          : {}),
       }),
     );
   }
@@ -68,6 +95,77 @@ export function ProfileForm({ profile }: Props) {
         </label>
 
       </div>
+
+      {showEnduranceRefs && (
+        <div className="pt-3 border-t border-border space-y-3">
+          <div>
+            <h3 className="text-xs font-semibold text-muted uppercase tracking-wider">
+              Références endurance
+            </h3>
+            <p className="text-[11px] text-subtle mt-0.5">
+              Optionnel. Permet à l&rsquo;app de calculer tes zones FC et tes allures cibles.
+            </p>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <label className="flex flex-col gap-1.5">
+              <span className="text-[11px] text-muted">FCmax (bpm)</span>
+              <input
+                type="number"
+                name="fcMax"
+                min={100}
+                max={230}
+                step={1}
+                inputMode="numeric"
+                defaultValue={profile.fcMax ?? ""}
+                placeholder="ex: 185"
+                className="rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-accent tabular-nums"
+              />
+            </label>
+            <label className="flex flex-col gap-1.5">
+              <span className="text-[11px] text-muted">FC repos (bpm)</span>
+              <input
+                type="number"
+                name="fcResting"
+                min={30}
+                max={100}
+                step={1}
+                inputMode="numeric"
+                defaultValue={profile.fcResting ?? ""}
+                placeholder="ex: 55"
+                className="rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-accent tabular-nums"
+              />
+            </label>
+            <label className="flex flex-col gap-1.5">
+              <span className="text-[11px] text-muted">VMA (km/h)</span>
+              <input
+                type="number"
+                name="vmaKmh"
+                min={5}
+                max={25}
+                step={0.1}
+                inputMode="decimal"
+                defaultValue={profile.vmaKmh ?? ""}
+                placeholder="ex: 15.5"
+                className="rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-accent tabular-nums"
+              />
+            </label>
+            <label className="flex flex-col gap-1.5">
+              <span className="text-[11px] text-muted">FTP (W, vélo)</span>
+              <input
+                type="number"
+                name="ftp"
+                min={50}
+                max={500}
+                step={5}
+                inputMode="numeric"
+                defaultValue={profile.ftp ?? ""}
+                placeholder="ex: 240"
+                className="rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-accent tabular-nums"
+              />
+            </label>
+          </div>
+        </div>
+      )}
 
       <label className="flex items-center gap-3 py-2">
         <input

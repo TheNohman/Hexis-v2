@@ -45,6 +45,12 @@ model User {
   medicalNotes         String?        // douleurs, contraintes, infos kiné
   onboardingCompletedAt DateTime?     // null = onboarding pas encore fait
 
+  // Endurance references (used to derive training zones / paces)
+  fcMax             Int?    // fréquence cardiaque max (bpm)
+  fcResting         Int?    // fréquence cardiaque au repos (bpm)
+  vmaKmh            Float?  // vitesse maximale aérobie en km/h (course)
+  ftp               Int?    // functional threshold power en W (vélo)
+
   // Mentor advice cache
   lastAdvice       String?
   lastAdviceAt     DateTime?

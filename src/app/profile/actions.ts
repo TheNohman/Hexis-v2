@@ -8,6 +8,10 @@ export async function updateProfileAction(data: {
   unitSystem?: string;
   defaultRestSecs?: number | null;
   mentorEnabled?: boolean;
+  fcMax?: number | null;
+  fcResting?: number | null;
+  vmaKmh?: number | null;
+  ftp?: number | null;
 }) {
   const userId = await getCurrentUserId();
   await updateUserProfile(userId, data);
