@@ -2,6 +2,7 @@ import Link from "next/link";
 import { formatDuration } from "@/lib/format";
 import type { WorkoutDetail } from "@/lib/workouts/types";
 import { SaveAsTemplateButton } from "./save-as-template-button";
+import { RedoWorkoutButton } from "./redo-workout-button";
 
 type Props = {
   workout: WorkoutDetail;
@@ -53,6 +54,10 @@ export function WorkoutReadonly({ workout }: Props) {
   const totalSets = workout.blocks
     .flatMap((b) => b.entries)
     .filter((e) => e.status === "DONE").length;
+
+  const hasStrength = workout.blocks
+    .flatMap((b) => b.entries)
+    .some((e) => e.exercise.type === "STRENGTH");
 
   return (
     <main className="flex-1 flex flex-col px-4 py-6">
@@ -146,6 +151,7 @@ export function WorkoutReadonly({ workout }: Props) {
         </div>
 
         {/* Save as template */}
+        <RedoWorkoutButton sourceWorkoutId={workout.id} hasStrengthExercises={hasStrength} />
         <SaveAsTemplateButton workoutId={workout.id} workoutName={workout.name} />
       </div>
     </main>

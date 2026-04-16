@@ -7,6 +7,8 @@ import {
   addBlock,
   addEntry,
   addSetAfter,
+  bulkValidatePlannedEntries,
+  cloneWorkoutAsPlanned,
   createWorkout,
   deleteBlock,
   deleteEntry,
@@ -21,6 +23,7 @@ import {
   updateEntryNotes,
   updateWorkoutName,
   updateWorkoutNotes,
+  updateWorkoutStartedAt,
   toggleEntryWarmup,
   validateEntry,
 } from "@/lib/workouts/mutations";
@@ -163,6 +166,54 @@ export async function finishWorkoutAction(workoutId: string) {
   await clearAdviceCache(userId);
   revalidatePath("/dashboard");
   redirect("/dashboard");
+}
+
+/**
+ * Mark every PLANNED entry of a workout as DONE, carrying planned values
+ * forward. Used for retro entry ("logger ma séance comme prévue").
+ * Does NOT finish the workout — the user still terminates it explicitly.
+ */
+export async function bulkValidateWorkoutAction(workoutId: string) {
+  const userId = await getCurrentUserId();
+  const result = await bulkValidatePlannedEntries(workoutId, userId);
+  revalidatePath(`/sessions/${workoutId}`);
+  return result;
+}
+
+/**
+ * Backdate (or forward-date) a workout. Used when the user logged today
+ * but actually trained on a different day.
+ */
+export async function setWorkoutStartedAtAction(
+  workoutId: string,
+  isoDateTime: string,
+) {
+  const userId = await getCurrentUserId();
+  const parsed = new Date(isoDateTime);
+  if (Number.isNaN(parsed.getTime())) {
+    throw new Error("Invalid date");
+  }
+  await updateWorkoutStartedAt(workoutId, userId, parsed);
+  revalidatePath(`/sessions/${workoutId}`);
+  revalidatePath("/dashboard");
+  revalidatePath("/history");
+}
+
+/**
+ * Clone a past workout as a new PLANNED one. Used from the history list
+ * with a "Refaire cette séance" button. Optional weightDeltaKg bumps
+ * strength-exercise planned weights (progressive overload).
+ */
+export async function cloneWorkoutAction(
+  sourceWorkoutId: string,
+  weightDeltaKg?: number,
+) {
+  const userId = await getCurrentUserId();
+  const workout = await cloneWorkoutAsPlanned(sourceWorkoutId, userId, {
+    weightDeltaKg,
+  });
+  revalidatePath("/dashboard");
+  redirect(`/sessions/${workout.id}`);
 }
 
 export async function updateEntryNotesAction(

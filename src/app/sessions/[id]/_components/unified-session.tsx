@@ -11,8 +11,9 @@ import {
 } from "@dnd-kit/sortable";
 import type { ExerciseListItem, WorkoutDetail } from "@/lib/workouts/types";
 import {
-  addBlockAction, finishWorkoutAction, renameWorkoutAction,
-  reorderBlocksAction, updateNotesAction,
+  addBlockAction, bulkValidateWorkoutAction, finishWorkoutAction,
+  renameWorkoutAction, reorderBlocksAction, setWorkoutStartedAtAction,
+  updateNotesAction,
 } from "@/app/sessions/actions";
 import { BlockSection } from "./block-section";
 import { CompactRestTimer } from "./compact-rest-timer";
@@ -36,9 +37,29 @@ export function UnifiedSession({ workout, exercises, defaultRestSecs = 90 }: Pro
 
   const allEntries = workout.blocks.flatMap((b) => b.entries);
   const hasPlanned = allEntries.some((e) => e.status === "PLANNED");
+  const plannedCount = allEntries.filter((e) => e.status === "PLANNED").length;
   const completedCount = allEntries.filter((e) => e.status === "DONE" || e.status === "SKIPPED").length;
   const totalCount = allEntries.length;
   const progress = totalCount > 0 ? completedCount / totalCount : 0;
+
+  // --- Retro logging: backdate + bulk-validate ---
+  const [isEditingDate, setIsEditingDate] = useState(false);
+  const [confirmBulk, setConfirmBulk] = useState(false);
+  const startedDateLabel = new Intl.DateTimeFormat("fr-FR", {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(workout.startedAt);
+  const startedLocalIso = toLocalDatetimeInputValue(workout.startedAt);
+
+  function handleBulkValidate() {
+    setConfirmBulk(false);
+    startTransition(async () => {
+      await bulkValidateWorkoutAction(workout.id);
+    });
+  }
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 10 } }),
@@ -111,6 +132,32 @@ export function UnifiedSession({ workout, exercises, defaultRestSecs = 90 }: Pro
               </button>
             )}
             {!workout.finishedAt && <SessionTimer startedAt={workout.startedAt} />}
+            {/* Backdate affordance. Clicking the date opens a native
+                datetime-local input; onBlur saves server-side. */}
+            {isEditingDate ? (
+              <input
+                type="datetime-local"
+                defaultValue={startedLocalIso}
+                autoFocus
+                onBlur={(e) => {
+                  const raw = e.target.value;
+                  setIsEditingDate(false);
+                  if (!raw) return;
+                  const iso = new Date(raw).toISOString();
+                  startTransition(() => setWorkoutStartedAtAction(workout.id, iso));
+                }}
+                className="text-xs bg-transparent border-b border-accent outline-none text-muted"
+              />
+            ) : (
+              <button
+                type="button"
+                onClick={() => setIsEditingDate(true)}
+                className="text-xs text-subtle hover:text-accent cursor-pointer transition-colors"
+                title="Modifier la date de la s\u00e9ance"
+              >
+                {startedDateLabel}
+              </button>
+            )}
           </div>
           <Link href="/dashboard" className="text-xs text-muted hover:text-foreground transition-colors py-1 whitespace-nowrap">
             &larr; Retour
@@ -184,6 +231,22 @@ export function UnifiedSession({ workout, exercises, defaultRestSecs = 90 }: Pro
           )}
         </div>
 
+        {/* Quick retro validation: visible only when there's still
+            planned work to flip and the workout isn't empty. Single
+            click logs a session that went as planned. */}
+        {plannedCount > 0 && totalCount > 0 && (
+          <div>
+            <button
+              type="button"
+              onClick={() => setConfirmBulk(true)}
+              disabled={isPending}
+              className="w-full rounded-xl border border-accent/40 bg-accent/5 text-accent py-2.5 text-sm font-medium hover:bg-accent/10 transition-colors cursor-pointer disabled:opacity-50"
+            >
+              Tout valider comme pr&eacute;vu ({plannedCount} s&eacute;rie{plannedCount > 1 ? "s" : ""})
+            </button>
+          </div>
+        )}
+
         {/* Finish */}
         <div className="pt-2">
           <button type="button" onClick={handleFinishClick} disabled={isPending}
@@ -201,6 +264,34 @@ export function UnifiedSession({ workout, exercises, defaultRestSecs = 90 }: Pro
           : `Il reste ${allEntries.filter((e) => e.status === "PLANNED").length} entr\u00e9e(s) non valid\u00e9e(s). Terminer ?`}
         confirmLabel="Terminer" onConfirm={handleFinishConfirmed} onCancel={() => setConfirmFinish(false)}
       />
+      <ConfirmDialog
+        open={confirmBulk}
+        title="Tout valider comme pr\u00e9vu"
+        message={`Toutes les ${plannedCount} entr\u00e9es planifi\u00e9es seront marqu\u00e9es comme r\u00e9alis\u00e9es avec les valeurs du mod\u00e8le. Tu peux toujours corriger s\u00e9rie par s\u00e9rie ensuite.`}
+        confirmLabel="Valider tout"
+        onConfirm={handleBulkValidate}
+        onCancel={() => setConfirmBulk(false)}
+      />
     </main>
+  );
+}
+
+/**
+ * Format a Date as the value a <input type="datetime-local"> expects.
+ * Browsers ignore timezone info in this input type, so we must produce
+ * the user's local wall-clock time as YYYY-MM-DDTHH:MM (no trailing Z).
+ */
+function toLocalDatetimeInputValue(d: Date): string {
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return (
+    d.getFullYear() +
+    "-" +
+    pad(d.getMonth() + 1) +
+    "-" +
+    pad(d.getDate()) +
+    "T" +
+    pad(d.getHours()) +
+    ":" +
+    pad(d.getMinutes())
   );
 }
