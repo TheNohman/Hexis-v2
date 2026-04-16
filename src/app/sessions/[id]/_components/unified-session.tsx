@@ -266,8 +266,8 @@ export function UnifiedSession({ workout, exercises, defaultRestSecs = 90 }: Pro
       />
       <ConfirmDialog
         open={confirmBulk}
-        title="Tout valider comme pr\u00e9vu"
-        message={`Toutes les ${plannedCount} entr\u00e9es planifi\u00e9es seront marqu\u00e9es comme r\u00e9alis\u00e9es avec les valeurs du mod\u00e8le. Tu peux toujours corriger s\u00e9rie par s\u00e9rie ensuite.`}
+        title="Tout valider comme prévu"
+        message={`Toutes les ${plannedCount} entrées planifiées seront marquées comme réalisées avec les valeurs du modèle. Tu peux toujours corriger série par série ensuite.`}
         confirmLabel="Valider tout"
         onConfirm={handleBulkValidate}
         onCancel={() => setConfirmBulk(false)}
