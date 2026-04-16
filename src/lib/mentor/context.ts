@@ -3,6 +3,7 @@ import { getWorkoutStats } from "@/lib/stats/queries";
 import { getRecentWellnessLogs } from "@/lib/wellness/queries";
 import { listBodyWeightEntries } from "@/lib/bodyweight/queries";
 import { getActiveWorkout } from "@/lib/workouts/queries";
+import { listPersonalBests } from "@/lib/prs/detect";
 
 export type MentorContext = {
   user: {
@@ -70,12 +71,33 @@ export type MentorContext = {
     completedEntries: number;
     totalEntries: number;
   } | null;
+  personalBests: {
+    exerciseName: string;
+    weightKg: number;
+    reps: number;
+    estimated1RM: number;
+    achievedAt: string;
+  }[];
+  strengthTrends: {
+    /** Count of STRENGTH sets done in the last 7 days with RPE >= 9. */
+    highRpeSetsLast7: number;
+    /** Average RPE on STRENGTH sets in the last 7 days (null if none). */
+    avgRpeLast7: number | null;
+  };
 };
 
 export async function buildMentorContext(userId: string): Promise<MentorContext> {
   // Fetch all data in parallel
-  const [user, stats, wellnessLogs, bodyWeightEntries, activeProgram, recentWorkouts, activeWorkout] =
-    await Promise.all([
+  const [
+    user,
+    stats,
+    wellnessLogs,
+    bodyWeightEntries,
+    activeProgram,
+    recentWorkouts,
+    activeWorkout,
+    personalBests,
+  ] = await Promise.all([
       prisma.user.findUnique({
         where: { id: userId },
         select: {
@@ -126,7 +148,34 @@ export async function buildMentorContext(userId: string): Promise<MentorContext>
         },
       }),
       getActiveWorkout(userId),
+      listPersonalBests(userId, 5),
     ]);
+
+  // Destructure the new element added to Promise.all above. TypeScript
+  // will keep us honest if the order drifts.
+
+  // Compute strength trends from recent workouts (last 7 days). Mentor
+  // uses this to suggest a deload if RPE stays at 9+ across multiple sets.
+  const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+  let highRpeSetsLast7 = 0;
+  const rpeValues: number[] = [];
+  for (const w of recentWorkouts) {
+    if (w.startedAt.getTime() < sevenDaysAgo) continue;
+    for (const block of w.blocks) {
+      for (const entry of block.entries) {
+        if (entry.status !== "DONE" || entry.exercise.type !== "STRENGTH") continue;
+        if (entry.isWarmup) continue;
+        const rpe = entry.values.find((v) => v.kpiDefinition.slug === "rpe")?.valueNumeric;
+        if (rpe == null) continue;
+        rpeValues.push(rpe);
+        if (rpe >= 9) highRpeSetsLast7 += 1;
+      }
+    }
+  }
+  const avgRpeLast7 =
+    rpeValues.length > 0
+      ? Math.round((rpeValues.reduce((s, n) => s + n, 0) / rpeValues.length) * 10) / 10
+      : null;
 
   // Compute wellness trends up-front so the prompt doesn't need to
   // re-average the raw array.
@@ -244,5 +293,19 @@ export async function buildMentorContext(userId: string): Promise<MentorContext>
           totalEntries: activeWorkout.totalEntries,
         }
       : null,
+    personalBests: personalBests.map((pb) => ({
+      exerciseName: pb.exerciseName,
+      weightKg: pb.weightKg,
+      reps: pb.reps,
+      estimated1RM: pb.estimated1RM,
+      achievedAt:
+        pb.achievedAt instanceof Date
+          ? pb.achievedAt.toISOString()
+          : String(pb.achievedAt),
+    })),
+    strengthTrends: {
+      highRpeSetsLast7,
+      avgRpeLast7,
+    },
   };
 }

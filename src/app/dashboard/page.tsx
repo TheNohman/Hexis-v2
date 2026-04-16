@@ -8,26 +8,70 @@ import { getTodayWellnessLog } from "@/lib/wellness/queries";
 import { getSportProfile, needsOnboarding } from "@/lib/profile/onboarding";
 import { createWorkoutAction } from "@/app/sessions/actions";
 import { formatDuration } from "@/lib/format";
+import { prisma } from "@/lib/prisma";
 import { NextWorkoutCard } from "./_components/next-workout-card";
 import { WellnessCheckin } from "./_components/wellness-checkin";
 import { SportHero } from "./_components/sport-hero";
 import { BeginnerTip } from "./_components/beginner-tip";
+import { PrCelebration } from "./_components/pr-celebration";
 
 export const dynamic = "force-dynamic";
 
-export default async function Dashboard() {
+type SearchParams = { prs?: string };
+
+export default async function Dashboard({
+  searchParams,
+}: {
+  searchParams?: Promise<SearchParams>;
+}) {
   const session = await auth();
   const userId = await getCurrentUserId();
   if (await needsOnboarding(userId)) redirect("/onboarding");
-  const [workouts, activeProgram, todayWellness, activeWorkout, profile] = await Promise.all([
+  const params = (await searchParams) ?? {};
+  const prCount = Number(params.prs ?? 0);
+  const [workouts, activeProgram, todayWellness, activeWorkout, profile, recentPRs] = await Promise.all([
     listRecentWorkouts(userId, 10),
     getActiveProgram(userId),
     getTodayWellnessLog(userId),
     getActiveWorkout(userId),
     getSportProfile(userId),
+    // Celebratory fetch: when coming back from a session that just
+    // set PRs, pull the latest N rows (by achievedAt) to display them.
+    prCount > 0
+      ? prisma.exerciseMax.findMany({
+          where: { userId, source: "INFERRED" },
+          orderBy: { achievedAt: "desc" },
+          take: prCount,
+          include: { exercise: { select: { name: true } } },
+        })
+      : Promise.resolve([]),
   ]);
   const firstName = session?.user?.name?.split(" ")[0] ?? null;
   const isBeginner = profile.sportLevel === "BEGINNER";
+
+  // For each detected PR, also fetch the previous best (2nd highest
+  // estimated1RM) to compute a delta — that's what makes the panel feel
+  // rewarding rather than just informational.
+  const prsWithDeltas = await Promise.all(
+    recentPRs.map(async (pr) => {
+      const previous = await prisma.exerciseMax.findFirst({
+        where: {
+          userId,
+          exerciseId: pr.exerciseId,
+          id: { not: pr.id },
+        },
+        orderBy: { estimated1RM: "desc" },
+        select: { estimated1RM: true },
+      });
+      return {
+        exerciseName: pr.exercise.name,
+        weightKg: pr.weightKg,
+        reps: pr.reps,
+        estimated1RM: pr.estimated1RM,
+        previousEstimated1RM: previous?.estimated1RM ?? null,
+      };
+    }),
+  );
 
   return (
     <main className="flex-1 flex flex-col items-center px-4 py-8">
@@ -70,6 +114,8 @@ export default async function Dashboard() {
           sportLevel={profile.sportLevel}
           sportObjective={profile.sportObjective}
         />
+
+        {prsWithDeltas.length > 0 && <PrCelebration prs={prsWithDeltas} />}
 
         <WellnessCheckin existingLog={todayWellness} />
 

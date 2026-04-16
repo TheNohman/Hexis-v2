@@ -31,6 +31,7 @@ import {
 } from "@/lib/workouts/mutations";
 import { createTemplateFromWorkout } from "@/lib/templates/from-workout";
 import { clearAdviceCache } from "@/lib/mentor/advice";
+import { detectAndRecordPRs } from "@/lib/prs/detect";
 import type { KpiValueInput } from "@/lib/workouts/types";
 
 export async function createWorkoutAction() {
@@ -164,10 +165,23 @@ export async function updateNotesAction(workoutId: string, notes: string) {
 export async function finishWorkoutAction(workoutId: string) {
   const userId = await getCurrentUserId();
   await finishWorkout(workoutId, userId);
+
+  // Scan the finished session for new personal records. Non-blocking
+  // in the sense that a detection failure doesn't prevent the redirect.
+  let prCount = 0;
+  try {
+    const prs = await detectAndRecordPRs(workoutId, userId);
+    prCount = prs.length;
+  } catch (err) {
+    console.error("[finishWorkout] PR detection failed", err);
+  }
+
   // Session just ended → the next mentor advice should reflect it.
   await clearAdviceCache(userId);
   revalidatePath("/dashboard");
-  redirect("/dashboard");
+  // Encode the PR count in the URL so the dashboard can surface a
+  // celebratory toast on the next render.
+  redirect(prCount > 0 ? `/dashboard?prs=${prCount}` : "/dashboard");
 }
 
 /**

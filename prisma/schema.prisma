@@ -27,6 +27,7 @@ model User {
   measurementTypeConfigs MeasurementTypeConfig[]
   programs               Program[]
   wellnessLogs       WellnessLog[]
+  exerciseMaxes      ExerciseMax[]
 
   // Profile / preferences
   unitSystem       String   @default("metric") // "metric" | "imperial"
@@ -142,6 +143,11 @@ enum PlaybackOrder {
   SAME    // A × tous les rounds (Tabata pur 1 exo)
 }
 
+enum MaxSource {
+  MANUAL    // saisi explicitement par l'utilisateur (test 1RM)
+  INFERRED  // détecté automatiquement à partir d'une séance
+}
+
 /// Référentiel de KPIs (poids, reps, durée, distance, allure, %VMA, etc.)
 model KpiDefinition {
   id       String      @id @default(cuid())
@@ -172,6 +178,7 @@ model Exercise {
   exerciseKpis    ExerciseKpi[]
   entries         WorkoutEntry[]
   templateEntries WorkoutTemplateEntry[]
+  maxes           ExerciseMax[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -216,6 +223,7 @@ model Workout {
   template WorkoutTemplate? @relation(fields: [templateId], references: [id], onDelete: SetNull)
   program  Program?         @relation(fields: [programId], references: [id], onDelete: SetNull)
   blocks   WorkoutBlock[]
+  prs      ExerciseMax[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -488,4 +496,31 @@ model WellnessLog {
 
   @@unique([userId, date])
   @@index([userId])
+}
+
+/// Trace des PR (Personal Records) d'un utilisateur sur un exercice de
+/// force. Une ligne est créée à chaque fois qu'un nouveau meilleur 1RM
+/// estimé (formule Epley) est atteint, ou qu'un max manuel est saisi.
+model ExerciseMax {
+  id           String    @id @default(cuid())
+  userId       String
+  exerciseId   String
+  weightKg     Float
+  reps         Int       @default(1)
+  /// 1RM estimé via Epley : weight * (1 + reps/30). Permet de comparer
+  /// des perfs à reps variables (80 kg × 3 > 85 kg × 1 par exemple).
+  estimated1RM Float
+  achievedAt   DateTime  @default(now())
+  /// Facultatif : la séance où ce PR a été atteint.
+  workoutId    String?
+  source       MaxSource @default(INFERRED)
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  exercise Exercise  @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
+  workout  Workout?  @relation(fields: [workoutId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+
+  @@index([userId, exerciseId, achievedAt])
+  @@index([userId, achievedAt])
 }
