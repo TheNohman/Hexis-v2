@@ -39,11 +39,15 @@ export function ActiveSessionBannerClient({
       : `${Math.floor(elapsedMins / 60)}h${String(elapsedMins % 60).padStart(2, "0")}`;
 
   return (
-    <Link
-      href={`/sessions/${sessionId}`}
-      className="fixed top-0 left-0 right-0 z-40 mx-auto max-w-2xl pt-[env(safe-area-inset-top)]"
-    >
-      <div className="mx-3 mt-2 rounded-xl border border-accent/30 bg-accent/10 backdrop-blur-md px-4 py-2.5 flex items-center justify-between gap-3 shadow-lg hover:bg-accent/15 transition-colors">
+    <>
+      {/* Spacer that reserves layout space so the fixed banner doesn't
+          overlap page content. Height tuned to match the banner + margins. */}
+      <div aria-hidden className="h-14" />
+      <Link
+        href={`/sessions/${sessionId}`}
+        className="fixed top-[env(safe-area-inset-top)] left-0 right-0 z-40 mx-auto max-w-2xl px-3 pt-2"
+      >
+        <div className="rounded-xl border border-accent/30 bg-accent/10 backdrop-blur-md px-4 py-2.5 flex items-center justify-between gap-3 shadow-lg hover:bg-accent/15 transition-colors">
         <div className="flex items-center gap-3 min-w-0">
           <span className="relative flex h-2 w-2 shrink-0">
             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent opacity-60" />
@@ -65,6 +69,7 @@ export function ActiveSessionBannerClient({
           Reprendre &rarr;
         </span>
       </div>
-    </Link>
+      </Link>
+    </>
   );
 }
