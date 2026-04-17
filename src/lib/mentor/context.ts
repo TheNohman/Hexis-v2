@@ -4,6 +4,7 @@ import { getRecentWellnessLogs } from "@/lib/wellness/queries";
 import { listBodyWeightEntries } from "@/lib/bodyweight/queries";
 import { getActiveWorkout } from "@/lib/workouts/queries";
 import { listPersonalBests } from "@/lib/prs/detect";
+import { sanitiseForPrompt } from "@/lib/mentor/sanitize";
 
 export type MentorContext = {
   user: {
@@ -253,7 +254,7 @@ export async function buildMentorContext(userId: string): Promise<MentorContext>
           exerciseMap.get(key)!.sets.push({
             status: entry.status,
             isWarmup: entry.isWarmup,
-            notes: entry.notes,
+            notes: sanitiseForPrompt(entry.notes),
             values: entry.values.map((v) => ({
               kpiName: v.kpiDefinition.name,
               slug: v.kpiDefinition.slug,
@@ -291,7 +292,7 @@ export async function buildMentorContext(userId: string): Promise<MentorContext>
       sleep: l.sleep,
       energy: l.energy,
       stress: l.stress,
-      notes: l.notes,
+      notes: sanitiseForPrompt(l.notes),
     })),
     bodyWeight: bodyWeightEntries.map((e) => ({
       date: e.date instanceof Date ? e.date.toISOString().slice(0, 10) : String(e.date),

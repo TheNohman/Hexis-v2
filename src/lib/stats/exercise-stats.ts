@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { Prisma } from "@/generated/prisma/client";
 
 // --------------- Types ---------------
 
@@ -35,11 +36,13 @@ async function fetchDoneEntries(
   exerciseId: string,
   since?: Date,
 ): Promise<RawEntryRow[]> {
+  // Use tagged template so the `since` date goes through as a bound
+  // parameter (no string interpolation into the SQL text).
   const sinceClause = since
-    ? `AND wo."startedAt" >= '${since.toISOString()}'`
-    : "";
+    ? Prisma.sql`AND wo."startedAt" >= ${since}`
+    : Prisma.empty;
 
-  return prisma.$queryRawUnsafe<RawEntryRow[]>(`
+  return prisma.$queryRaw<RawEntryRow[]>(Prisma.sql`
     SELECT e."id"          AS entry_id,
            wo."id"         AS workout_id,
            wo."name"       AS workout_name,
@@ -53,13 +56,13 @@ async function fetchDoneEntries(
     JOIN   "Exercise" ex ON ex."id" = e."exerciseId"
     JOIN   "EntryKpiValue" v ON v."entryId" = e."id"
     JOIN   "KpiDefinition" kd ON kd."id" = v."kpiDefinitionId"
-    WHERE  wo."userId" = $1
-      AND  e."exerciseId" = $2
+    WHERE  wo."userId" = ${userId}
+      AND  e."exerciseId" = ${exerciseId}
       AND  e."status" = 'DONE'
       AND  e."isWarmup" = false
       ${sinceClause}
     ORDER BY wo."startedAt" ASC, e."displayOrder" ASC
-  `, userId, exerciseId);
+  `);
 }
 
 type EntryData = {
