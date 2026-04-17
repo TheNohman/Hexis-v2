@@ -28,6 +28,7 @@ model User {
   programs               Program[]
   wellnessLogs       WellnessLog[]
   exerciseMaxes      ExerciseMax[]
+  appEvents          AppEvent[]
 
   // Profile / preferences
   unitSystem       String   @default("metric") // "metric" | "imperial"
@@ -534,4 +535,20 @@ model ExerciseMax {
 
   @@index([userId, exerciseId, achievedAt])
   @@index([userId, achievedAt])
+}
+
+/// Évènement applicatif (télémétrie in-app). `userId` peut être null
+/// pour les events pré-auth. Le payload JSON reste libre pour évoluer
+/// sans migration quand on ajoute des métadonnées.
+model AppEvent {
+  id        String   @id @default(cuid())
+  userId    String?
+  name      String
+  payload   Json?
+  createdAt DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([name, createdAt])
 }

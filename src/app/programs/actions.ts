@@ -23,6 +23,7 @@ import { parseGeneratedProgram } from "@/lib/mentor/parser";
 import { materializeAIProgram } from "@/lib/programs/ai-create";
 import { finishActiveWorkouts } from "@/lib/workouts/mutations";
 import { prisma } from "@/lib/prisma";
+import { trackEvent } from "@/lib/telemetry/track";
 import {
   assertValid,
   idSchema,
@@ -33,6 +34,7 @@ import {
 export async function createProgramAction() {
   const userId = await getCurrentUserId();
   const program = await createProgram(userId);
+  await trackEvent(userId, "program_created", { programId: program.id });
   redirect(`/programs/${program.id}`);
 }
 

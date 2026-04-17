@@ -35,6 +35,8 @@ import {
 import { createTemplateFromWorkout } from "@/lib/templates/from-workout";
 import { clearAdviceCache } from "@/lib/mentor/advice";
 import { detectAndRecordPRs } from "@/lib/prs/detect";
+import { trackEvent } from "@/lib/telemetry/track";
+import { prisma } from "@/lib/prisma";
 import type { KpiValueInput } from "@/lib/workouts/types";
 import {
   assertValid,
@@ -52,6 +54,7 @@ export async function createWorkoutAction() {
   const userId = await getCurrentUserId();
   await finishActiveWorkouts(userId);
   const workout = await createWorkout(userId);
+  await trackEvent(userId, "workout_created", { workoutId: workout.id });
   redirect("/sessions/" + workout.id);
 }
 
@@ -208,6 +211,53 @@ export async function finishWorkoutAction(workoutId: string) {
   } catch (err) {
     console.error("[finishWorkout] PR detection failed", err);
   }
+  // Calcule les metrics AVANT le redirect — sinon `redirect()` throws et
+  // on perd tout (la télémétrie n'est jamais appelée).
+  try {
+    const workout = await prisma.workout.findFirst({
+      where: { id: workoutId, userId },
+      include: {
+        blocks: {
+          include: {
+            entries: {
+              where: { status: "DONE", isWarmup: false },
+              include: {
+                values: { include: { kpiDefinition: { select: { slug: true } } } },
+              },
+            },
+          },
+        },
+      },
+    });
+    let durationMins: number | null = null;
+    let totalSets = 0;
+    let totalVolume = 0;
+    if (workout) {
+      if (workout.finishedAt) {
+        durationMins =
+          Math.round(
+            ((workout.finishedAt.getTime() - workout.startedAt.getTime()) / 60000) * 10,
+          ) / 10;
+      }
+      for (const block of workout.blocks) {
+        for (const entry of block.entries) {
+          totalSets += 1;
+          const weight = entry.values.find((v) => v.kpiDefinition.slug === "weight_kg")
+            ?.valueNumeric;
+          const reps = entry.values.find((v) => v.kpiDefinition.slug === "reps")?.valueNumeric;
+          if (weight != null && reps != null) totalVolume += weight * reps;
+        }
+      }
+    }
+    await trackEvent(userId, "workout_finished", {
+      workoutId,
+      durationMins,
+      totalSets,
+      totalVolume: Math.round(totalVolume),
+    });
+  } catch (err) {
+    console.error("[finishWorkout] telemetry metrics failed", err);
+  }
   await clearAdviceCache(userId);
   revalidatePath("/dashboard");
   redirect("/sessions/" + workoutId + "/summary");
@@ -250,6 +300,14 @@ export async function completeIntervalRoundAction(workoutId: string, blockId: st
   assertValid(idSchema, blockId);
   const userId = await getCurrentUserId();
   const block = await incrementCompletedRounds(blockId, userId);
+  // Track seulement la fin du HIIT (pas chaque round — trop bruyant).
+  if (block.roundCount != null && block.completedRounds >= block.roundCount) {
+    await trackEvent(userId, "hiit_completed", {
+      workoutId,
+      blockId,
+      rounds: block.roundCount,
+    });
+  }
   revalidatePath("/sessions/" + workoutId);
   return { completedRounds: block.completedRounds };
 }
