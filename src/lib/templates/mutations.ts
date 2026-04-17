@@ -118,16 +118,23 @@ export async function addIntervalTemplateBlock(
 
   return prisma.workoutTemplateBlock.create({
     data: {
-      templateId,
+      // Use relation connect rather than raw FK so we can mix with the
+      // nested `intervalConfig.create` (Prisma's unchecked input variant
+      // doesn't accept relation nested creates).
+      template: { connect: { id: templateId } },
       name: data.name.trim() || "Bloc HIIT",
       displayOrder: nextOrder,
       mode: "INTERVAL",
-      intervalFormat: data.format,
-      workSecs: data.workSecs,
-      restSecs: data.restSecs,
-      roundCount: data.roundCount,
-      playbackOrder: data.playbackOrder,
-      customSequence,
+      intervalConfig: {
+        create: {
+          intervalFormat: data.format,
+          workSecs: data.workSecs,
+          restSecs: data.restSecs,
+          roundCount: data.roundCount,
+          playbackOrder: data.playbackOrder,
+          customSequence,
+        },
+      },
       entries: {
         create: data.exerciseIds.map((exerciseId, i) => ({
           exerciseId,
@@ -343,6 +350,7 @@ export async function createWorkoutFromTemplate(
       blocks: {
         orderBy: { displayOrder: "asc" },
         include: {
+          intervalConfig: true,
           entries: {
             orderBy: { displayOrder: "asc" },
             include: { values: true },
@@ -371,15 +379,25 @@ export async function createWorkoutFromTemplate(
           name: block.name,
           displayOrder: block.displayOrder,
           // Carry over the interval configuration so HIIT blocks defined
-          // in a template stay HIIT blocks in the spawned workout.
+          // in a template stay HIIT blocks in the spawned workout. Each
+          // workout block gets its own IntervalConfig row (1:1 relation,
+          // rows are not shared across blocks).
           mode: block.mode,
-          intervalFormat: block.intervalFormat,
-          workSecs: block.workSecs,
-          restSecs: block.restSecs,
-          roundCount: block.roundCount,
-          playbackOrder: block.playbackOrder,
-          countdownLeadSecs: block.countdownLeadSecs,
-          customSequence: block.customSequence,
+          ...(block.intervalConfig
+            ? {
+                intervalConfig: {
+                  create: {
+                    intervalFormat: block.intervalConfig.intervalFormat,
+                    workSecs: block.intervalConfig.workSecs,
+                    restSecs: block.intervalConfig.restSecs,
+                    roundCount: block.intervalConfig.roundCount,
+                    playbackOrder: block.intervalConfig.playbackOrder,
+                    countdownLeadSecs: block.intervalConfig.countdownLeadSecs,
+                    customSequence: block.intervalConfig.customSequence,
+                  },
+                },
+              }
+            : {}),
           entries: {
             create: block.entries.map((entry) => ({
               exerciseId: entry.exerciseId,

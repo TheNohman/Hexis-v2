@@ -155,6 +155,29 @@ enum MaxSource {
   INFERRED  // détecté automatiquement à partir d'une séance
 }
 
+/// Configuration d'un bloc HIIT / intervalles (format, work/rest, rounds,
+/// ordre de lecture, séquence custom…). Factorisée hors de WorkoutBlock et
+/// WorkoutTemplateBlock pour éviter la duplication des 7 colonnes — chaque
+/// bloc en mode INTERVAL possède son instance (relation 1:1, non partagée).
+model IntervalConfig {
+  id                String          @id @default(cuid())
+  intervalFormat    IntervalFormat?
+  workSecs          Int?
+  restSecs          Int?
+  roundCount        Int?
+  playbackOrder     PlaybackOrder?  @default(CYCLE)
+  countdownLeadSecs Int             @default(10)
+  /// When playbackOrder=CUSTOM, one exerciseId per round. Length matches
+  /// roundCount. Empty / null for CYCLE and SAME.
+  customSequence    String[]        @default([])
+
+  workoutBlock         WorkoutBlock?
+  workoutTemplateBlock WorkoutTemplateBlock?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
 /// Référentiel de KPIs (poids, reps, durée, distance, allure, %VMA, etc.)
 model KpiDefinition {
   id       String      @id @default(cuid())
@@ -248,19 +271,18 @@ model WorkoutBlock {
   name         String
   displayOrder Int    @default(0)
 
-  // Interval / HIIT configuration. mode=STANDARD leaves these null.
+  // Discriminant kept on the block for cheap filtering (no JOIN needed
+  // to tell "is this a HIIT block?"). All other HIIT knobs live on the
+  // optional IntervalConfig relation below.
   mode              BlockMode       @default(STANDARD)
-  intervalFormat    IntervalFormat?
-  workSecs          Int?
-  restSecs          Int?
-  roundCount        Int?
-  playbackOrder     PlaybackOrder?  @default(CYCLE)
-  countdownLeadSecs Int             @default(10)
-  /// When playbackOrder=CUSTOM, one exerciseId per round. Length matches
-  /// roundCount. Empty / null for CYCLE and SAME.
-  customSequence    String[]        @default([])
   /// Live counter updated as the user completes rounds of the circuit.
   completedRounds   Int             @default(0)
+
+  /// 1:1 optional relation holding the full HIIT configuration. Null for
+  /// STANDARD blocks. Each WorkoutBlock owns its own IntervalConfig row
+  /// (no sharing across blocks).
+  intervalConfigId  String?         @unique
+  intervalConfig    IntervalConfig? @relation(fields: [intervalConfigId], references: [id], onDelete: SetNull)
 
   workout Workout        @relation(fields: [workoutId], references: [id], onDelete: Cascade)
   entries WorkoutEntry[]
@@ -392,16 +414,15 @@ model WorkoutTemplateBlock {
   name         String
   displayOrder Int    @default(0)
 
-  // Interval / HIIT configuration mirrored from WorkoutBlock so a template
-  // can prescribe a full HIIT workout (Tabata, intervals…).
+  // Discriminant kept on the block for cheap filtering. Full HIIT config
+  // lives on the IntervalConfig relation below (shared schema with
+  // WorkoutBlock — see IntervalConfig).
   mode              BlockMode       @default(STANDARD)
-  intervalFormat    IntervalFormat?
-  workSecs          Int?
-  restSecs          Int?
-  roundCount        Int?
-  playbackOrder     PlaybackOrder?  @default(CYCLE)
-  countdownLeadSecs Int             @default(10)
-  customSequence    String[]        @default([])
+
+  /// 1:1 optional relation holding the full HIIT configuration. Null for
+  /// STANDARD blocks. Each template block owns its own IntervalConfig row.
+  intervalConfigId  String?         @unique
+  intervalConfig    IntervalConfig? @relation(fields: [intervalConfigId], references: [id], onDelete: SetNull)
 
   template WorkoutTemplate        @relation(fields: [templateId], references: [id], onDelete: Cascade)
   entries  WorkoutTemplateEntry[]

@@ -13,17 +13,17 @@ export async function incrementCompletedRounds(
   const block = await assertBlockOwnership<{
     mode: string;
     completedRounds: number | null;
-    roundCount: number | null;
+    intervalConfig: { roundCount: number | null } | null;
   }>(blockId, userId, {
     mode: true,
     completedRounds: true,
-    roundCount: true,
+    intervalConfig: { select: { roundCount: true } },
   });
   if (block.mode !== "INTERVAL") throw new Error("Not an interval block");
 
   const nextCompleted = Math.min(
     (block.completedRounds ?? 0) + 1,
-    block.roundCount ?? 1,
+    block.intervalConfig?.roundCount ?? 1,
   );
   return prisma.workoutBlock.update({
     where: { id: blockId },

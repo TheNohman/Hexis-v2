@@ -33,6 +33,7 @@ export async function getTemplateById(
       blocks: {
         orderBy: { displayOrder: "asc" },
         include: {
+          intervalConfig: true,
           entries: {
             orderBy: { displayOrder: "asc" },
             include: {
@@ -58,13 +59,15 @@ export async function getTemplateById(
       name: b.name,
       displayOrder: b.displayOrder,
       mode: b.mode,
-      intervalFormat: b.intervalFormat,
-      workSecs: b.workSecs,
-      restSecs: b.restSecs,
-      roundCount: b.roundCount,
-      playbackOrder: b.playbackOrder,
-      countdownLeadSecs: b.countdownLeadSecs,
-      customSequence: b.customSequence,
+      // Flatten IntervalConfig into the DTO so UI consumers keep the
+      // existing flat contract (`block.workSecs`, etc.).
+      intervalFormat: b.intervalConfig?.intervalFormat ?? null,
+      workSecs: b.intervalConfig?.workSecs ?? null,
+      restSecs: b.intervalConfig?.restSecs ?? null,
+      roundCount: b.intervalConfig?.roundCount ?? null,
+      playbackOrder: b.intervalConfig?.playbackOrder ?? null,
+      countdownLeadSecs: b.intervalConfig?.countdownLeadSecs ?? 10,
+      customSequence: b.intervalConfig?.customSequence ?? [],
       entries: b.entries.map((e) => ({
         id: e.id,
         displayOrder: e.displayOrder,

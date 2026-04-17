@@ -66,7 +66,7 @@ describe("incrementCompletedRounds", () => {
     mocked.workoutBlock.findUnique.mockResolvedValue({
       id: "b1",
       mode: "INTERVAL",
-      roundCount: 5,
+      intervalConfig: { roundCount: 5 },
       completedRounds: 2,
       workout: { userId: "user-1" },
     });
@@ -84,7 +84,7 @@ describe("incrementCompletedRounds", () => {
     mocked.workoutBlock.findUnique.mockResolvedValue({
       id: "b1",
       mode: "INTERVAL",
-      roundCount: 4,
+      intervalConfig: { roundCount: 4 },
       completedRounds: 4,
       workout: { userId: "user-1" },
     });
@@ -110,7 +110,7 @@ describe("incrementCompletedRounds", () => {
     mocked.workoutBlock.findUnique.mockResolvedValue({
       id: "b1",
       mode: "INTERVAL",
-      roundCount: 5,
+      intervalConfig: { roundCount: 5 },
       completedRounds: 0,
       workout: { userId: "other-user" },
     });
@@ -124,7 +124,7 @@ describe("incrementCompletedRounds", () => {
     mocked.workoutBlock.findUnique.mockResolvedValue({
       id: "b1",
       mode: "STANDARD",
-      roundCount: null,
+      intervalConfig: null,
       completedRounds: 0,
       workout: { userId: "user-1" },
     });
