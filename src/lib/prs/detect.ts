@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { trackEvent } from "@/lib/telemetry/track";
 
 export type DetectedPR = {
   exerciseId: string;
@@ -137,6 +138,18 @@ export async function detectAndRecordPRs(
     })),
   });
 
+  // Télémétrie : une ligne par PR détecté (permet de compter sur /stats).
+  for (const pr of detected) {
+    await trackEvent(userId, "pr_detected", {
+      workoutId,
+      exerciseId: pr.exerciseId,
+      exerciseName: pr.exerciseName,
+      weightKg: pr.weightKg,
+      reps: pr.reps,
+      estimated1RM: pr.estimated1RM,
+    });
+  }
+
   return detected;
 }
 
@@ -179,7 +192,7 @@ export async function addManualPR(
 
   const estimated1RM = estimate1RM(input.weightKg, input.reps);
 
-  return prisma.exerciseMax.create({
+  const row = await prisma.exerciseMax.create({
     data: {
       userId,
       exerciseId: input.exerciseId,
@@ -190,6 +203,15 @@ export async function addManualPR(
       source: "MANUAL" as const,
     },
   });
+
+  await trackEvent(userId, "pr_manual_added", {
+    exerciseId: input.exerciseId,
+    weightKg: input.weightKg,
+    reps: input.reps,
+    estimated1RM,
+  });
+
+  return row;
 }
 
 /**

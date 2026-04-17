@@ -20,7 +20,8 @@ export default auth((req) => {
       pathname.startsWith("/wellness") ||
       pathname.startsWith("/bodyweight") ||
       pathname.startsWith("/measurements") ||
-      pathname.startsWith("/exercises"));
+      pathname.startsWith("/exercises") ||
+      pathname.startsWith("/mentor"));
 
   if (!req.auth && isProtected) {
     const newUrl = new URL("/api/auth/signin", req.nextUrl.origin);
@@ -44,5 +45,6 @@ export const config = {
     "/bodyweight/:path*",
     "/measurements/:path*",
     "/exercises/:path*",
+    "/mentor/:path*",
   ],
 };

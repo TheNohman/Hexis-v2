@@ -1,16 +1,21 @@
 import Link from "next/link";
 import { getCurrentUserId } from "@/lib/auth-helpers";
 import { getWorkoutStats, getWellnessPerformanceCorrelation } from "@/lib/stats/queries";
+import { listRecentEvents, countEventsByName } from "@/lib/telemetry/queries";
 import { formatDuration } from "@/lib/format";
 import { WellnessCorrelation } from "./_components/wellness-correlation";
+import { RecentEvents } from "./_components/recent-events";
 
 export const dynamic = "force-dynamic";
 
 export default async function StatsPage() {
   const userId = await getCurrentUserId();
-  const [stats, wellnessPerf] = await Promise.all([
+  const since30d = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+  const [stats, wellnessPerf, recentEvents, eventCounts] = await Promise.all([
     getWorkoutStats(userId),
     getWellnessPerformanceCorrelation(userId, 30),
+    listRecentEvents(userId, 30),
+    countEventsByName(userId, since30d),
   ]);
 
   const maxWeekCount = Math.max(...stats.weeklyActivity.map((w) => w.count), 1);
@@ -84,6 +89,9 @@ export default async function StatsPage() {
             </div>
           </section>
         )}
+
+        {/* Activité récente (télémétrie in-app) */}
+        <RecentEvents events={recentEvents} counts={eventCounts} />
 
         {/* Wellness × Performance correlation (Pearson + bucketed avg) */}
         <WellnessCorrelation points={wellnessPerf} />

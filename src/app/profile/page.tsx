@@ -8,7 +8,6 @@ import { getActiveProgram } from "@/lib/programs/queries";
 import { listTypeConfigs } from "@/lib/measurements/type-config-queries";
 import { listAllMeasurements } from "@/lib/measurements/queries";
 import { formatDuration } from "@/lib/format";
-import { getSessionAdvice } from "@/lib/mentor/advice";
 import { getSportProfile } from "@/lib/profile/onboarding";
 import { computeHeartRateZones, computePaceZones, formatPace } from "@/lib/endurance/zones";
 import { ProfileForm } from "./_components/profile-form";
@@ -28,7 +27,6 @@ export default async function ProfilePage() {
     wellnessLogs,
     stats,
     activeProgram,
-    mentorAdvice,
     sportProfile,
   ] = await Promise.all([
     getUserProfile(userId),
@@ -38,7 +36,6 @@ export default async function ProfilePage() {
     getRecentWellnessLogs(userId, 30),
     getWorkoutStats(userId),
     getActiveProgram(userId),
-    getSessionAdvice(userId),
     getSportProfile(userId),
   ]);
 
@@ -426,9 +423,10 @@ export default async function ProfilePage() {
             </div>
           </HubCard>
 
-          {/* ─── Mentor IA — conseil prochaine séance ─── */}
-          {mentorAdvice && (
+          {/* ─── Mentor IA — pitch + lien vers /mentor ─── */}
+          {profile.mentorEnabled && (
             <HubCard
+              href="/mentor"
               title="Mentor IA"
               className="col-span-2"
               icon={
@@ -448,7 +446,11 @@ export default async function ProfilePage() {
               }
             >
               <p className="text-sm text-muted leading-relaxed">
-                {mentorAdvice}
+                Un coach virtuel qui s&apos;appuie sur tes donn&eacute;es pour
+                te conseiller.
+              </p>
+              <p className="text-xs text-accent font-medium mt-2">
+                Voir plus sur /mentor &rarr;
               </p>
             </HubCard>
           )}
