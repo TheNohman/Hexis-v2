@@ -1,7 +1,8 @@
 "use client";
 
-import { useTransition, type MouseEvent } from "react";
+import { useState, useTransition, type MouseEvent } from "react";
 import { useToast } from "@/app/_components/toast";
+import { ConfirmDialog } from "@/app/_components/confirm-dialog";
 import { deleteWorkoutAction } from "@/app/sessions/actions";
 
 type Props = {
@@ -11,16 +12,18 @@ type Props = {
 
 export function DeleteWorkoutButton({ workoutId, workoutName }: Props) {
   const [isPending, startTransition] = useTransition();
+  const [confirmOpen, setConfirmOpen] = useState(false);
   const toast = useToast();
 
-  function handleClick(e: MouseEvent<HTMLButtonElement>) {
+  function askConfirm(e: MouseEvent<HTMLButtonElement>) {
     // Prevent the parent <Link> from navigating.
     e.preventDefault();
     e.stopPropagation();
-    const confirmed = window.confirm(
-      `Supprimer la s\u00e9ance \u00ab\u00a0${workoutName}\u00a0\u00bb ? Cette action est irr\u00e9versible.`,
-    );
-    if (!confirmed) return;
+    setConfirmOpen(true);
+  }
+
+  function handleConfirm() {
+    setConfirmOpen(false);
     startTransition(async () => {
       try {
         await deleteWorkoutAction(workoutId);
@@ -41,14 +44,25 @@ export function DeleteWorkoutButton({ workoutId, workoutName }: Props) {
   }
 
   return (
-    <button
-      type="button"
-      onClick={handleClick}
-      disabled={isPending}
-      aria-label="Supprimer cette s\u00e9ance"
-      className="text-[11px] text-subtle hover:text-danger transition-colors px-2 py-1 rounded-md hover:bg-danger/10 cursor-pointer disabled:opacity-50"
-    >
-      {isPending ? "\u2026" : "Supprimer"}
-    </button>
+    <>
+      <button
+        type="button"
+        onClick={askConfirm}
+        disabled={isPending}
+        aria-label="Supprimer cette s\u00e9ance"
+        className="text-[11px] text-subtle hover:text-danger transition-colors px-2 py-1 rounded-md hover:bg-danger/10 cursor-pointer disabled:opacity-50"
+      >
+        {isPending ? "\u2026" : "Supprimer"}
+      </button>
+      <ConfirmDialog
+        open={confirmOpen}
+        title="Supprimer la s\u00e9ance ?"
+        message={`\u00ab\u00a0${workoutName}\u00a0\u00bb sera d\u00e9finitivement supprim\u00e9e. Cette action est irr\u00e9versible.`}
+        confirmLabel="Supprimer"
+        destructive
+        onConfirm={handleConfirm}
+        onCancel={() => setConfirmOpen(false)}
+      />
+    </>
   );
 }

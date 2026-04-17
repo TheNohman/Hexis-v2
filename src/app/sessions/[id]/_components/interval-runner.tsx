@@ -8,6 +8,7 @@ import {
   useRef,
   useTransition,
 } from "react";
+import { Check, ChevronLeft, Pause, Play, RotateCcw, SkipForward } from "lucide-react";
 import type { WorkoutDetail } from "@/lib/workouts/types";
 import {
   completeIntervalRoundAction,
@@ -305,9 +306,10 @@ export function IntervalRunner({ workoutId, block, onClose }: Props) {
         <button
           type="button"
           onClick={onClose}
-          className="text-xs uppercase tracking-wider text-white/80 hover:text-white cursor-pointer"
+          className="text-xs uppercase tracking-wider text-white/80 hover:text-white cursor-pointer inline-flex items-center gap-1"
         >
-          ← Quitter
+          <ChevronLeft className="h-3.5 w-3.5" aria-hidden="true" />
+          Quitter
         </button>
         <p className="text-xs uppercase tracking-wider text-white/80 tabular-nums">
           Round{" "}
@@ -317,9 +319,10 @@ export function IntervalRunner({ workoutId, block, onClose }: Props) {
         <button
           type="button"
           onClick={handleReset}
-          className="text-xs uppercase tracking-wider text-white/80 hover:text-white cursor-pointer"
+          className="text-xs uppercase tracking-wider text-white/80 hover:text-white cursor-pointer inline-flex items-center gap-1"
         >
-          ↻ Reset
+          <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />
+          Reset
         </button>
       </div>
 
@@ -329,8 +332,12 @@ export function IntervalRunner({ workoutId, block, onClose }: Props) {
           {label}
         </p>
 
-        <p className="font-display font-bold text-[min(50vw,240px)] leading-none tabular-nums">
-          {state.phase === "DONE" ? "✓" : state.secondsLeft}
+        <p className="font-display font-bold text-[min(50vw,240px)] leading-none tabular-nums flex items-center justify-center">
+          {state.phase === "DONE" ? (
+            <Check className="h-[min(40vw,200px)] w-[min(40vw,200px)]" strokeWidth={3} aria-hidden="true" />
+          ) : (
+            state.secondsLeft
+          )}
         </p>
 
         {state.phase !== "DONE" && currentExercise && (
@@ -382,16 +389,27 @@ export function IntervalRunner({ workoutId, block, onClose }: Props) {
                 ensureAudio();
                 rawDispatch({ type: "TOGGLE_PAUSE" });
               }}
-              className="rounded-xl bg-white/15 backdrop-blur py-4 text-sm font-bold uppercase tracking-wider cursor-pointer hover:bg-white/25 transition-colors"
+              className="rounded-xl bg-white/15 backdrop-blur py-4 text-sm font-bold uppercase tracking-wider cursor-pointer hover:bg-white/25 transition-colors inline-flex items-center justify-center gap-2"
             >
-              {state.paused ? "▶ Reprendre" : "❚❚ Pause"}
+              {state.paused ? (
+                <>
+                  <Play className="h-4 w-4" aria-hidden="true" />
+                  Reprendre
+                </>
+              ) : (
+                <>
+                  <Pause className="h-4 w-4" aria-hidden="true" />
+                  Pause
+                </>
+              )}
             </button>
             <button
               type="button"
               onClick={() => rawDispatch({ type: "SKIP_PHASE" })}
-              className="rounded-xl bg-white/15 backdrop-blur py-4 text-sm font-bold uppercase tracking-wider cursor-pointer hover:bg-white/25 transition-colors"
+              className="rounded-xl bg-white/15 backdrop-blur py-4 text-sm font-bold uppercase tracking-wider cursor-pointer hover:bg-white/25 transition-colors inline-flex items-center justify-center gap-2"
             >
-              ⏭ Passer
+              <SkipForward className="h-4 w-4" aria-hidden="true" />
+              Passer
             </button>
           </>
         )}

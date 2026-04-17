@@ -30,6 +30,7 @@ import {
 import { TemplateBlockCard } from "./template-block-card";
 import dynamic from "next/dynamic";
 import { TemplateIntervalBlockCard } from "./template-interval-block-card";
+import { ConfirmDialog } from "@/app/_components/confirm-dialog";
 
 // Lazy-load the HIIT dialog so its dnd-kit / interval-specific bundle
 // doesn't ship with the first render of a template page that never
@@ -49,6 +50,7 @@ export function TemplateEditor({ template, exercises }: Props) {
   const [newBlockName, setNewBlockName] = useState("");
   const [showNewBlockInput, setShowNewBlockInput] = useState(false);
   const [showHiitDialog, setShowHiitDialog] = useState(false);
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
 
   const [optimisticBlocks, setOptimisticBlocks] = useState(template.blocks);
@@ -90,7 +92,7 @@ export function TemplateEditor({ template, exercises }: Props) {
   }
 
   function handleDelete() {
-    if (!confirm(`Supprimer le mod\u00e8le "${template.name}" ?`)) return;
+    setConfirmDeleteOpen(false);
     startTransition(() => deleteTemplateAction(template.id));
   }
 
@@ -246,7 +248,7 @@ export function TemplateEditor({ template, exercises }: Props) {
           </button>
           <button
             type="button"
-            onClick={handleDelete}
+            onClick={() => setConfirmDeleteOpen(true)}
             disabled={isPending}
             className="w-full rounded-2xl border border-danger/30 text-danger py-3 text-sm font-bold hover:bg-danger-light transition-colors cursor-pointer disabled:opacity-50"
           >
@@ -254,6 +256,16 @@ export function TemplateEditor({ template, exercises }: Props) {
           </button>
         </div>
       </div>
+
+      <ConfirmDialog
+        open={confirmDeleteOpen}
+        title="Supprimer ce mod\u00e8le ?"
+        message={`\u00ab\u00a0${template.name}\u00a0\u00bb sera d\u00e9finitivement supprim\u00e9. Les s\u00e9ances d\u00e9j\u00e0 lanc\u00e9es depuis ce mod\u00e8le ne seront pas affect\u00e9es.`}
+        confirmLabel="Supprimer"
+        destructive
+        onConfirm={handleDelete}
+        onCancel={() => setConfirmDeleteOpen(false)}
+      />
 
       <IntervalBlockDialog
         open={showHiitDialog}

@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { formatDuration } from "@/lib/format";
 import type { TemplateDetail } from "@/lib/templates/types";
 import type { ExerciseGroup } from "@/app/sessions/[id]/_components/group-entries";
+import { ConfirmDialog } from "@/app/_components/confirm-dialog";
 import {
   duplicateTemplateEntryAction,
   deleteTemplateEntryAction,
@@ -21,17 +22,21 @@ type Props = {
 export function TemplateExerciseCard({ templateId, blockId, group }: Props) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [editingRest, setEditingRest] = useState(false);
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
 
   function handleDeleteAll() {
-    if (!confirm(`Supprimer "${group.exerciseName}" et toutes ses s\u00e9ries ?`))
-      return;
+    setMenuOpen(false);
+    setConfirmDeleteOpen(true);
+  }
+
+  function handleConfirmDelete() {
+    setConfirmDeleteOpen(false);
     startTransition(async () => {
       for (const set of group.sets) {
         await deleteTemplateEntryAction(templateId, set.id);
       }
     });
-    setMenuOpen(false);
   }
 
   function handleDuplicateLast() {
@@ -157,6 +162,16 @@ export function TemplateExerciseCard({ templateId, blockId, group }: Props) {
           <span className="text-xs text-subtle">sec repos</span>
         </div>
       )}
+
+      <ConfirmDialog
+        open={confirmDeleteOpen}
+        title="Supprimer cet exercice ?"
+        message={`\u00ab\u00a0${group.exerciseName}\u00a0\u00bb et ses ${group.sets.length} s\u00e9rie${group.sets.length > 1 ? "s" : ""} seront supprim\u00e9${group.sets.length > 1 ? "s" : ""}.`}
+        confirmLabel="Supprimer"
+        destructive
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setConfirmDeleteOpen(false)}
+      />
     </div>
   );
 }

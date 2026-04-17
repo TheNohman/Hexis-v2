@@ -1,7 +1,9 @@
 import Link from "next/link";
+import { History, Search } from "lucide-react";
 import { getCurrentUserId } from "@/lib/auth-helpers";
 import { listWorkoutHistory } from "@/lib/history/queries";
 import { formatDuration } from "@/lib/format";
+import { EmptyState } from "@/app/_components/empty-state";
 import { DeleteWorkoutButton } from "./_components/delete-workout-button";
 import { HistoryFlash } from "./_components/history-flash";
 
@@ -64,11 +66,20 @@ export default async function HistoryPage({
 
         {/* Results */}
         {items.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-border p-8 text-center">
-            <p className="text-muted">
-              {q ? "Aucun r\u00e9sultat." : "Aucune s\u00e9ance pour le moment."}
-            </p>
-          </div>
+          q ? (
+            <EmptyState
+              icon={Search}
+              title="Aucun r\u00e9sultat"
+              description={`Aucune s\u00e9ance ne correspond \u00e0 \u00ab\u00a0${q}\u00a0\u00bb.`}
+            />
+          ) : (
+            <EmptyState
+              icon={History}
+              title="Aucune s\u00e9ance"
+              description="Tes s\u00e9ances termin\u00e9es appara\u00eetront ici."
+              cta={{ label: "Lancer une s\u00e9ance", href: "/dashboard" }}
+            />
+          )
         ) : (
           <ul className="space-y-2">
             {items.map((workout) => (

@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { PrimarySport, SportLevel } from "@/generated/prisma/client";
 import { completeOnboardingAction } from "../actions";
 import { StepSport } from "./steps/step-sport";
@@ -84,9 +85,10 @@ export function OnboardingWizard() {
               type="button"
               onClick={back}
               disabled={stepIndex === 0}
-              className="text-accent disabled:opacity-30 disabled:cursor-not-allowed hover:underline cursor-pointer"
+              className="text-accent disabled:opacity-30 disabled:cursor-not-allowed hover:underline cursor-pointer inline-flex items-center gap-1"
             >
-              ← Retour
+              <ChevronLeft className="h-3 w-3" aria-hidden="true" />
+              Retour
             </button>
           </div>
           <div className="w-full h-1.5 bg-border rounded-full overflow-hidden">
@@ -144,9 +146,10 @@ export function OnboardingWizard() {
               type="button"
               onClick={next}
               disabled={!canContinue}
-              className="w-full rounded-2xl bg-accent text-white py-4 font-semibold hover:bg-accent-hover transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
+              className="w-full rounded-2xl bg-accent text-white py-4 font-semibold hover:bg-accent-hover transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2"
             >
-              Continuer →
+              Continuer
+              <ChevronRight className="h-4 w-4" aria-hidden="true" />
             </button>
           )}
         </div>
