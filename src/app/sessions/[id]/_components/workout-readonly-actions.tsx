@@ -1,7 +1,8 @@
 "use client";
 
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 import { useToast } from "@/app/_components/toast";
+import { ConfirmDialog } from "@/app/_components/confirm-dialog";
 import {
   deleteWorkoutAction,
   unfinishWorkoutAction,
@@ -14,6 +15,7 @@ type Props = {
 export function WorkoutReadonlyActions({ workoutId }: Props) {
   const [isDeleting, startDelete] = useTransition();
   const [isUnfinishing, startUnfinish] = useTransition();
+  const [confirmOpen, setConfirmOpen] = useState(false);
   const toast = useToast();
 
   function handleUnfinish() {
@@ -40,10 +42,7 @@ export function WorkoutReadonlyActions({ workoutId }: Props) {
   }
 
   function handleDelete() {
-    const confirmed = window.confirm(
-      "Supprimer d\u00e9finitivement cette s\u00e9ance ? Cette action est irr\u00e9versible.",
-    );
-    if (!confirmed) return;
+    setConfirmOpen(false);
     startDelete(async () => {
       try {
         await deleteWorkoutAction(workoutId);
@@ -84,7 +83,7 @@ export function WorkoutReadonlyActions({ workoutId }: Props) {
 
       <button
         type="button"
-        onClick={handleDelete}
+        onClick={() => setConfirmOpen(true)}
         disabled={busy}
         className="w-full rounded-xl border border-danger/40 text-danger py-3 text-xs font-medium hover:bg-danger/10 transition-colors cursor-pointer disabled:opacity-50"
       >
@@ -92,6 +91,16 @@ export function WorkoutReadonlyActions({ workoutId }: Props) {
           ? "Suppression\u2026"
           : "Supprimer cette s\u00e9ance"}
       </button>
+
+      <ConfirmDialog
+        open={confirmOpen}
+        title="Supprimer cette s\u00e9ance ?"
+        message="La s\u00e9ance et toutes ses entr\u00e9es seront d\u00e9finitivement supprim\u00e9es. Cette action est irr\u00e9versible."
+        confirmLabel="Supprimer"
+        destructive
+        onConfirm={handleDelete}
+        onCancel={() => setConfirmOpen(false)}
+      />
     </div>
   );
 }

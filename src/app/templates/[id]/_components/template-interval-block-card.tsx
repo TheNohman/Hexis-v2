@@ -1,10 +1,11 @@
 "use client";
 
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
 import type { ExerciseListItem } from "@/lib/workouts/types";
 import type { TemplateDetail } from "@/lib/templates/types";
 import { formatDuration } from "@/lib/format";
 import { Stat } from "@/app/_components/stat";
+import { ConfirmDialog } from "@/app/_components/confirm-dialog";
 import { deleteTemplateBlockAction } from "@/app/templates/actions";
 
 type Block = TemplateDetail["blocks"][number];
@@ -24,9 +25,10 @@ type Props = {
  */
 export function TemplateIntervalBlockCard({ templateId, block, exercises }: Props) {
   const [isPending, startTransition] = useTransition();
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
 
-  function handleDelete() {
-    if (!confirm(`Supprimer le bloc "${block.name}" ?`)) return;
+  function handleConfirmDelete() {
+    setConfirmDeleteOpen(false);
     startTransition(() => deleteTemplateBlockAction(templateId, block.id));
   }
 
@@ -57,13 +59,23 @@ export function TemplateIntervalBlockCard({ templateId, block, exercises }: Prop
         </div>
         <button
           type="button"
-          onClick={handleDelete}
+          onClick={() => setConfirmDeleteOpen(true)}
           disabled={isPending}
           className="text-xs text-danger hover:underline cursor-pointer disabled:opacity-50"
         >
           Supprimer
         </button>
       </header>
+
+      <ConfirmDialog
+        open={confirmDeleteOpen}
+        title="Supprimer ce bloc HIIT ?"
+        message={`\u00ab\u00a0${block.name}\u00a0\u00bb sera supprim\u00e9.`}
+        confirmLabel="Supprimer"
+        destructive
+        onConfirm={handleConfirmDelete}
+        onCancel={() => setConfirmDeleteOpen(false)}
+      />
 
       <div className="px-4 py-3 space-y-2">
         <div className="grid grid-cols-4 gap-2 text-center">

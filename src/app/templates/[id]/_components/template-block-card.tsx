@@ -14,6 +14,7 @@ import {
 import { groupEntriesByExercise } from "@/app/sessions/[id]/_components/group-entries";
 import { ExercisePicker } from "@/app/sessions/[id]/_components/exercise-picker";
 import { TemplateExerciseCard } from "./template-exercise-card";
+import { ConfirmDialog } from "@/app/_components/confirm-dialog";
 
 type Block = TemplateDetail["blocks"][number];
 
@@ -26,6 +27,7 @@ type Props = {
 export function TemplateBlockCard({ templateId, block, exercises }: Props) {
   const [pickerOpen, setPickerOpen] = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
 
   const {
@@ -98,18 +100,27 @@ export function TemplateBlockCard({ templateId, block, exercises }: Props) {
         <button
           type="button"
           disabled={isPending}
-          onClick={() => {
-            if (confirm(`Supprimer le bloc "${block.name}" ?`)) {
-              startTransition(() =>
-                deleteTemplateBlockAction(templateId, block.id),
-              );
-            }
-          }}
+          onClick={() => setConfirmDeleteOpen(true)}
           className="text-xs text-subtle hover:text-danger cursor-pointer disabled:opacity-50 p-2 -mr-2 transition-colors"
         >
           Supprimer
         </button>
       </div>
+
+      <ConfirmDialog
+        open={confirmDeleteOpen}
+        title="Supprimer ce bloc ?"
+        message={`\u00ab\u00a0${block.name}\u00a0\u00bb et tous ses exercices seront supprim\u00e9s.`}
+        confirmLabel="Supprimer"
+        destructive
+        onConfirm={() => {
+          setConfirmDeleteOpen(false);
+          startTransition(() =>
+            deleteTemplateBlockAction(templateId, block.id),
+          );
+        }}
+        onCancel={() => setConfirmDeleteOpen(false)}
+      />
 
       {/* Exercise cards */}
       <div className="space-y-3">

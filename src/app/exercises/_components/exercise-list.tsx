@@ -2,7 +2,9 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { Dumbbell, Search } from "lucide-react";
 import { formatExerciseType } from "@/lib/format";
+import { EmptyState } from "@/app/_components/empty-state";
 import { deleteExerciseAction } from "../actions";
 import type { ExerciseType } from "@/generated/prisma/enums";
 
@@ -87,11 +89,19 @@ export function ExerciseList({ exercises }: { exercises: Exercise[] }) {
 
       {/* Results */}
       {grouped.size === 0 ? (
-        <div className="rounded-xl border border-dashed border-border p-8 text-center">
-          <p className="text-muted">
-            {search ? "Aucun exercice trouv\u00e9." : "Aucun exercice pour le moment."}
-          </p>
-        </div>
+        search ? (
+          <EmptyState
+            icon={Search}
+            title="Aucun exercice trouv\u00e9"
+            description={`Rien ne correspond \u00e0 \u00ab\u00a0${search}\u00a0\u00bb. Essaie un autre mot-cl\u00e9.`}
+          />
+        ) : (
+          <EmptyState
+            icon={Dumbbell}
+            title="Aucun exercice"
+            description="La biblioth\u00e8que est vide pour cette cat\u00e9gorie."
+          />
+        )
       ) : (
         Array.from(grouped.entries()).map(([type, items]) => (
           <section key={type} className="space-y-2">

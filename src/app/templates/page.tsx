@@ -1,6 +1,8 @@
 import Link from "next/link";
+import { ClipboardList } from "lucide-react";
 import { getCurrentUserId } from "@/lib/auth-helpers";
 import { listTemplates } from "@/lib/templates/queries";
+import { EmptyState } from "@/app/_components/empty-state";
 import { createTemplateAction } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -35,12 +37,11 @@ export default async function TemplatesPage() {
 
         <section className="space-y-2">
           {templates.length === 0 ? (
-            <div className="rounded-xl border border-dashed border-border p-8 text-center">
-              <p className="text-muted">Aucun mod&egrave;le pour le moment.</p>
-              <p className="text-sm text-subtle mt-1">
-                Cr&eacute;e un mod&egrave;le pour planifier tes s&eacute;ances.
-              </p>
-            </div>
+            <EmptyState
+              icon={ClipboardList}
+              title="Aucun mod\u00e8le"
+              description="Un mod\u00e8le est une s\u00e9ance r\u00e9utilisable. Utilise le bouton ci-dessus pour en cr\u00e9er un."
+            />
           ) : (
             <ul className="space-y-2">
               {templates.map((t) => (

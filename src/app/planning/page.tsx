@@ -1,9 +1,11 @@
 import Link from "next/link";
+import { Calendar, ClipboardList } from "lucide-react";
 import { getCurrentUserId } from "@/lib/auth-helpers";
 import { listPrograms } from "@/lib/programs/queries";
 import { listTemplates } from "@/lib/templates/queries";
 import { createProgramAction } from "@/app/programs/actions";
 import { createTemplateAction } from "@/app/templates/actions";
+import { EmptyState } from "@/app/_components/empty-state";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
@@ -136,12 +138,11 @@ async function ProgramsTab({ userId, mentorEnabled }: { userId: string; mentorEn
 
       {programs.length === 0 ? (
         !isNewUser && (
-          <div className="rounded-xl border border-dashed border-border p-8 text-center">
-            <p className="text-muted">Aucun programme pour le moment.</p>
-            <p className="text-sm text-subtle mt-1">
-              Cr&eacute;e un programme pour planifier tes semaines d&rsquo;entra&icirc;nement.
-            </p>
-          </div>
+          <EmptyState
+            icon={Calendar}
+            title="Aucun programme"
+            description="Cr\u00e9e un programme pour planifier tes semaines d&rsquo;entra\u00eenement."
+          />
         )
       ) : (
         <ul className="space-y-2">
@@ -190,12 +191,11 @@ async function TemplatesTab({ userId }: { userId: string }) {
       </form>
 
       {templates.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-border p-8 text-center">
-          <p className="text-muted">Aucun mod&egrave;le pour le moment.</p>
-          <p className="text-sm text-subtle mt-1">
-            Cr&eacute;e un mod&egrave;le pour planifier tes s&eacute;ances.
-          </p>
-        </div>
+        <EmptyState
+          icon={ClipboardList}
+          title="Aucun mod\u00e8le"
+          description="Un mod\u00e8le est une s\u00e9ance r\u00e9utilisable \u2014 le bloc de base de tes programmes."
+        />
       ) : (
         <ul className="space-y-2">
           {templates.map((t) => (
