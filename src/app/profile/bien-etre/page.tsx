@@ -29,6 +29,14 @@ export default async function BienEtrePage() {
           </Link>
         </header>
 
+        <Link
+          href="/dashboard#wellness"
+          className="inline-flex items-center gap-2 rounded-lg border border-dashed border-border px-3 py-2 text-sm text-muted hover:border-accent hover:text-accent transition-colors"
+        >
+          <span className="text-base leading-none">+</span>
+          Ajouter un jour (rattrapage)
+        </Link>
+
         <WellnessHistorySection logs={logs} />
       </div>
     </main>

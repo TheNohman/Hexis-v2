@@ -472,7 +472,19 @@ export default async function ProfilePage() {
             Préférences
           </summary>
           <div className="mt-2 space-y-4">
-            <ProfileForm profile={profile} showEnduranceRefs={showEnduranceRefs} />
+            <ProfileForm
+              profile={profile}
+              showEnduranceRefs={showEnduranceRefs}
+              sportProfile={{
+                primarySport: sportProfile.primarySport,
+                sportLevel: sportProfile.sportLevel,
+                sportObjective: sportProfile.sportObjective,
+                weeklySessionTarget: sportProfile.weeklySessionTarget,
+                sessionDurationMins: sportProfile.sessionDurationMins,
+                equipmentAccess: sportProfile.equipmentAccess,
+                medicalNotes: sportProfile.medicalNotes,
+              }}
+            />
 
             {heartZones && (
               <div className="rounded-xl border border-border bg-surface p-4 space-y-2">

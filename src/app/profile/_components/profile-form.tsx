@@ -1,7 +1,9 @@
 "use client";
 
-import { useTransition } from "react";
+import { useState, useTransition } from "react";
+import type { PrimarySport, SportLevel } from "@/generated/prisma/client";
 import { updateProfileAction } from "@/app/profile/actions";
+import { SPORTS, LEVELS, EQUIPMENT_OPTIONS } from "@/app/_components/sport-options";
 
 type Props = {
   profile: {
@@ -15,12 +17,50 @@ type Props = {
     vmaKmh: number | null;
     ftp: number | null;
   };
+  sportProfile?: {
+    primarySport: PrimarySport | null;
+    sportLevel: SportLevel | null;
+    sportObjective: string | null;
+    weeklySessionTarget: number | null;
+    sessionDurationMins: number | null;
+    equipmentAccess: string[];
+    medicalNotes: string | null;
+  };
   /** Whether to render the endurance-reference block (FCmax, VMA, FTP). */
   showEnduranceRefs?: boolean;
 };
 
-export function ProfileForm({ profile, showEnduranceRefs = false }: Props) {
+export function ProfileForm({ profile, sportProfile, showEnduranceRefs = false }: Props) {
   const [isPending, startTransition] = useTransition();
+
+  // Controlled state for sport section (checkbox list + selects benefit from it).
+  const [primarySport, setPrimarySport] = useState<PrimarySport | "">(
+    sportProfile?.primarySport ?? "",
+  );
+  const [sportLevel, setSportLevel] = useState<SportLevel | "">(
+    sportProfile?.sportLevel ?? "",
+  );
+  const [sportObjective, setSportObjective] = useState<string>(
+    sportProfile?.sportObjective ?? "",
+  );
+  const [weeklyTarget, setWeeklyTarget] = useState<number>(
+    sportProfile?.weeklySessionTarget ?? 3,
+  );
+  const [sessionDuration, setSessionDuration] = useState<number>(
+    sportProfile?.sessionDurationMins ?? 60,
+  );
+  const [equipment, setEquipment] = useState<string[]>(
+    sportProfile?.equipmentAccess ?? [],
+  );
+  const [medicalNotes, setMedicalNotes] = useState<string>(
+    sportProfile?.medicalNotes ?? "",
+  );
+
+  function toggleEquipment(value: string) {
+    setEquipment((prev) =>
+      prev.includes(value) ? prev.filter((v) => v !== value) : [...prev, value],
+    );
+  }
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -55,6 +95,17 @@ export function ProfileForm({ profile, showEnduranceRefs = false }: Props) {
               fcResting: parseIntOrNull("fcResting"),
               vmaKmh: parseFloatOrNull("vmaKmh"),
               ftp: parseIntOrNull("ftp"),
+            }
+          : {}),
+        ...(sportProfile
+          ? {
+              primarySport: primarySport || null,
+              sportLevel: sportLevel || null,
+              sportObjective: sportObjective.trim() || null,
+              weeklySessionTarget: weeklyTarget > 0 ? weeklyTarget : null,
+              sessionDurationMins: sessionDuration > 0 ? sessionDuration : null,
+              equipmentAccess: equipment,
+              medicalNotes: medicalNotes.trim() || null,
             }
           : {}),
       }),
@@ -165,6 +216,148 @@ export function ProfileForm({ profile, showEnduranceRefs = false }: Props) {
             </label>
           </div>
         </div>
+      )}
+
+      {sportProfile && (
+        <details className="pt-3 border-t border-border group">
+          <summary className="flex items-center justify-between cursor-pointer list-none py-1">
+            <div>
+              <h3 className="text-xs font-semibold text-muted uppercase tracking-wider">
+                Profil sportif
+              </h3>
+              <p className="text-[11px] text-subtle mt-0.5">
+                Sport principal, niveau, objectif, équipement — éditables à tout moment.
+              </p>
+            </div>
+            <svg
+              width="12"
+              height="12"
+              viewBox="0 0 12 12"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              className="transition-transform group-open:rotate-90 text-muted"
+            >
+              <polyline points="4,2 8,6 4,10" />
+            </svg>
+          </summary>
+
+          <div className="mt-3 space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <label className="flex flex-col gap-1.5">
+                <span className="text-[11px] text-muted">Sport principal</span>
+                <select
+                  value={primarySport}
+                  onChange={(e) => setPrimarySport(e.target.value as PrimarySport | "")}
+                  className="rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:border-accent transition-colors"
+                >
+                  <option value="">—</option>
+                  {SPORTS.map((s) => (
+                    <option key={s.value} value={s.value}>
+                      {s.icon} {s.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label className="flex flex-col gap-1.5">
+                <span className="text-[11px] text-muted">Niveau</span>
+                <select
+                  value={sportLevel}
+                  onChange={(e) => setSportLevel(e.target.value as SportLevel | "")}
+                  className="rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:border-accent transition-colors"
+                >
+                  <option value="">—</option>
+                  {LEVELS.map((l) => (
+                    <option key={l.value} value={l.value}>
+                      {l.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+
+            <label className="flex flex-col gap-1.5">
+              <span className="text-[11px] text-muted">Objectif principal</span>
+              <input
+                type="text"
+                value={sportObjective}
+                onChange={(e) => setSportObjective(e.target.value)}
+                placeholder="Ex : préparer mon premier semi en octobre"
+                className="rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:border-accent transition-colors"
+              />
+            </label>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] text-muted">Séances / semaine</span>
+                  <span className="text-accent font-semibold tabular-nums text-sm">{weeklyTarget}</span>
+                </div>
+                <input
+                  type="range"
+                  min={1}
+                  max={10}
+                  step={1}
+                  value={weeklyTarget}
+                  onChange={(e) => setWeeklyTarget(parseInt(e.target.value, 10))}
+                  className="w-full accent-accent"
+                />
+              </div>
+              <div className="space-y-1">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] text-muted">Durée séance (min)</span>
+                  <span className="text-accent font-semibold tabular-nums text-sm">{sessionDuration}</span>
+                </div>
+                <input
+                  type="range"
+                  min={15}
+                  max={180}
+                  step={5}
+                  value={sessionDuration}
+                  onChange={(e) => setSessionDuration(parseInt(e.target.value, 10))}
+                  className="w-full accent-accent"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <span className="text-[11px] text-muted">Équipement disponible</span>
+              <div className="grid grid-cols-2 gap-2">
+                {EQUIPMENT_OPTIONS.map((e) => {
+                  const active = equipment.includes(e.value);
+                  return (
+                    <button
+                      key={e.value}
+                      type="button"
+                      onClick={() => toggleEquipment(e.value)}
+                      className={`text-left rounded-lg border px-3 py-2 transition-all cursor-pointer flex items-center gap-2 text-sm ${
+                        active
+                          ? "border-accent bg-accent/10"
+                          : "border-border bg-background hover:border-accent/40"
+                      }`}
+                    >
+                      <span className="text-base">{e.emoji}</span>
+                      <span>{e.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <label className="flex flex-col gap-1.5">
+              <span className="text-[11px] text-muted">Contraintes médicales (optionnel)</span>
+              <textarea
+                value={medicalNotes}
+                onChange={(e) => setMedicalNotes(e.target.value)}
+                rows={2}
+                placeholder="Ex : épaule droite sensible, tendinite Achille récurrente…"
+                className="rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:border-accent transition-colors resize-none"
+              />
+            </label>
+          </div>
+        </details>
       )}
 
       <label className="flex items-center gap-3 py-2">
