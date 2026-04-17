@@ -12,9 +12,11 @@ import {
   createWorkout,
   deleteBlock,
   deleteEntry,
+  deleteWorkout,
   duplicateEntry,
   finishActiveWorkouts,
   finishWorkout,
+  unfinishWorkout,
   incrementCompletedRounds,
   renameBlock,
   reorderBlocks,
@@ -276,6 +278,36 @@ export async function toggleEntryWarmupAction(
   const userId = await getCurrentUserId();
   await toggleEntryWarmup(entryId, userId);
   revalidatePath(`/sessions/${workoutId}`);
+}
+
+/**
+ * Delete a workout entirely (cascade through blocks/entries/values).
+ * Redirects to /history with a flash query param since a toast would be
+ * lost across the redirect.
+ */
+export async function deleteWorkoutAction(workoutId: string) {
+  const userId = await getCurrentUserId();
+  await deleteWorkout(workoutId, userId);
+  // History changed → drop cached advice.
+  await clearAdviceCache(userId);
+  revalidatePath("/dashboard");
+  revalidatePath("/history");
+  redirect("/history?flash=deleted");
+}
+
+/**
+ * Re-open a finished workout. Used when a session was terminated by
+ * mistake. Finishes any other active workout first to preserve the
+ * "one active workout at a time" invariant.
+ */
+export async function unfinishWorkoutAction(workoutId: string) {
+  const userId = await getCurrentUserId();
+  await unfinishWorkout(workoutId, userId);
+  await clearAdviceCache(userId);
+  revalidatePath("/dashboard");
+  revalidatePath("/history");
+  revalidatePath(`/sessions/${workoutId}`);
+  redirect(`/sessions/${workoutId}`);
 }
 
 export async function saveAsTemplateAction(workoutId: string, name?: string) {

@@ -3,6 +3,7 @@ import { formatDuration } from "@/lib/format";
 import type { WorkoutDetail } from "@/lib/workouts/types";
 import { SaveAsTemplateButton } from "./save-as-template-button";
 import { RedoWorkoutButton } from "./redo-workout-button";
+import { WorkoutReadonlyActions } from "./workout-readonly-actions";
 
 type Props = {
   workout: WorkoutDetail;
@@ -153,6 +154,7 @@ export function WorkoutReadonly({ workout }: Props) {
         {/* Save as template */}
         <RedoWorkoutButton sourceWorkoutId={workout.id} hasStrengthExercises={hasStrength} />
         <SaveAsTemplateButton workoutId={workout.id} workoutName={workout.name} />
+        <WorkoutReadonlyActions workoutId={workout.id} />
       </div>
     </main>
   );

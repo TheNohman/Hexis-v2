@@ -2,15 +2,17 @@ import Link from "next/link";
 import { getCurrentUserId } from "@/lib/auth-helpers";
 import { listWorkoutHistory } from "@/lib/history/queries";
 import { formatDuration } from "@/lib/format";
+import { DeleteWorkoutButton } from "./_components/delete-workout-button";
+import { HistoryFlash } from "./_components/history-flash";
 
 export const dynamic = "force-dynamic";
 
 export default async function HistoryPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; page?: string }>;
+  searchParams: Promise<{ q?: string; page?: string; flash?: string }>;
 }) {
-  const { q, page: pageStr } = await searchParams;
+  const { q, page: pageStr, flash } = await searchParams;
   const userId = await getCurrentUserId();
   const page = Math.max(1, parseInt(pageStr ?? "1", 10) || 1);
   const pageSize = 20;
@@ -26,6 +28,7 @@ export default async function HistoryPage({
 
   return (
     <main className="flex-1 flex flex-col items-center px-4 py-8">
+      <HistoryFlash flash={flash} />
       <div className="max-w-2xl w-full space-y-6">
         <header className="flex items-start justify-between gap-3">
           <div>
@@ -69,10 +72,13 @@ export default async function HistoryPage({
         ) : (
           <ul className="space-y-2">
             {items.map((workout) => (
-              <li key={workout.id}>
+              <li
+                key={workout.id}
+                className="relative rounded-xl border border-border bg-surface hover:bg-surface-hover transition-colors"
+              >
                 <Link
                   href={`/sessions/${workout.id}`}
-                  className="block rounded-xl border border-border bg-surface hover:bg-surface-hover transition-colors p-4"
+                  className="block p-4 pr-20"
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0 flex-1">
@@ -115,6 +121,12 @@ export default async function HistoryPage({
                     </div>
                   </div>
                 </Link>
+                <div className="absolute top-2 right-2">
+                  <DeleteWorkoutButton
+                    workoutId={workout.id}
+                    workoutName={workout.name}
+                  />
+                </div>
               </li>
             ))}
           </ul>

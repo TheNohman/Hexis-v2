@@ -45,6 +45,41 @@ export async function finishActiveWorkouts(userId: string) {
   });
 }
 
+/**
+ * Delete a workout (and its blocks/entries/values via onDelete: Cascade
+ * in the Prisma schema). Validates ownership before deleting.
+ */
+export async function deleteWorkout(workoutId: string, userId: string) {
+  const workout = await prisma.workout.findUnique({
+    where: { id: workoutId },
+    select: { id: true, userId: true },
+  });
+  assertOwnership(workout, userId);
+
+  return prisma.workout.delete({ where: { id: workoutId } });
+}
+
+/**
+ * Re-open a finished workout (set finishedAt back to null). First closes
+ * any other active workout so the invariant "at most one active workout"
+ * holds.
+ */
+export async function unfinishWorkout(workoutId: string, userId: string) {
+  const workout = await prisma.workout.findUnique({
+    where: { id: workoutId },
+    select: { id: true, userId: true },
+  });
+  assertOwnership(workout, userId);
+
+  // Ensure no other workout stays active concurrently.
+  await finishActiveWorkouts(userId);
+
+  return prisma.workout.update({
+    where: { id: workoutId },
+    data: { finishedAt: null },
+  });
+}
+
 export async function updateWorkoutName(
   workoutId: string,
   userId: string,
