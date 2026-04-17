@@ -28,6 +28,7 @@ model User {
   programs               Program[]
   wellnessLogs       WellnessLog[]
   exerciseMaxes      ExerciseMax[]
+  mentorAdvices      MentorAdvice[]
 
   // Profile / preferences
   unitSystem       String   @default("metric") // "metric" | "imperial"
@@ -534,4 +535,17 @@ model ExerciseMax {
 
   @@index([userId, exerciseId, achievedAt])
   @@index([userId, achievedAt])
+}
+
+/// Historique des conseils du Mentor IA. Chaque génération réussie
+/// crée une ligne ; `User.lastAdvice` reste utilisé comme cache court.
+model MentorAdvice {
+  id        String   @id @default(cuid())
+  userId    String
+  content   String   @db.Text
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
 }

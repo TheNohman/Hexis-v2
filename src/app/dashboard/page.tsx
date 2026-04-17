@@ -43,6 +43,12 @@ export default async function Dashboard() {
           </div>
           <div className="flex items-center gap-3">
             <Link
+              href="/mentor"
+              className="text-xs text-muted hover:text-foreground transition-colors cursor-pointer py-1"
+            >
+              Mentor IA
+            </Link>
+            <Link
               href="/profile"
               className="text-xs text-muted hover:text-foreground transition-colors cursor-pointer py-1"
             >

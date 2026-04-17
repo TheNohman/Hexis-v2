@@ -32,6 +32,31 @@ function takeRateLimitToken(userId: string): boolean {
   return true;
 }
 
+/**
+ * Read-only view of the rate-limit state for a user. Used to render the
+ * "Il reste X générations cette heure" badge on /mentor. Does NOT consume
+ * a token.
+ */
+export function getRemainingRateLimit(userId: string): {
+  remaining: number;
+  max: number;
+  windowMs: number;
+  resetAt: number | null;
+} {
+  const now = Date.now();
+  const prev = rateLimitBuckets.get(userId) ?? [];
+  const fresh = prev.filter((t) => now - t < RATE_LIMIT_WINDOW_MS);
+  const remaining = Math.max(0, RATE_LIMIT_MAX - fresh.length);
+  const oldest = fresh.length > 0 ? Math.min(...fresh) : null;
+  const resetAt = oldest != null ? oldest + RATE_LIMIT_WINDOW_MS : null;
+  return {
+    remaining,
+    max: RATE_LIMIT_MAX,
+    windowMs: RATE_LIMIT_WINDOW_MS,
+    resetAt,
+  };
+}
+
 
 const ADVICE_SYSTEM_PROMPT = `Tu es un coach sportif expert et bienveillant. À partir des données d'entraînement de l'utilisateur, donne UN conseil court et personnalisé pour sa prochaine séance.
 
@@ -121,6 +146,14 @@ export async function getSessionAdvice(userId: string): Promise<string | null> {
         where: { id: userId },
         data: { lastAdvice: advice, lastAdviceAt: new Date() },
       });
+      // Persist into history table so /mentor can show the last N advices.
+      try {
+        await prisma.mentorAdvice.create({
+          data: { userId, content: advice },
+        });
+      } catch (historyError) {
+        console.error("[mentor-advice] history insert", historyError);
+      }
     }
 
     return advice;
@@ -129,6 +162,28 @@ export async function getSessionAdvice(userId: string): Promise<string | null> {
     // Return stale cache if available
     return user.lastAdvice ?? null;
   }
+}
+
+export type MentorAdviceHistoryEntry = {
+  id: string;
+  content: string;
+  createdAt: Date;
+};
+
+/**
+ * Return the last N mentor advices for a user, newest first.
+ */
+export async function getMentorAdviceHistory(
+  userId: string,
+  limit = 10,
+): Promise<MentorAdviceHistoryEntry[]> {
+  const rows = await prisma.mentorAdvice.findMany({
+    where: { userId },
+    orderBy: { createdAt: "desc" },
+    take: limit,
+    select: { id: true, content: true, createdAt: true },
+  });
+  return rows;
 }
 
 /**
