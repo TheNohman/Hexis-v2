@@ -1,26 +1,11 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
-import {
-  DndContext,
-  closestCenter,
-  PointerSensor,
-  TouchSensor,
-  KeyboardSensor,
-  useSensor,
-  useSensors,
-  type DragEndEvent,
-} from "@dnd-kit/core";
-import {
-  SortableContext,
-  verticalListSortingStrategy,
-  useSortable,
-  sortableKeyboardCoordinates,
-  arrayMove,
-} from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
+import { GripVertical, X as XIcon } from "lucide-react";
 import type { ExerciseListItem } from "@/lib/workouts/types";
+import { formatDuration } from "@/lib/format";
 import { addIntervalTemplateBlockAction } from "@/app/templates/actions";
+import { SortableList } from "@/app/_components/sortable-list";
 
 type Props = {
   open: boolean;
@@ -125,12 +110,6 @@ export function IntervalBlockDialog({
     return exercises.filter((e) => e.name.toLowerCase().includes(q));
   }, [exercises, query]);
 
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
-    useSensor(TouchSensor, { activationConstraint: { delay: 180, tolerance: 5 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
-  );
-
   function handlePresetChange(next: Preset) {
     setPreset(next);
     setWorkSecs(next.workSecs);
@@ -144,27 +123,6 @@ export function IntervalBlockDialog({
       if (prev.includes(id)) return prev.filter((x) => x !== id);
       return [...prev, id];
     });
-  }
-
-  function handleSelectedDragEnd(e: DragEndEvent) {
-    const { active, over } = e;
-    if (!over || active.id === over.id) return;
-    setSelectedExerciseIds((prev) => {
-      const oldIndex = prev.indexOf(String(active.id));
-      const newIndex = prev.indexOf(String(over.id));
-      if (oldIndex < 0 || newIndex < 0) return prev;
-      return arrayMove(prev, oldIndex, newIndex);
-    });
-  }
-
-  function handleSequenceDragEnd(e: DragEndEvent) {
-    const { active, over } = e;
-    if (!over || active.id === over.id) return;
-    // IDs here are "seq-<roundIndex>" so we can reorder the slots.
-    const fromIdx = parseInt(String(active.id).replace("seq-", ""), 10);
-    const toIdx = parseInt(String(over.id).replace("seq-", ""), 10);
-    if (Number.isNaN(fromIdx) || Number.isNaN(toIdx)) return;
-    setCustomSequence((prev) => arrayMove(prev, fromIdx, toIdx));
   }
 
   function setSequenceSlot(index: number, exerciseId: string) {
@@ -407,28 +365,38 @@ export function IntervalBlockDialog({
                   Choisis au moins un exercice ci-dessous.
                 </p>
               ) : (
-                <DndContext
-                  sensors={sensors}
-                  collisionDetection={closestCenter}
-                  onDragEnd={handleSelectedDragEnd}
-                >
-                  <SortableContext
-                    items={selectedExerciseIds}
-                    strategy={verticalListSortingStrategy}
-                  >
-                    <ol className="space-y-1 rounded-xl border border-border bg-surface p-2">
-                      {selectedExerciseIds.map((id, i) => (
-                        <SortableRow
-                          key={id}
-                          id={id}
-                          index={i}
-                          label={exerciseById.get(id)?.name ?? id}
-                          onRemove={() => toggleExercise(id)}
-                        />
-                      ))}
-                    </ol>
-                  </SortableContext>
-                </DndContext>
+                <SortableList
+                  items={selectedExerciseIds}
+                  keyFor={(id) => id}
+                  onReorder={setSelectedExerciseIds}
+                  className="space-y-1 rounded-xl border border-border bg-surface p-2"
+                  renderItem={(id, i, handle) => (
+                    <li className="flex items-center gap-2 rounded-lg bg-background border border-border/50 pl-1 pr-2 py-1.5">
+                      <button
+                        type="button"
+                        {...handle.attributes}
+                        {...handle.listeners}
+                        aria-label="Déplacer"
+                        className="cursor-grab active:cursor-grabbing text-subtle hover:text-foreground px-2 py-1 touch-none"
+                      >
+                        <GripVertical className="w-4 h-4" />
+                      </button>
+                      <span className="text-[10px] font-mono text-subtle w-5 text-center">
+                        {String(i + 1).padStart(2, "0")}
+                      </span>
+                      <span className="flex-1 text-sm truncate">
+                        {exerciseById.get(id)?.name ?? id}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => toggleExercise(id)}
+                        className="text-xs text-danger hover:underline cursor-pointer"
+                      >
+                        Retirer
+                      </button>
+                    </li>
+                  )}
+                />
               )}
             </section>
           )}
@@ -459,7 +427,7 @@ export function IntervalBlockDialog({
                           aria-label="Retirer"
                           className="text-subtle hover:text-danger cursor-pointer"
                         >
-                          ×
+                          <XIcon className="w-3.5 h-3.5" />
                         </button>
                       </span>
                     ))}
@@ -481,38 +449,48 @@ export function IntervalBlockDialog({
                     Glisse les slots pour réordonner ou sélectionne un exo différent par round.
                   </p>
 
-                  <DndContext
-                    sensors={sensors}
-                    collisionDetection={closestCenter}
-                    onDragEnd={handleSequenceDragEnd}
-                  >
-                    <SortableContext
-                      items={Array.from({ length: roundCount }).map((_, i) => `seq-${i}`)}
-                      strategy={verticalListSortingStrategy}
-                    >
-                      <ol className="space-y-1 rounded-xl border border-border bg-surface p-2">
-                        {Array.from({ length: roundCount }).map((_, i) => {
-                          const current =
-                            customSequence[i] ??
-                            selectedExerciseIds[i % selectedExerciseIds.length] ??
-                            "";
-                          return (
-                            <SequenceRow
-                              key={`seq-${i}`}
-                              slotId={`seq-${i}`}
-                              roundIndex={i}
-                              currentExerciseId={current}
-                              options={selectedExerciseIds.map((id) => ({
-                                id,
-                                name: exerciseById.get(id)?.name ?? id,
-                              }))}
-                              onChange={(next) => setSequenceSlot(i, next)}
-                            />
-                          );
-                        })}
-                      </ol>
-                    </SortableContext>
-                  </DndContext>
+                  <SortableList
+                    items={Array.from({ length: roundCount }).map((_, i) => ({
+                      slotIndex: i,
+                      exerciseId:
+                        customSequence[i] ??
+                        selectedExerciseIds[i % selectedExerciseIds.length] ??
+                        "",
+                    }))}
+                    keyFor={(slot) => `seq-${slot.slotIndex}`}
+                    onReorder={(next) =>
+                      // Rebuild customSequence from the reordered slots.
+                      setCustomSequence(next.map((s) => s.exerciseId))
+                    }
+                    className="space-y-1 rounded-xl border border-border bg-surface p-2"
+                    renderItem={(slot, i, handle) => (
+                      <li className="flex items-center gap-2 rounded-lg bg-background border border-border/50 pl-1 pr-2 py-1.5">
+                        <button
+                          type="button"
+                          {...handle.attributes}
+                          {...handle.listeners}
+                          aria-label="Déplacer ce round"
+                          className="cursor-grab active:cursor-grabbing text-subtle hover:text-foreground px-2 py-1 touch-none"
+                        >
+                          ⠿
+                        </button>
+                        <span className="text-[10px] font-mono text-accent w-10 text-center">
+                          R{String(i + 1).padStart(2, "0")}
+                        </span>
+                        <select
+                          value={slot.exerciseId}
+                          onChange={(e) => setSequenceSlot(i, e.target.value)}
+                          className="flex-1 rounded-md border border-border bg-background px-2 py-1 text-sm outline-none focus:border-accent"
+                        >
+                          {selectedExerciseIds.map((id) => (
+                            <option key={id} value={id}>
+                              {exerciseById.get(id)?.name ?? id}
+                            </option>
+                          ))}
+                        </select>
+                      </li>
+                    )}
+                  />
                 </>
               )}
             </section>
@@ -579,107 +557,6 @@ export function IntervalBlockDialog({
 }
 
 // ─── Sub-components ───────────────────────────────────────────────────
-
-function SortableRow({
-  id,
-  index,
-  label,
-  onRemove,
-}: {
-  id: string;
-  index: number;
-  label: string;
-  onRemove: () => void;
-}) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
-    useSortable({ id });
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.5 : 1,
-  };
-  return (
-    <li
-      ref={setNodeRef}
-      style={style}
-      className="flex items-center gap-2 rounded-lg bg-background border border-border/50 pl-1 pr-2 py-1.5"
-    >
-      <button
-        type="button"
-        {...attributes}
-        {...listeners}
-        aria-label="Déplacer"
-        className="cursor-grab active:cursor-grabbing text-subtle hover:text-foreground px-2 py-1 touch-none"
-      >
-        ⠿
-      </button>
-      <span className="text-[10px] font-mono text-subtle w-5 text-center">
-        {String(index + 1).padStart(2, "0")}
-      </span>
-      <span className="flex-1 text-sm truncate">{label}</span>
-      <button
-        type="button"
-        onClick={onRemove}
-        className="text-xs text-danger hover:underline cursor-pointer"
-      >
-        Retirer
-      </button>
-    </li>
-  );
-}
-
-function SequenceRow({
-  slotId,
-  roundIndex,
-  currentExerciseId,
-  options,
-  onChange,
-}: {
-  slotId: string;
-  roundIndex: number;
-  currentExerciseId: string;
-  options: { id: string; name: string }[];
-  onChange: (next: string) => void;
-}) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
-    useSortable({ id: slotId });
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.5 : 1,
-  };
-  return (
-    <li
-      ref={setNodeRef}
-      style={style}
-      className="flex items-center gap-2 rounded-lg bg-background border border-border/50 pl-1 pr-2 py-1.5"
-    >
-      <button
-        type="button"
-        {...attributes}
-        {...listeners}
-        aria-label="Déplacer ce round"
-        className="cursor-grab active:cursor-grabbing text-subtle hover:text-foreground px-2 py-1 touch-none"
-      >
-        ⠿
-      </button>
-      <span className="text-[10px] font-mono text-accent w-10 text-center">
-        R{String(roundIndex + 1).padStart(2, "0")}
-      </span>
-      <select
-        value={currentExerciseId}
-        onChange={(e) => onChange(e.target.value)}
-        className="flex-1 rounded-md border border-border bg-background px-2 py-1 text-sm outline-none focus:border-accent"
-      >
-        {options.map((o) => (
-          <option key={o.id} value={o.id}>
-            {o.name}
-          </option>
-        ))}
-      </select>
-    </li>
-  );
-}
 
 function NumberField({
   label,
@@ -753,8 +630,3 @@ function defaultNameForPreset(p: Preset): string {
   }
 }
 
-function formatDuration(secs: number): string {
-  const m = Math.floor(secs / 60);
-  const s = secs % 60;
-  return m > 0 ? `${m} min ${s > 0 ? `${s} s` : ""}`.trim() : `${s} s`;
-}

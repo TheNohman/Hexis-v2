@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { upsertWellnessLogAction } from "@/app/wellness/actions";
+import { useToast } from "@/app/_components/toast";
 
 type Props = {
   existingLog?: {
@@ -73,6 +74,7 @@ function RatingRow({
 }
 
 export function WellnessCheckin({ existingLog }: Props) {
+  const toast = useToast();
   const [isPending, startTransition] = useTransition();
   const [expanded, setExpanded] = useState(false);
   const [mood, setMood] = useState(existingLog?.mood ?? 3);
@@ -85,16 +87,21 @@ export function WellnessCheckin({ existingLog }: Props) {
   function handleSave() {
     const today = new Date().toISOString().slice(0, 10);
     startTransition(async () => {
-      await upsertWellnessLogAction({
-        date: today,
-        mood,
-        sleep,
-        energy,
-        stress,
-        notes: notes.trim() || null,
-      });
-      setSaved(true);
-      setExpanded(false);
+      try {
+        await upsertWellnessLogAction({
+          date: today,
+          mood,
+          sleep,
+          energy,
+          stress,
+          notes: notes.trim() || null,
+        });
+        setSaved(true);
+        setExpanded(false);
+        toast.show("Bien-être du jour enregistré", { kind: "success" });
+      } catch {
+        toast.show("Impossible d'enregistrer le bien-être", { kind: "error" });
+      }
     });
   }
 

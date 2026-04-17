@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getCurrentUserId } from "@/lib/auth-helpers";
 import { getWorkoutStats, getWellnessPerformanceCorrelation } from "@/lib/stats/queries";
 import { formatDuration } from "@/lib/format";
+import { WellnessCorrelation } from "./_components/wellness-correlation";
 
 export const dynamic = "force-dynamic";
 
@@ -84,55 +85,8 @@ export default async function StatsPage() {
           </section>
         )}
 
-        {/* Wellness x Performance */}
-        {wellnessPerf.length >= 3 && (
-          <section className="space-y-3">
-            <h2 className="text-xs font-semibold text-muted uppercase tracking-wider">
-              Bien-&ecirc;tre &amp; performance (30 jours)
-            </h2>
-            <div className="rounded-xl border border-border bg-surface p-4 space-y-3">
-              {(() => {
-                const withWorkout = wellnessPerf.filter((p) => p.volume > 0);
-                const withoutWorkout = wellnessPerf.filter((p) => p.volume === 0);
-                if (withWorkout.length === 0) {
-                  return <p className="text-sm text-subtle text-center">Pas assez de donn&eacute;es crois&eacute;es.</p>;
-                }
-                const avgEnergyTraining = withWorkout.reduce((s, p) => s + p.energy, 0) / withWorkout.length;
-                const avgSleepTraining = withWorkout.reduce((s, p) => s + p.sleep, 0) / withWorkout.length;
-                const avgStressTraining = withWorkout.reduce((s, p) => s + p.stress, 0) / withWorkout.length;
-                const avgEnergyRest = withoutWorkout.length > 0
-                  ? withoutWorkout.reduce((s, p) => s + p.energy, 0) / withoutWorkout.length : null;
-                const avgSleepRest = withoutWorkout.length > 0
-                  ? withoutWorkout.reduce((s, p) => s + p.sleep, 0) / withoutWorkout.length : null;
-
-                const metrics = [
-                  { label: "\u00c9nergie", icon: "\u26a1", training: avgEnergyTraining, rest: avgEnergyRest },
-                  { label: "Sommeil", icon: "\ud83d\ude34", training: avgSleepTraining, rest: avgSleepRest },
-                  { label: "Stress", icon: "\ud83e\uddd8", training: avgStressTraining, rest: null },
-                ];
-
-                return (
-                  <div className="space-y-2">
-                    <div className="grid grid-cols-3 gap-3">
-                      {metrics.map((m) => (
-                        <div key={m.label} className="text-center">
-                          <span className="text-lg">{m.icon}</span>
-                          <p className="text-xl font-display font-bold tabular-nums mt-1">{m.training.toFixed(1)}</p>
-                          <p className="text-[10px] text-muted">{m.label}</p>
-                          <p className="text-[10px] text-subtle">jours d&rsquo;entra&icirc;nement</p>
-                        </div>
-                      ))}
-                    </div>
-                    <p className="text-[10px] text-subtle text-center mt-2">
-                      Bas&eacute; sur {withWorkout.length} jour{withWorkout.length > 1 ? "s" : ""} d&rsquo;entra&icirc;nement
-                      {avgSleepRest != null && ` vs ${withoutWorkout.length} jour${withoutWorkout.length > 1 ? "s" : ""} de repos`}
-                    </p>
-                  </div>
-                );
-              })()}
-            </div>
-          </section>
-        )}
+        {/* Wellness × Performance correlation (Pearson + bucketed avg) */}
+        <WellnessCorrelation points={wellnessPerf} />
 
         {/* Recent exercises */}
         <section className="space-y-3">

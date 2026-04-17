@@ -3,6 +3,8 @@
 import { useTransition } from "react";
 import type { ExerciseListItem } from "@/lib/workouts/types";
 import type { TemplateDetail } from "@/lib/templates/types";
+import { formatDuration } from "@/lib/format";
+import { Stat } from "@/app/_components/stat";
 import { deleteTemplateBlockAction } from "@/app/templates/actions";
 
 type Block = TemplateDetail["blocks"][number];
@@ -65,10 +67,10 @@ export function TemplateIntervalBlockCard({ templateId, block, exercises }: Prop
 
       <div className="px-4 py-3 space-y-2">
         <div className="grid grid-cols-4 gap-2 text-center">
-          <Stat label="Effort" value={`${workSecs}s`} />
-          <Stat label="Repos" value={`${restSecs}s`} />
-          <Stat label="Rounds" value={`${rounds}`} />
-          <Stat label="Total" value={formatDuration(totalSecs)} />
+          <Stat label="Effort" value={`${workSecs}s`} dense />
+          <Stat label="Repos" value={`${restSecs}s`} dense />
+          <Stat label="Rounds" value={`${rounds}`} dense />
+          <Stat label="Total" value={formatDuration(totalSecs)} dense />
         </div>
 
         <div className="pt-2 border-t border-accent/10">
@@ -113,15 +115,6 @@ export function TemplateIntervalBlockCard({ templateId, block, exercises }: Prop
   );
 }
 
-function Stat({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-lg bg-surface border border-border py-2">
-      <p className="text-sm font-bold tabular-nums">{value}</p>
-      <p className="text-[10px] text-muted uppercase tracking-wider">{label}</p>
-    </div>
-  );
-}
-
 function labelForFormat(f: Block["intervalFormat"]): string {
   switch (f) {
     case "TABATA":
@@ -137,9 +130,3 @@ function labelForFormat(f: Block["intervalFormat"]): string {
   }
 }
 
-function formatDuration(secs: number): string {
-  const m = Math.floor(secs / 60);
-  const s = secs % 60;
-  if (m === 0) return `${s}s`;
-  return s === 0 ? `${m}min` : `${m}m${String(s).padStart(2, "0")}`;
-}

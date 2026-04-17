@@ -1,6 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useReducer,
+  useRef,
+  useTransition,
+} from "react";
 import type { WorkoutDetail } from "@/lib/workouts/types";
 import {
   completeIntervalRoundAction,
@@ -17,21 +24,108 @@ type Props = {
 
 type Phase = "GET_READY" | "WORK" | "REST" | "DONE";
 
+type State = {
+  phase: Phase;
+  secondsLeft: number;
+  currentRound: number;
+  paused: boolean;
+  /** Incremented every time a round transitions WORK → REST so the
+   *  persistence effect only fires on the edge (no double writes). */
+  persistEpoch: number;
+};
+
+type Action =
+  | { type: "TICK" }
+  | { type: "TOGGLE_PAUSE" }
+  | { type: "SKIP_PHASE" }
+  | { type: "RESET"; leadSecs: number };
+
+type Config = {
+  workSecs: number;
+  restSecs: number;
+  rounds: number;
+  leadSecs: number;
+};
+
+function reducer(state: State, action: Action, cfg: Config): State {
+  switch (action.type) {
+    case "TOGGLE_PAUSE":
+      return { ...state, paused: !state.paused };
+    case "RESET":
+      return {
+        phase: "GET_READY",
+        secondsLeft: action.leadSecs,
+        currentRound: 0,
+        paused: false,
+        persistEpoch: state.persistEpoch, // keep monotonic
+      };
+    case "SKIP_PHASE":
+      // Collapse to the next phase transition by forcing secondsLeft to 0.
+      if (state.phase === "DONE") return state;
+      return { ...state, secondsLeft: 0 };
+    case "TICK": {
+      if (state.phase === "DONE" || state.paused) return state;
+      if (state.secondsLeft > 1) {
+        return { ...state, secondsLeft: state.secondsLeft - 1 };
+      }
+      // Phase transition.
+      if (state.phase === "GET_READY") {
+        return {
+          ...state,
+          phase: "WORK",
+          secondsLeft: cfg.workSecs,
+          currentRound: 0,
+        };
+      }
+      if (state.phase === "WORK") {
+        const nextRound = state.currentRound + 1;
+        if (nextRound >= cfg.rounds) {
+          return {
+            ...state,
+            phase: "DONE",
+            secondsLeft: 0,
+            currentRound: nextRound,
+            persistEpoch: state.persistEpoch + 1,
+          };
+        }
+        if (cfg.restSecs > 0) {
+          return {
+            ...state,
+            phase: "REST",
+            secondsLeft: cfg.restSecs,
+            currentRound: nextRound,
+            persistEpoch: state.persistEpoch + 1,
+          };
+        }
+        // No rest configured → skip straight to WORK.
+        return {
+          ...state,
+          phase: "WORK",
+          secondsLeft: cfg.workSecs,
+          currentRound: nextRound,
+          persistEpoch: state.persistEpoch + 1,
+        };
+      }
+      // REST → WORK
+      return { ...state, phase: "WORK", secondsLeft: cfg.workSecs };
+    }
+  }
+}
+
 /**
  * Full-screen interval timer. Takes over the viewport while the user is
- * running a HIIT block. Handles:
- *   - GET_READY countdown (10s lead-in, configurable per block)
- *   - WORK → REST → WORK alternation for N rounds
- *   - Audio cues via WebAudio (3-2-1 countdown + transition bip)
- *   - Wake lock so the screen doesn't sleep mid-workout
- *   - Pause / resume
- *   - Server-side round persistence via completeIntervalRoundAction
+ * running a HIIT block. State is fully driven by a reducer keyed on
+ * the three user events (TICK / TOGGLE_PAUSE / SKIP_PHASE / RESET);
+ * everything else (audio, wake lock, persistence) is a side-effect
+ * that reads state, never the other way around.
  */
 export function IntervalRunner({ workoutId, block, onClose }: Props) {
-  const rounds = block.roundCount ?? 0;
-  const workSecs = block.workSecs ?? 20;
-  const restSecs = block.restSecs ?? 10;
-  const leadSecs = block.countdownLeadSecs ?? 10;
+  const cfg: Config = {
+    rounds: block.roundCount ?? 0,
+    workSecs: block.workSecs ?? 20,
+    restSecs: block.restSecs ?? 10,
+    leadSecs: block.countdownLeadSecs ?? 10,
+  };
 
   const playlist = useMemo(
     () =>
@@ -42,21 +136,20 @@ export function IntervalRunner({ workoutId, block, onClose }: Props) {
     [block.entries],
   );
 
-  const [phase, setPhase] = useState<Phase>("GET_READY");
-  const [currentRound, setCurrentRound] = useState<number>(
-    block.completedRounds ?? 0,
+  const [state, rawDispatch] = useReducer(
+    (s: State, a: Action) => reducer(s, a, cfg),
+    {
+      phase: "GET_READY",
+      secondsLeft: cfg.leadSecs,
+      currentRound: block.completedRounds ?? 0,
+      paused: false,
+      persistEpoch: 0,
+    },
   );
-  const [secondsLeft, setSecondsLeft] = useState<number>(leadSecs);
-  const [paused, setPaused] = useState<boolean>(false);
+
   const [, startTransition] = useTransition();
 
-  // Keep a ref to always-latest values inside the interval tick.
-  const phaseRef = useRef(phase);
-  const pausedRef = useRef(paused);
-  phaseRef.current = phase;
-  pausedRef.current = paused;
-
-  // --- Audio (WebAudio beeps) ---
+  // ── WebAudio beeps ──
   const audioCtxRef = useRef<AudioContext | null>(null);
   const ensureAudio = useCallback(() => {
     if (typeof window === "undefined") return null;
@@ -72,7 +165,6 @@ export function IntervalRunner({ workoutId, block, onClose }: Props) {
     }
     return audioCtxRef.current;
   }, []);
-
   const beep = useCallback(
     (freq: number, durMs: number, volume = 0.15) => {
       const ctx = ensureAudio();
@@ -91,22 +183,19 @@ export function IntervalRunner({ workoutId, block, onClose }: Props) {
     [ensureAudio],
   );
 
-  // --- Wake lock ---
+  // ── Wake lock ──
   useEffect(() => {
     let sentinel: WakeLockSentinel | null = null;
-    async function lock() {
+    (async () => {
       try {
         const wl = (navigator as Navigator & {
           wakeLock?: { request(type: "screen"): Promise<WakeLockSentinel> };
         }).wakeLock;
-        if (wl) {
-          sentinel = await wl.request("screen");
-        }
+        if (wl) sentinel = await wl.request("screen");
       } catch {
-        /* ignore — not all browsers support it */
+        /* ignore */
       }
-    }
-    lock();
+    })();
     return () => {
       try {
         sentinel?.release();
@@ -116,77 +205,43 @@ export function IntervalRunner({ workoutId, block, onClose }: Props) {
     };
   }, []);
 
-  // --- Main tick loop ---
+  // ── Ticker ──
   useEffect(() => {
-    if (phase === "DONE") return;
-    const id = setInterval(() => {
-      if (pausedRef.current) return;
-      setSecondsLeft((s) => {
-        // Countdown beep on last 3 ticks of each phase except GET_READY's
-        // very first seconds.
-        if (s <= 3 && s > 0 && phaseRef.current !== "DONE") {
-          beep(800, 80);
-        }
-        return s - 1;
-      });
-    }, 1000);
+    if (state.phase === "DONE") return;
+    const id = setInterval(() => rawDispatch({ type: "TICK" }), 1000);
     return () => clearInterval(id);
-  }, [phase, beep]);
+  }, [state.phase]);
 
-  // --- Phase transitions when secondsLeft hits 0 ---
+  // ── Countdown beeps (on the 3-2-1 of each phase) ──
   useEffect(() => {
-    if (secondsLeft > 0) return;
-    if (phase === "DONE") return;
-
-    beep(1200, 250);
-
-    if (phase === "GET_READY") {
-      setPhase("WORK");
-      setSecondsLeft(workSecs);
-      setCurrentRound(0); // WORK round 1 starts next
-      return;
+    if (state.phase === "DONE") return;
+    if (state.paused) return;
+    if (state.secondsLeft > 0 && state.secondsLeft <= 3) {
+      beep(800, 80);
     }
+    if (state.secondsLeft === 0 && state.phase !== "GET_READY") {
+      beep(1200, 250);
+    }
+  }, [state.secondsLeft, state.phase, state.paused, beep]);
 
-    if (phase === "WORK") {
-      // Persist this round as completed.
-      const nextRound = currentRound + 1;
-      startTransition(async () => {
-        try {
-          await completeIntervalRoundAction(workoutId, block.id);
-        } catch {
-          /* swallow — UI keeps ticking; server is eventually consistent */
-        }
-      });
-      if (nextRound >= rounds) {
-        setPhase("DONE");
-        setSecondsLeft(0);
-        setCurrentRound(nextRound);
-        beep(1600, 500);
-        return;
+  // ── Final cheer on DONE ──
+  useEffect(() => {
+    if (state.phase === "DONE") beep(1600, 500);
+  }, [state.phase, beep]);
+
+  // ── Persist completed rounds on every WORK→REST / WORK→DONE edge ──
+  useEffect(() => {
+    if (state.persistEpoch === 0) return;
+    startTransition(async () => {
+      try {
+        await completeIntervalRoundAction(workoutId, block.id);
+      } catch {
+        /* swallow — UI keeps ticking; server is eventually consistent */
       }
-      setCurrentRound(nextRound);
-      if (restSecs > 0) {
-        setPhase("REST");
-        setSecondsLeft(restSecs);
-      } else {
-        // Skip rest phase entirely.
-        setPhase("WORK");
-        setSecondsLeft(workSecs);
-      }
-      return;
-    }
+    });
+  }, [state.persistEpoch, workoutId, block.id]);
 
-    if (phase === "REST") {
-      setPhase("WORK");
-      setSecondsLeft(workSecs);
-      return;
-    }
-  }, [secondsLeft, phase, workSecs, restSecs, rounds, currentRound, beep, block.id, workoutId]);
-
-  // Which exercise is up? Three modes:
-  //   SAME   → always the first exo in the playlist
-  //   CUSTOM → read from customSequence[r] (exerciseId lookup)
-  //   CYCLE  → playlist[r % playlist.length]
+  // ── Exercise picker: SAME / CUSTOM / CYCLE ──
   const exercisesById = useMemo(
     () => new Map(playlist.map((p) => [p.id, p] as const)),
     [playlist],
@@ -205,9 +260,11 @@ export function IntervalRunner({ workoutId, block, onClose }: Props) {
     [playlist, block.playbackOrder, block.customSequence, exercisesById],
   );
 
-  const currentExercise = exerciseForRound(currentRound);
+  const currentExercise = exerciseForRound(state.currentRound);
   const nextExercise =
-    currentRound + 1 < rounds ? exerciseForRound(currentRound + 1) : null;
+    state.currentRound + 1 < cfg.rounds
+      ? exerciseForRound(state.currentRound + 1)
+      : null;
 
   function handleReset() {
     startTransition(async () => {
@@ -217,32 +274,23 @@ export function IntervalRunner({ workoutId, block, onClose }: Props) {
         /* ignore */
       }
     });
-    setPhase("GET_READY");
-    setSecondsLeft(leadSecs);
-    setCurrentRound(0);
-    setPaused(false);
+    rawDispatch({ type: "RESET", leadSecs: cfg.leadSecs });
   }
 
-  function handleSkipPhase() {
-    setSecondsLeft(0);
-  }
-
-  // Colors per phase. Fully opaque so the session underneath doesn't
-  // bleed through the full-screen overlay.
   const bg =
-    phase === "WORK"
+    state.phase === "WORK"
       ? "bg-[color:var(--done,#22c55e)]"
-      : phase === "REST"
+      : state.phase === "REST"
         ? "bg-orange-500"
-        : phase === "GET_READY"
+        : state.phase === "GET_READY"
           ? "bg-accent"
           : "bg-background";
   const label =
-    phase === "WORK"
+    state.phase === "WORK"
       ? "EFFORT"
-      : phase === "REST"
+      : state.phase === "REST"
         ? "REPOS"
-        : phase === "GET_READY"
+        : state.phase === "GET_READY"
           ? "PRÉPARE-TOI"
           : "TERMINÉ";
 
@@ -262,7 +310,9 @@ export function IntervalRunner({ workoutId, block, onClose }: Props) {
           ← Quitter
         </button>
         <p className="text-xs uppercase tracking-wider text-white/80 tabular-nums">
-          Round {Math.min(currentRound + (phase === "WORK" ? 1 : 0), rounds)} / {rounds}
+          Round{" "}
+          {Math.min(state.currentRound + (state.phase === "WORK" ? 1 : 0), cfg.rounds)} /{" "}
+          {cfg.rounds}
         </p>
         <button
           type="button"
@@ -280,32 +330,35 @@ export function IntervalRunner({ workoutId, block, onClose }: Props) {
         </p>
 
         <p className="font-display font-bold text-[min(50vw,240px)] leading-none tabular-nums">
-          {phase === "DONE" ? "✓" : secondsLeft}
+          {state.phase === "DONE" ? "✓" : state.secondsLeft}
         </p>
 
-        {phase !== "DONE" && currentExercise && (
+        {state.phase !== "DONE" && currentExercise && (
           <div className="text-center">
-            <p className="text-3xl font-display font-semibold">{currentExercise.name}</p>
-            {nextExercise && phase === "REST" && (
+            <p className="text-3xl font-display font-semibold">
+              {currentExercise.name}
+            </p>
+            {nextExercise && state.phase === "REST" && (
               <p className="text-sm text-white/75 mt-3">
-                Ensuite → <span className="font-semibold">{nextExercise.name}</span>
+                Ensuite →{" "}
+                <span className="font-semibold">{nextExercise.name}</span>
               </p>
             )}
           </div>
         )}
 
-        {phase === "DONE" && (
+        {state.phase === "DONE" && (
           <p className="text-xl font-semibold">Circuit terminé !</p>
         )}
       </div>
 
       {/* Round dots */}
       <div className="flex items-center justify-center gap-1.5 pb-3">
-        {Array.from({ length: rounds }).map((_, i) => (
+        {Array.from({ length: cfg.rounds }).map((_, i) => (
           <span
             key={i}
             className={`h-2 w-2 rounded-full ${
-              i < currentRound ? "bg-white" : "bg-white/30"
+              i < state.currentRound ? "bg-white" : "bg-white/30"
             }`}
           />
         ))}
@@ -313,7 +366,7 @@ export function IntervalRunner({ workoutId, block, onClose }: Props) {
 
       {/* Bottom controls */}
       <div className="p-4 grid grid-cols-2 gap-3">
-        {phase === "DONE" ? (
+        {state.phase === "DONE" ? (
           <button
             type="button"
             onClick={onClose}
@@ -327,15 +380,15 @@ export function IntervalRunner({ workoutId, block, onClose }: Props) {
               type="button"
               onClick={() => {
                 ensureAudio();
-                setPaused((p) => !p);
+                rawDispatch({ type: "TOGGLE_PAUSE" });
               }}
               className="rounded-xl bg-white/15 backdrop-blur py-4 text-sm font-bold uppercase tracking-wider cursor-pointer hover:bg-white/25 transition-colors"
             >
-              {paused ? "▶ Reprendre" : "❚❚ Pause"}
+              {state.paused ? "▶ Reprendre" : "❚❚ Pause"}
             </button>
             <button
               type="button"
-              onClick={handleSkipPhase}
+              onClick={() => rawDispatch({ type: "SKIP_PHASE" })}
               className="rounded-xl bg-white/15 backdrop-blur py-4 text-sm font-bold uppercase tracking-wider cursor-pointer hover:bg-white/25 transition-colors"
             >
               ⏭ Passer

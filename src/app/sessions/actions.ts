@@ -168,10 +168,8 @@ export async function finishWorkoutAction(workoutId: string) {
 
   // Scan the finished session for new personal records. Non-blocking
   // in the sense that a detection failure doesn't prevent the redirect.
-  let prCount = 0;
   try {
-    const prs = await detectAndRecordPRs(workoutId, userId);
-    prCount = prs.length;
+    await detectAndRecordPRs(workoutId, userId);
   } catch (err) {
     console.error("[finishWorkout] PR detection failed", err);
   }
@@ -179,9 +177,10 @@ export async function finishWorkoutAction(workoutId: string) {
   // Session just ended → the next mentor advice should reflect it.
   await clearAdviceCache(userId);
   revalidatePath("/dashboard");
-  // Encode the PR count in the URL so the dashboard can surface a
-  // celebratory toast on the next render.
-  redirect(prCount > 0 ? `/dashboard?prs=${prCount}` : "/dashboard");
+  // Route to the recap screen (not the dashboard) so the user gets
+  // a proper post-workout moment. The summary page links back to
+  // the dashboard itself.
+  redirect(`/sessions/${workoutId}/summary`);
 }
 
 /**

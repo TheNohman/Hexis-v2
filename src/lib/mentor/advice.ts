@@ -6,6 +6,46 @@ function getOpenAI() {
   return new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 }
 
+/**
+ * Per-user in-memory rate limit. Caps generations to
+ * RATE_LIMIT_MAX per RATE_LIMIT_WINDOW_MS. In-memory is fine because:
+ *   - Next.js server is long-lived (single instance on the VPS).
+ *   - Worst case on restart: one user gets one extra generation.
+ * If we ever scale horizontally this should move to Redis.
+ */
+const RATE_LIMIT_MAX = 6; // requests
+const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000; // per hour
+const rateLimitBuckets = new Map<string, number[]>();
+
+function takeRateLimitToken(userId: string): boolean {
+  const now = Date.now();
+  const prev = rateLimitBuckets.get(userId) ?? [];
+  const fresh = prev.filter((t) => now - t < RATE_LIMIT_WINDOW_MS);
+  if (fresh.length >= RATE_LIMIT_MAX) {
+    rateLimitBuckets.set(userId, fresh);
+    return false;
+  }
+  fresh.push(now);
+  rateLimitBuckets.set(userId, fresh);
+  return true;
+}
+
+/**
+ * Scrub potentially-prompt-injecting content from free-text user fields
+ * before sending them to the LLM. Users can type anything in
+ * `medicalNotes` and `sportObjective`; we don't want "Ignore previous
+ * instructions…" to leak into the system prompt.
+ */
+function sanitiseForPrompt(raw: string | null | undefined): string | null {
+  if (!raw) return null;
+  // Strip known jailbreak triggers and cap length.
+  const cleaned = raw
+    .replace(/ignore (previous|all|above)/gi, "[caviardé]")
+    .replace(/system prompt|system:/gi, "[caviardé]")
+    .slice(0, 300);
+  return cleaned.trim() || null;
+}
+
 const ADVICE_SYSTEM_PROMPT = `Tu es un coach sportif expert et bienveillant. À partir des données d'entraînement de l'utilisateur, donne UN conseil court et personnalisé pour sa prochaine séance.
 
 Règles :
@@ -54,9 +94,20 @@ export async function getSessionAdvice(userId: string): Promise<string | null> {
     return user.lastAdvice;
   }
 
+  // Rate limit to guard the OpenAI bill. If exceeded, fall back to the
+  // stale cache (better than nothing) and skip the API call entirely.
+  if (!takeRateLimitToken(userId)) {
+    return user.lastAdvice ?? null;
+  }
+
   // Generate fresh advice
   try {
     const context = await buildMentorContext(userId);
+    // Scrub user-controlled free-text to prevent prompt injection.
+    if (context.user) {
+      context.user.medicalNotes = sanitiseForPrompt(context.user.medicalNotes);
+      context.user.sportObjective = sanitiseForPrompt(context.user.sportObjective);
+    }
     const contextSummary = JSON.stringify(context, null, 0);
 
     const response = await getOpenAI().chat.completions.create({

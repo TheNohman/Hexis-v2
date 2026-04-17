@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import type { WorkoutDetail } from "@/lib/workouts/types";
+import { formatDuration } from "@/lib/format";
+import { Stat } from "@/app/_components/stat";
 import { IntervalRunner } from "./interval-runner";
 
 type Block = WorkoutDetail["blocks"][number];
@@ -44,10 +46,15 @@ export function IntervalBlockSection({ workoutId, block }: Props) {
 
         <div className="p-4 space-y-3">
           <div className="grid grid-cols-4 gap-2 text-center">
-            <Stat label="Effort" value={`${workSecs}s`} />
-            <Stat label="Repos" value={`${restSecs}s`} />
-            <Stat label="Rounds" value={`${block.completedRounds}/${rounds}`} highlight={done} />
-            <Stat label="Total" value={formatDuration(totalSecs)} />
+            <Stat label="Effort" value={`${workSecs}s`} dense />
+            <Stat label="Repos" value={`${restSecs}s`} dense />
+            <Stat
+              label="Rounds"
+              value={`${block.completedRounds}/${rounds}`}
+              dense
+              variant={done ? "done" : "default"}
+            />
+            <Stat label="Total" value={formatDuration(totalSecs)} dense />
           </div>
 
           {playlist.length > 0 && (
@@ -87,29 +94,6 @@ export function IntervalBlockSection({ workoutId, block }: Props) {
   );
 }
 
-function Stat({
-  label,
-  value,
-  highlight,
-}: {
-  label: string;
-  value: string;
-  highlight?: boolean;
-}) {
-  return (
-    <div
-      className={`rounded-lg py-2 border ${
-        highlight ? "border-done/40 bg-done/10" : "border-border bg-surface"
-      }`}
-    >
-      <p className={`text-sm font-bold tabular-nums ${highlight ? "text-done" : ""}`}>
-        {value}
-      </p>
-      <p className="text-[10px] text-muted uppercase tracking-wider">{label}</p>
-    </div>
-  );
-}
-
 function labelForFormat(f: Block["intervalFormat"]): string {
   switch (f) {
     case "TABATA":
@@ -125,9 +109,3 @@ function labelForFormat(f: Block["intervalFormat"]): string {
   }
 }
 
-function formatDuration(secs: number): string {
-  const m = Math.floor(secs / 60);
-  const s = secs % 60;
-  if (m === 0) return `${s}s`;
-  return s === 0 ? `${m}min` : `${m}m${String(s).padStart(2, "0")}`;
-}

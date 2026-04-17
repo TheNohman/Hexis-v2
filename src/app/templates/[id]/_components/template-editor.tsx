@@ -28,8 +28,16 @@ import {
   startSessionFromTemplateAction,
 } from "@/app/templates/actions";
 import { TemplateBlockCard } from "./template-block-card";
+import dynamic from "next/dynamic";
 import { TemplateIntervalBlockCard } from "./template-interval-block-card";
-import { IntervalBlockDialog } from "./interval-block-dialog";
+
+// Lazy-load the HIIT dialog so its dnd-kit / interval-specific bundle
+// doesn't ship with the first render of a template page that never
+// opens it. Loaded on first click of "+ Bloc HIIT".
+const IntervalBlockDialog = dynamic(
+  () => import("./interval-block-dialog").then((m) => m.IntervalBlockDialog),
+  { ssr: false },
+);
 
 type Props = {
   template: TemplateDetail;
