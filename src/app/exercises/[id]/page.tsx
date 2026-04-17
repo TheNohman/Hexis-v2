@@ -5,6 +5,7 @@ import { formatDuration, formatExerciseType } from "@/lib/format";
 import { getExercisePersonalRecords, getExerciseProgression } from "@/lib/stats/exercise-stats";
 import { prisma } from "@/lib/prisma";
 import { ExerciseProgressionChart } from "./_components/progression-chart";
+import { ManualPRForm } from "./_components/manual-pr-form";
 
 export const dynamic = "force-dynamic";
 
@@ -128,6 +129,9 @@ export default async function ExerciseDetailPage({
             </div>
           </section>
         )}
+
+        {/* Manual PR entry (only meaningful for STRENGTH exercises) */}
+        {exercise.type === "STRENGTH" && <ManualPRForm exerciseId={exercise.id} />}
 
         {/* Progression chart */}
         {progression.length >= 2 && (

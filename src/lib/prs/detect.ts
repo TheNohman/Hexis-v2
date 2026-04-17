@@ -141,6 +141,58 @@ export async function detectAndRecordPRs(
 }
 
 /**
+ * Manually record a PR (1RM test, gym log entry, etc.). Unlike
+ * `detectAndRecordPRs`, this does NOT require a workout context — the
+ * user simply declares "I lifted X kg for Y reps on date D". The estimated
+ * 1RM is computed via Epley and the row is stored with `source: "MANUAL"`.
+ *
+ * The caller (server action) is responsible for verifying the exerciseId
+ * belongs to the user (or is a system exercise) before calling this —
+ * here we only validate numeric inputs.
+ */
+export async function addManualPR(
+  userId: string,
+  input: {
+    exerciseId: string;
+    weightKg: number;
+    reps: number;
+    achievedAt?: Date;
+  },
+) {
+  if (!input.exerciseId) throw new Error("exerciseId is required");
+  if (!Number.isFinite(input.weightKg) || input.weightKg <= 0) {
+    throw new Error("weightKg must be a positive number");
+  }
+  if (!Number.isFinite(input.reps) || input.reps <= 0 || !Number.isInteger(input.reps)) {
+    throw new Error("reps must be a positive integer");
+  }
+
+  // Ownership check: exercise must be system or owned by the user.
+  const exercise = await prisma.exercise.findUnique({
+    where: { id: input.exerciseId },
+    select: { id: true, isSystem: true, userId: true },
+  });
+  if (!exercise) throw new Error("Not found");
+  if (!exercise.isSystem && exercise.userId !== userId) {
+    throw new Error("Forbidden");
+  }
+
+  const estimated1RM = estimate1RM(input.weightKg, input.reps);
+
+  return prisma.exerciseMax.create({
+    data: {
+      userId,
+      exerciseId: input.exerciseId,
+      weightKg: input.weightKg,
+      reps: input.reps,
+      estimated1RM,
+      achievedAt: input.achievedAt ?? new Date(),
+      source: "MANUAL" as const,
+    },
+  });
+}
+
+/**
  * Return the user's current best (by estimated1RM) per exercise with a PR
  * row. Used by the dashboard "Records récents" and the mentor context.
  */
