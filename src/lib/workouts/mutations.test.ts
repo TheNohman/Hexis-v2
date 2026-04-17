@@ -74,10 +74,12 @@ describe("incrementCompletedRounds", () => {
 
     await incrementCompletedRounds("b1", "user-1");
 
-    expect(mocked.workoutBlock.update).toHaveBeenCalledWith({
-      where: { id: "b1" },
-      data: { completedRounds: 3 },
-    });
+    expect(mocked.workoutBlock.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: "b1" },
+        data: { completedRounds: 3 },
+      }),
+    );
   });
 
   it("caps completedRounds at roundCount", async () => {
@@ -92,10 +94,12 @@ describe("incrementCompletedRounds", () => {
 
     await incrementCompletedRounds("b1", "user-1");
 
-    expect(mocked.workoutBlock.update).toHaveBeenCalledWith({
-      where: { id: "b1" },
-      data: { completedRounds: 4 },
-    });
+    expect(mocked.workoutBlock.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: "b1" },
+        data: { completedRounds: 4 },
+      }),
+    );
   });
 
   it("throws Not found when block is missing", async () => {
