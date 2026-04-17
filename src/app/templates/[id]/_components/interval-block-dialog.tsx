@@ -385,94 +385,136 @@ export function IntervalBlockDialog({
             />
           </section>
 
-          {/* Selected playlist — draggable to reorder */}
-          <section className="space-y-2">
-            <h3 className="text-xs font-semibold text-muted uppercase tracking-wider flex items-center justify-between">
-              <span>Playlist ({selectedExerciseIds.length})</span>
-              {selectedExerciseIds.length > 1 && (
-                <span className="text-[10px] normal-case text-subtle">
-                  Glisse pour réordonner
-                </span>
-              )}
-            </h3>
-            {selectedExerciseIds.length === 0 ? (
-              <p className="text-xs text-subtle italic">
-                Choisis au moins un exercice ci-dessous.
-              </p>
-            ) : (
-              <DndContext
-                sensors={sensors}
-                collisionDetection={closestCenter}
-                onDragEnd={handleSelectedDragEnd}
-              >
-                <SortableContext
-                  items={selectedExerciseIds}
-                  strategy={verticalListSortingStrategy}
-                >
-                  <ol className="space-y-1 rounded-xl border border-border bg-surface p-2">
-                    {selectedExerciseIds.map((id, i) => (
-                      <SortableRow
-                        key={id}
-                        id={id}
-                        index={i}
-                        label={exerciseById.get(id)?.name ?? id}
-                        onRemove={() => toggleExercise(id)}
-                      />
-                    ))}
-                  </ol>
-                </SortableContext>
-              </DndContext>
-            )}
-          </section>
-
-          {/* Custom sequence editor */}
-          {playbackOrder === "CUSTOM" && selectedExerciseIds.length > 0 && (
+          {/* Playlist (CYCLE / SAME) — draggable, defines the cycle order
+              (CYCLE) or the single played exo (SAME). Hidden in CUSTOM
+              mode where the per-round sequence below drives everything. */}
+          {playbackOrder !== "CUSTOM" && (
             <section className="space-y-2">
               <h3 className="text-xs font-semibold text-muted uppercase tracking-wider flex items-center justify-between">
-                <span>Séquence des rounds</span>
-                <button
-                  type="button"
-                  onClick={syncCustomSequence}
-                  className="text-[10px] normal-case text-accent hover:underline cursor-pointer"
-                >
-                  Pré-remplir en cycle
-                </button>
+                <span>
+                  {playbackOrder === "SAME"
+                    ? `Exercice (${selectedExerciseIds.length})`
+                    : `Playlist (${selectedExerciseIds.length})`}
+                </span>
+                {playbackOrder === "CYCLE" && selectedExerciseIds.length > 1 && (
+                  <span className="text-[10px] normal-case text-subtle">
+                    Glisse pour réordonner
+                  </span>
+                )}
               </h3>
-              <p className="text-[11px] text-subtle">
-                Glisse les slots pour réordonner ou sélectionne un exo différent par round.
-              </p>
-              <DndContext
-                sensors={sensors}
-                collisionDetection={closestCenter}
-                onDragEnd={handleSequenceDragEnd}
-              >
-                <SortableContext
-                  items={Array.from({ length: roundCount }).map((_, i) => `seq-${i}`)}
-                  strategy={verticalListSortingStrategy}
+              {selectedExerciseIds.length === 0 ? (
+                <p className="text-xs text-subtle italic">
+                  Choisis au moins un exercice ci-dessous.
+                </p>
+              ) : (
+                <DndContext
+                  sensors={sensors}
+                  collisionDetection={closestCenter}
+                  onDragEnd={handleSelectedDragEnd}
                 >
-                  <ol className="space-y-1 rounded-xl border border-border bg-surface p-2">
-                    {Array.from({ length: roundCount }).map((_, i) => {
-                      const current =
-                        customSequence[i] ??
-                        selectedExerciseIds[i % selectedExerciseIds.length] ??
-                        "";
-                      return (
-                        <SequenceRow
-                          key={`seq-${i}`}
-                          slotId={`seq-${i}`}
-                          roundIndex={i}
-                          currentExerciseId={current}
-                          options={selectedExerciseIds.map((id) => ({
-                            id,
-                            name: exerciseById.get(id)?.name ?? id,
-                          }))}
-                          onChange={(next) => setSequenceSlot(i, next)}
+                  <SortableContext
+                    items={selectedExerciseIds}
+                    strategy={verticalListSortingStrategy}
+                  >
+                    <ol className="space-y-1 rounded-xl border border-border bg-surface p-2">
+                      {selectedExerciseIds.map((id, i) => (
+                        <SortableRow
+                          key={id}
+                          id={id}
+                          index={i}
+                          label={exerciseById.get(id)?.name ?? id}
+                          onRemove={() => toggleExercise(id)}
                         />
-                      );
-                    })}
-                  </ol>
-                </SortableContext>
-              </DndContext>
+                      ))}
+                    </ol>
+                  </SortableContext>
+                </DndContext>
+              )}
+            </section>
+          )}
+
+          {/* Custom sequence editor — in CUSTOM mode this section replaces
+              the playlist and is the single source of truth. A compact
+              chip row above shows which exos are in the pool with a
+              remove affordance, so the Playlist section stays useful
+              only when its ORDER matters (CYCLE / SAME). */}
+          {playbackOrder === "CUSTOM" && (
+            <section className="space-y-3">
+              {selectedExerciseIds.length === 0 ? (
+                <p className="text-xs text-subtle italic">
+                  Choisis au moins un exercice ci-dessous.
+                </p>
+              ) : (
+                <>
+                  <div className="flex flex-wrap gap-1.5">
+                    {selectedExerciseIds.map((id) => (
+                      <span
+                        key={id}
+                        className="inline-flex items-center gap-1.5 rounded-full border border-border bg-surface px-2.5 py-1 text-xs"
+                      >
+                        {exerciseById.get(id)?.name ?? id}
+                        <button
+                          type="button"
+                          onClick={() => toggleExercise(id)}
+                          aria-label="Retirer"
+                          className="text-subtle hover:text-danger cursor-pointer"
+                        >
+                          ×
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-xs font-semibold text-muted uppercase tracking-wider">
+                      Séquence des rounds
+                    </h3>
+                    <button
+                      type="button"
+                      onClick={syncCustomSequence}
+                      className="text-[10px] normal-case text-accent hover:underline cursor-pointer"
+                    >
+                      Pré-remplir en cycle
+                    </button>
+                  </div>
+                  <p className="text-[11px] text-subtle -mt-1">
+                    Glisse les slots pour réordonner ou sélectionne un exo différent par round.
+                  </p>
+
+                  <DndContext
+                    sensors={sensors}
+                    collisionDetection={closestCenter}
+                    onDragEnd={handleSequenceDragEnd}
+                  >
+                    <SortableContext
+                      items={Array.from({ length: roundCount }).map((_, i) => `seq-${i}`)}
+                      strategy={verticalListSortingStrategy}
+                    >
+                      <ol className="space-y-1 rounded-xl border border-border bg-surface p-2">
+                        {Array.from({ length: roundCount }).map((_, i) => {
+                          const current =
+                            customSequence[i] ??
+                            selectedExerciseIds[i % selectedExerciseIds.length] ??
+                            "";
+                          return (
+                            <SequenceRow
+                              key={`seq-${i}`}
+                              slotId={`seq-${i}`}
+                              roundIndex={i}
+                              currentExerciseId={current}
+                              options={selectedExerciseIds.map((id) => ({
+                                id,
+                                name: exerciseById.get(id)?.name ?? id,
+                              }))}
+                              onChange={(next) => setSequenceSlot(i, next)}
+                            />
+                          );
+                        })}
+                      </ol>
+                    </SortableContext>
+                  </DndContext>
+                </>
+              )}
             </section>
           )}
 
