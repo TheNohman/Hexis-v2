@@ -15,8 +15,14 @@ export async function upsertWellnessLogAction(data: {
   notes?: string | null;
 }) {
   const parsed = assertValid(wellnessUpsertSchema, data);
+  // Guard: refuse future dates. Past dates allowed (UI constrains to 30 d).
+  const today = new Date().toISOString().slice(0, 10);
+  if (parsed.date > today) {
+    throw new Error("Impossible d'enregistrer un bien-être futur");
+  }
   const userId = await getCurrentUserId();
   await upsertWellnessLog(userId, parsed);
+  // Wellness change materially shifts the advice context; invalidate cache.
   await clearAdviceCache(userId);
   revalidatePath("/profile");
   revalidatePath("/dashboard");

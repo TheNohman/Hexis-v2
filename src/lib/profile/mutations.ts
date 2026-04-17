@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import type { PrimarySport, SportLevel } from "@/generated/prisma/client";
 
 export async function updateUserProfile(
   userId: string,
@@ -10,6 +11,13 @@ export async function updateUserProfile(
     fcResting?: number | null;
     vmaKmh?: number | null;
     ftp?: number | null;
+    primarySport?: PrimarySport | null;
+    sportLevel?: SportLevel | null;
+    sportObjective?: string | null;
+    weeklySessionTarget?: number | null;
+    sessionDurationMins?: number | null;
+    equipmentAccess?: string[];
+    medicalNotes?: string | null;
   },
 ): Promise<void> {
   await prisma.user.update({
@@ -26,6 +34,23 @@ export async function updateUserProfile(
       ...(data.fcResting !== undefined && { fcResting: data.fcResting }),
       ...(data.vmaKmh !== undefined && { vmaKmh: data.vmaKmh }),
       ...(data.ftp !== undefined && { ftp: data.ftp }),
+      ...(data.primarySport !== undefined && { primarySport: data.primarySport }),
+      ...(data.sportLevel !== undefined && { sportLevel: data.sportLevel }),
+      ...(data.sportObjective !== undefined && {
+        sportObjective: data.sportObjective,
+      }),
+      ...(data.weeklySessionTarget !== undefined && {
+        weeklySessionTarget: data.weeklySessionTarget,
+      }),
+      ...(data.sessionDurationMins !== undefined && {
+        sessionDurationMins: data.sessionDurationMins,
+      }),
+      ...(data.equipmentAccess !== undefined && {
+        equipmentAccess: data.equipmentAccess,
+      }),
+      ...(data.medicalNotes !== undefined && {
+        medicalNotes: data.medicalNotes,
+      }),
     },
   });
 }

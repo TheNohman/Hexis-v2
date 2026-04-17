@@ -25,6 +25,16 @@ const SLEEP_EMOJI = ["", "\ud83d\ude35", "\ud83d\ude2a", "\ud83d\ude34", "\ud83d
 const ENERGY_EMOJI = ["", "\ud83e\udd74", "\ud83d\ude2a", "\ud83d\ude10", "\u26a1", "\ud83d\udd25"];
 const STRESS_EMOJI = ["", "\ud83d\ude30", "\ud83d\ude23", "\ud83d\ude10", "\ud83d\ude0c", "\ud83e\uddd8"];
 
+function todayIso() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function isoDaysAgo(days: number) {
+  const d = new Date();
+  d.setDate(d.getDate() - days);
+  return d.toISOString().slice(0, 10);
+}
+
 function RatingRow({
   label,
   emojis,
@@ -77,6 +87,7 @@ export function WellnessCheckin({ existingLog }: Props) {
   const toast = useToast();
   const [isPending, startTransition] = useTransition();
   const [expanded, setExpanded] = useState(false);
+  const [date, setDate] = useState<string>(todayIso());
   const [mood, setMood] = useState(existingLog?.mood ?? 3);
   const [sleep, setSleep] = useState(existingLog?.sleep ?? 3);
   const [energy, setEnergy] = useState(existingLog?.energy ?? 3);
@@ -84,21 +95,31 @@ export function WellnessCheckin({ existingLog }: Props) {
   const [notes, setNotes] = useState(existingLog?.notes ?? "");
   const [saved, setSaved] = useState(!!existingLog);
 
+  const today = todayIso();
+  const minDate = isoDaysAgo(30);
+  const isBackfill = date !== today;
+
   function handleSave() {
-    const today = new Date().toISOString().slice(0, 10);
     startTransition(async () => {
       try {
         await upsertWellnessLogAction({
-          date: today,
+          date,
           mood,
           sleep,
           energy,
           stress,
           notes: notes.trim() || null,
         });
-        setSaved(true);
+        if (!isBackfill) {
+          setSaved(true);
+        }
         setExpanded(false);
-        toast.show("Bien-être du jour enregistré", { kind: "success" });
+        toast.show(
+          isBackfill
+            ? "Bien-être enregistré pour ce jour"
+            : "Bien-être du jour enregistré",
+          { kind: "success" },
+        );
       } catch {
         toast.show("Impossible d'enregistrer le bien-être", { kind: "error" });
       }
@@ -141,14 +162,20 @@ export function WellnessCheckin({ existingLog }: Props) {
   }
 
   return (
-    <div className="rounded-xl border border-border bg-surface p-4 space-y-4">
+    <div id="wellness" className="rounded-xl border border-border bg-surface p-4 space-y-4">
       <div className="flex items-center justify-between">
         <h3 className="text-xs font-semibold text-muted uppercase tracking-wider">
-          Bien-&ecirc;tre du jour
+          Bien-&ecirc;tre
+          {isBackfill && (
+            <span className="ml-2 text-[10px] text-accent normal-case">Rattrapage</span>
+          )}
         </h3>
         <button
           type="button"
-          onClick={() => setExpanded(false)}
+          onClick={() => {
+            setExpanded(false);
+            setDate(today);
+          }}
           className="text-xs text-subtle hover:text-foreground cursor-pointer transition-colors"
         >
           Fermer
@@ -167,6 +194,18 @@ export function WellnessCheckin({ existingLog }: Props) {
         rows={2}
         className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:border-accent transition-colors resize-none"
       />
+
+      <label className="flex items-center justify-between gap-3 rounded-lg border border-border/70 bg-background/60 px-3 py-2">
+        <span className="text-xs text-muted">Date</span>
+        <input
+          type="date"
+          value={date}
+          min={minDate}
+          max={today}
+          onChange={(e) => setDate(e.target.value)}
+          className="bg-transparent text-sm outline-none tabular-nums"
+        />
+      </label>
 
       <button
         type="button"

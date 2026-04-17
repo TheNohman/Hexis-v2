@@ -3,58 +3,10 @@
 import { useMemo, useState, useTransition } from "react";
 import type { PrimarySport, SportLevel } from "@/generated/prisma/client";
 import { completeOnboardingAction } from "../actions";
+import { SPORTS, LEVELS, EQUIPMENT_OPTIONS } from "@/app/_components/sport-options";
 
 type StepId = "sport" | "level" | "objective" | "availability" | "confirm";
 const STEPS: StepId[] = ["sport", "level", "objective", "availability", "confirm"];
-
-const SPORTS: {
-  value: PrimarySport;
-  icon: string;
-  label: string;
-  description: string;
-}[] = [
-  {
-    value: "STRENGTH_TRAINING",
-    icon: "🏋️",
-    label: "Musculation",
-    description: "Hypertrophie, esthétique, santé générale",
-  },
-  {
-    value: "POWERLIFTING",
-    icon: "🏆",
-    label: "Powerlifting / Force",
-    description: "Squat, Bench, Deadlift — performance en force",
-  },
-  {
-    value: "ENDURANCE",
-    icon: "🏃",
-    label: "Endurance",
-    description: "Course, vélo, natation, triathlon",
-  },
-  {
-    value: "CROSSFIT_HIIT",
-    icon: "⚡",
-    label: "CrossFit / HIIT",
-    description: "Circuits intenses, WODs, HIIT",
-  },
-  {
-    value: "MULTI_SPORT",
-    icon: "🧘",
-    label: "Multi-activités",
-    description: "Mélange muscu + cardio + mobilité, sans compétition",
-  },
-];
-
-const LEVELS: {
-  value: SportLevel;
-  label: string;
-  description: string;
-}[] = [
-  { value: "BEGINNER", label: "Débutant·e", description: "Moins de 6 mois de pratique structurée" },
-  { value: "INTERMEDIATE", label: "Intermédiaire", description: "6 mois à 2 ans, je connais les mouvements de base" },
-  { value: "ADVANCED", label: "Avancé·e", description: "2+ ans, je m'entraîne en autonomie" },
-  { value: "COMPETITIVE", label: "Compétiteur·ice", description: "Je prépare des compétitions" },
-];
 
 // Suggested objectives by sport — pre-filled chips the user can click.
 const OBJECTIVES_BY_SPORT: Record<PrimarySport, string[]> = {
@@ -64,16 +16,6 @@ const OBJECTIVES_BY_SPORT: Record<PrimarySport, string[]> = {
   CROSSFIT_HIIT: ["Améliorer ma condition physique", "Progresser sur les benchmarks", "Perdre du gras", "Prendre du muscle fonctionnel"],
   MULTI_SPORT: ["Équilibre muscu / cardio", "Rester en forme", "Gérer le stress", "Varier les plaisirs"],
 };
-
-const EQUIPMENT_OPTIONS = [
-  { value: "gym_full", label: "Salle complète", emoji: "🏢" },
-  { value: "gym_basic", label: "Salle basique", emoji: "🏫" },
-  { value: "home", label: "Matériel maison", emoji: "🏠" },
-  { value: "barbell", label: "Barre & disques", emoji: "🔩" },
-  { value: "bike", label: "Vélo", emoji: "🚴" },
-  { value: "pool", label: "Piscine", emoji: "🏊" },
-  { value: "running", label: "Course / trail", emoji: "🏃" },
-];
 
 export function OnboardingWizard() {
   const [isPending, startTransition] = useTransition();
