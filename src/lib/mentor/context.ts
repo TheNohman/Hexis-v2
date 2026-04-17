@@ -133,21 +133,37 @@ export async function buildMentorContext(userId: string): Promise<MentorContext>
           },
         },
       }),
+      // Slim projection: only the fields used downstream (status,
+      // isWarmup, notes + per-value numerics and kpi slug/name). Earlier
+      // revisions eagerly pulled the full row tree which produced ~500
+      // rows across 10 workouts with all KPI metadata.
       prisma.workout.findMany({
         where: { userId },
         orderBy: { startedAt: "desc" },
-        take: 10,
-        include: {
+        // 5 sessions is enough context for a 2-sentence advice and
+        // halves the row footprint vs. the previous take: 10.
+        take: 5,
+        select: {
+          name: true,
+          startedAt: true,
+          finishedAt: true,
           blocks: {
             orderBy: { displayOrder: "asc" },
-            include: {
+            select: {
+              id: true,
+              name: true,
               entries: {
                 orderBy: { displayOrder: "asc" },
-                include: {
+                select: {
+                  status: true,
+                  isWarmup: true,
+                  notes: true,
                   exercise: { select: { name: true, type: true } },
                   values: {
-                    include: {
-                      kpiDefinition: { select: { name: true, slug: true } },
+                    select: {
+                      valueNumeric: true,
+                      plannedNumeric: true,
+                      kpiDefinition: { select: { slug: true, name: true } },
                     },
                   },
                 },

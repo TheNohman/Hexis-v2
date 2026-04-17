@@ -1,5 +1,9 @@
 import { prisma } from "@/lib/prisma";
-import { assertOwnership } from "@/lib/ownership";
+import {
+  assertOwnership,
+  assertTemplateBlockOwnership,
+  assertTemplateEntryOwnership,
+} from "@/lib/ownership";
 import type { KpiValueInput } from "@/lib/workouts/types";
 
 export async function createTemplate(userId: string, name?: string) {
@@ -14,6 +18,7 @@ export async function createTemplate(userId: string, name?: string) {
 export async function deleteTemplate(templateId: string, userId: string) {
   const template = await prisma.workoutTemplate.findUnique({
     where: { id: templateId },
+    select: { id: true, userId: true },
   });
   assertOwnership(template, userId);
   return prisma.workoutTemplate.delete({ where: { id: templateId } });
@@ -26,6 +31,7 @@ export async function renameTemplate(
 ) {
   const template = await prisma.workoutTemplate.findUnique({
     where: { id: templateId },
+    select: { id: true, userId: true },
   });
   assertOwnership(template, userId);
   return prisma.workoutTemplate.update({
@@ -41,7 +47,11 @@ export async function addTemplateBlock(
 ) {
   const template = await prisma.workoutTemplate.findUnique({
     where: { id: templateId },
-    include: { blocks: { select: { displayOrder: true } } },
+    select: {
+      id: true,
+      userId: true,
+      blocks: { select: { displayOrder: true } },
+    },
   });
   assertOwnership(template, userId);
 
@@ -82,7 +92,11 @@ export async function addIntervalTemplateBlock(
 ) {
   const template = await prisma.workoutTemplate.findUnique({
     where: { id: templateId },
-    include: { blocks: { select: { displayOrder: true } } },
+    select: {
+      id: true,
+      userId: true,
+      blocks: { select: { displayOrder: true } },
+    },
   });
   assertOwnership(template, userId);
 
@@ -129,12 +143,7 @@ export async function renameTemplateBlock(
   userId: string,
   name: string,
 ) {
-  const block = await prisma.workoutTemplateBlock.findUnique({
-    where: { id: blockId },
-    include: { template: { select: { userId: true } } },
-  });
-  if (!block) throw new Error("Not found");
-  if (block.template.userId !== userId) throw new Error("Forbidden");
+  await assertTemplateBlockOwnership(blockId, userId);
 
   return prisma.workoutTemplateBlock.update({
     where: { id: blockId },
@@ -143,12 +152,7 @@ export async function renameTemplateBlock(
 }
 
 export async function deleteTemplateBlock(blockId: string, userId: string) {
-  const block = await prisma.workoutTemplateBlock.findUnique({
-    where: { id: blockId },
-    include: { template: { select: { userId: true } } },
-  });
-  if (!block) throw new Error("Not found");
-  if (block.template.userId !== userId) throw new Error("Forbidden");
+  await assertTemplateBlockOwnership(blockId, userId);
 
   return prisma.workoutTemplateBlock.delete({ where: { id: blockId } });
 }
@@ -160,7 +164,11 @@ export async function reorderTemplateBlocks(
 ) {
   const template = await prisma.workoutTemplate.findUnique({
     where: { id: templateId },
-    include: { blocks: { select: { id: true } } },
+    select: {
+      id: true,
+      userId: true,
+      blocks: { select: { id: true } },
+    },
   });
   assertOwnership(template, userId);
 
@@ -191,15 +199,11 @@ export async function addTemplateEntry(
     restDurationSecs?: number | null;
   },
 ) {
-  const block = await prisma.workoutTemplateBlock.findUnique({
-    where: { id: blockId },
-    include: {
-      template: { select: { userId: true } },
-      entries: { select: { displayOrder: true } },
-    },
+  const block = await assertTemplateBlockOwnership<{
+    entries: { displayOrder: number }[];
+  }>(blockId, userId, {
+    entries: { select: { displayOrder: true } },
   });
-  if (!block) throw new Error("Not found");
-  if (block.template.userId !== userId) throw new Error("Forbidden");
 
   const exercise = await prisma.exercise.findUnique({
     where: { id: data.exerciseId },
@@ -236,20 +240,25 @@ export async function duplicateTemplateEntry(
   entryId: string,
   userId: string,
 ) {
-  const entry = await prisma.workoutTemplateEntry.findUnique({
-    where: { id: entryId },
-    include: {
-      block: {
-        include: {
-          template: { select: { userId: true } },
-          entries: { select: { displayOrder: true } },
-        },
+  const entry = await assertTemplateEntryOwnership<{
+    restDurationSecs: number | null;
+    block: { entries: { displayOrder: number }[] };
+    values: {
+      kpiDefinitionId: string;
+      valueNumeric: number | null;
+      valueText: string | null;
+    }[];
+  }>(entryId, userId, {
+    restDurationSecs: true,
+    block: { select: { entries: { select: { displayOrder: true } } } },
+    values: {
+      select: {
+        kpiDefinitionId: true,
+        valueNumeric: true,
+        valueText: true,
       },
-      values: true,
     },
   });
-  if (!entry) throw new Error("Not found");
-  if (entry.block.template.userId !== userId) throw new Error("Forbidden");
 
   const nextOrder =
     Math.max(...entry.block.entries.map((e) => e.displayOrder)) + 1;
@@ -273,14 +282,7 @@ export async function duplicateTemplateEntry(
 }
 
 export async function deleteTemplateEntry(entryId: string, userId: string) {
-  const entry = await prisma.workoutTemplateEntry.findUnique({
-    where: { id: entryId },
-    include: {
-      block: { include: { template: { select: { userId: true } } } },
-    },
-  });
-  if (!entry) throw new Error("Not found");
-  if (entry.block.template.userId !== userId) throw new Error("Forbidden");
+  await assertTemplateEntryOwnership(entryId, userId);
 
   return prisma.workoutTemplateEntry.delete({ where: { id: entryId } });
 }
@@ -290,15 +292,11 @@ export async function reorderTemplateEntries(
   userId: string,
   orderedEntryIds: string[],
 ) {
-  const block = await prisma.workoutTemplateBlock.findUnique({
-    where: { id: blockId },
-    include: {
-      template: { select: { userId: true } },
-      entries: { select: { id: true } },
-    },
+  const block = await assertTemplateBlockOwnership<{
+    entries: { id: string }[];
+  }>(blockId, userId, {
+    entries: { select: { id: true } },
   });
-  if (!block) throw new Error("Not found");
-  if (block.template.userId !== userId) throw new Error("Forbidden");
 
   const actualIds = new Set(block.entries.map((e) => e.id));
   if (
@@ -323,14 +321,7 @@ export async function updateTemplateEntryRest(
   userId: string,
   restDurationSecs: number | null,
 ) {
-  const entry = await prisma.workoutTemplateEntry.findUnique({
-    where: { id: entryId },
-    include: {
-      block: { include: { template: { select: { userId: true } } } },
-    },
-  });
-  if (!entry) throw new Error("Not found");
-  if (entry.block.template.userId !== userId) throw new Error("Forbidden");
+  await assertTemplateEntryOwnership(entryId, userId);
 
   return prisma.workoutTemplateEntry.update({
     where: { id: entryId },
