@@ -1,41 +1,40 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { z } from "zod";
 import { getCurrentUserId } from "@/lib/auth-helpers";
 import { createExercise, deleteExercise, updateExercise } from "@/lib/exercises/mutations";
 import type { ExerciseType } from "@/generated/prisma/enums";
-
-const VALID_TYPES = new Set<ExerciseType>([
-  "STRENGTH",
-  "BODYWEIGHT",
-  "CARDIO",
-  "MOBILITY",
-  "REST",
-]);
+import { assertValid, exerciseTypeEnum, idSchema, nameSchema } from "@/lib/validation/schemas";
 
 export async function createExerciseAction(formData: FormData) {
   const userId = await getCurrentUserId();
 
-  const name = (formData.get("name") as string | null)?.trim();
-  if (!name) throw new Error("Le nom est requis");
+  const raw = {
+    name: ((formData.get("name") as string | null) ?? "").trim(),
+    description: ((formData.get("description") as string | null) ?? "").trim() || undefined,
+    type: formData.get("type") as string | null,
+  };
 
-  const description = (formData.get("description") as string | null)?.trim() || undefined;
-  const type = formData.get("type") as string;
+  const schema = z.object({
+    name: nameSchema,
+    description: z.string().max(2000).optional(),
+    type: exerciseTypeEnum,
+  });
 
-  if (!VALID_TYPES.has(type as ExerciseType)) {
-    throw new Error("Type d'exercice invalide");
-  }
+  const parsed = assertValid(schema, raw);
 
   await createExercise(userId, {
-    name,
-    description,
-    type: type as ExerciseType,
+    name: parsed.name,
+    description: parsed.description,
+    type: parsed.type as ExerciseType,
   });
 
   revalidatePath("/exercises");
 }
 
 export async function deleteExerciseAction(exerciseId: string) {
+  assertValid(idSchema, exerciseId);
   const userId = await getCurrentUserId();
   await deleteExercise(exerciseId, userId);
   revalidatePath("/exercises");
@@ -45,7 +44,13 @@ export async function updateExerciseAction(
   exerciseId: string,
   data: { name?: string; description?: string | null },
 ) {
+  assertValid(idSchema, exerciseId);
+  const schema = z.object({
+    name: z.string().trim().min(1).max(500).optional(),
+    description: z.string().max(2000).nullable().optional(),
+  });
+  const parsed = assertValid(schema, data);
   const userId = await getCurrentUserId();
-  await updateExercise(exerciseId, userId, data);
+  await updateExercise(exerciseId, userId, parsed);
   revalidatePath("/exercises");
 }

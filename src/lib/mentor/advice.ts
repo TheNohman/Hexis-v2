@@ -1,6 +1,8 @@
 import OpenAI from "openai";
 import { prisma } from "@/lib/prisma";
 import { buildMentorContext } from "./context";
+import { sanitiseForPrompt } from "./sanitize";
+export { sanitiseForPrompt };
 
 function getOpenAI() {
   return new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
@@ -30,21 +32,6 @@ function takeRateLimitToken(userId: string): boolean {
   return true;
 }
 
-/**
- * Scrub potentially-prompt-injecting content from free-text user fields
- * before sending them to the LLM. Users can type anything in
- * `medicalNotes` and `sportObjective`; we don't want "Ignore previous
- * instructions…" to leak into the system prompt.
- */
-function sanitiseForPrompt(raw: string | null | undefined): string | null {
-  if (!raw) return null;
-  // Strip known jailbreak triggers and cap length.
-  const cleaned = raw
-    .replace(/ignore (previous|all|above)/gi, "[caviardé]")
-    .replace(/system prompt|system:/gi, "[caviardé]")
-    .slice(0, 300);
-  return cleaned.trim() || null;
-}
 
 const ADVICE_SYSTEM_PROMPT = `Tu es un coach sportif expert et bienveillant. À partir des données d'entraînement de l'utilisateur, donne UN conseil court et personnalisé pour sa prochaine séance.
 

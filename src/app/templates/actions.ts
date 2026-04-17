@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { z } from "zod";
 import { getCurrentUserId } from "@/lib/auth-helpers";
 import {
   addIntervalTemplateBlock,
@@ -22,43 +23,46 @@ import {
 import { cloneTemplate } from "@/lib/templates/clone";
 import { finishActiveWorkouts } from "@/lib/workouts/mutations";
 import type { KpiValueInput } from "@/lib/workouts/types";
+import {
+  assertValid,
+  idSchema,
+  intervalBlockSchema,
+  kpiValuesArraySchema,
+  nameSchema,
+} from "@/lib/validation/schemas";
+
+const idListSchema = z.array(idSchema).max(200);
 
 export async function createTemplateAction() {
   const userId = await getCurrentUserId();
   const template = await createTemplate(userId);
-  redirect(`/templates/${template.id}`);
+  redirect("/templates/" + template.id);
 }
 
 export async function deleteTemplateAction(templateId: string) {
+  assertValid(idSchema, templateId);
   const userId = await getCurrentUserId();
   await deleteTemplate(templateId, userId);
   revalidatePath("/templates");
   redirect("/templates");
 }
 
-export async function renameTemplateAction(
-  templateId: string,
-  name: string,
-) {
+export async function renameTemplateAction(templateId: string, name: string) {
+  assertValid(idSchema, templateId);
+  assertValid(nameSchema, name);
   const userId = await getCurrentUserId();
   await renameTemplate(templateId, userId, name);
-  revalidatePath(`/templates/${templateId}`);
+  revalidatePath("/templates/" + templateId);
 }
 
-export async function addTemplateBlockAction(
-  templateId: string,
-  name: string,
-) {
+export async function addTemplateBlockAction(templateId: string, name: string) {
+  assertValid(idSchema, templateId);
+  assertValid(nameSchema, name);
   const userId = await getCurrentUserId();
   await addTemplateBlock(templateId, userId, name);
-  revalidatePath(`/templates/${templateId}`);
+  revalidatePath("/templates/" + templateId);
 }
 
-/**
- * Add an INTERVAL-mode block (HIIT / Tabata) with a configured cadence
- * and a playlist of exercises. The client sends a resolved config from
- * its preset (Tabata 20/10×8 or custom intervals).
- */
 export async function addIntervalTemplateBlockAction(
   templateId: string,
   data: {
@@ -72,9 +76,11 @@ export async function addIntervalTemplateBlockAction(
     customSequence?: string[];
   },
 ) {
+  assertValid(idSchema, templateId);
+  const parsed = assertValid(intervalBlockSchema, data);
   const userId = await getCurrentUserId();
-  await addIntervalTemplateBlock(templateId, userId, data);
-  revalidatePath(`/templates/${templateId}`);
+  await addIntervalTemplateBlock(templateId, userId, parsed);
+  revalidatePath("/templates/" + templateId);
 }
 
 export async function renameTemplateBlockAction(
@@ -82,27 +88,31 @@ export async function renameTemplateBlockAction(
   blockId: string,
   name: string,
 ) {
+  assertValid(idSchema, templateId);
+  assertValid(idSchema, blockId);
+  assertValid(nameSchema, name);
   const userId = await getCurrentUserId();
   await renameTemplateBlock(blockId, userId, name);
-  revalidatePath(`/templates/${templateId}`);
+  revalidatePath("/templates/" + templateId);
 }
 
-export async function deleteTemplateBlockAction(
-  templateId: string,
-  blockId: string,
-) {
+export async function deleteTemplateBlockAction(templateId: string, blockId: string) {
+  assertValid(idSchema, templateId);
+  assertValid(idSchema, blockId);
   const userId = await getCurrentUserId();
   await deleteTemplateBlock(blockId, userId);
-  revalidatePath(`/templates/${templateId}`);
+  revalidatePath("/templates/" + templateId);
 }
 
 export async function reorderTemplateBlocksAction(
   templateId: string,
   orderedBlockIds: string[],
 ) {
+  assertValid(idSchema, templateId);
+  assertValid(idListSchema, orderedBlockIds);
   const userId = await getCurrentUserId();
   await reorderTemplateBlocks(templateId, userId, orderedBlockIds);
-  revalidatePath(`/templates/${templateId}`);
+  revalidatePath("/templates/" + templateId);
 }
 
 export async function addTemplateEntryAction(
@@ -112,31 +122,35 @@ export async function addTemplateEntryAction(
   values: KpiValueInput[],
   restDurationSecs?: number | null,
 ) {
+  assertValid(idSchema, templateId);
+  assertValid(idSchema, blockId);
+  assertValid(idSchema, exerciseId);
+  assertValid(kpiValuesArraySchema, values);
+  if (restDurationSecs !== undefined && restDurationSecs !== null)
+    assertValid(z.number().int().min(0).max(3600), restDurationSecs);
   const userId = await getCurrentUserId();
   await addTemplateEntry(blockId, userId, {
     exerciseId,
     values,
     restDurationSecs,
   });
-  revalidatePath(`/templates/${templateId}`);
+  revalidatePath("/templates/" + templateId);
 }
 
-export async function duplicateTemplateEntryAction(
-  templateId: string,
-  entryId: string,
-) {
+export async function duplicateTemplateEntryAction(templateId: string, entryId: string) {
+  assertValid(idSchema, templateId);
+  assertValid(idSchema, entryId);
   const userId = await getCurrentUserId();
   await duplicateTemplateEntry(entryId, userId);
-  revalidatePath(`/templates/${templateId}`);
+  revalidatePath("/templates/" + templateId);
 }
 
-export async function deleteTemplateEntryAction(
-  templateId: string,
-  entryId: string,
-) {
+export async function deleteTemplateEntryAction(templateId: string, entryId: string) {
+  assertValid(idSchema, templateId);
+  assertValid(idSchema, entryId);
   const userId = await getCurrentUserId();
   await deleteTemplateEntry(entryId, userId);
-  revalidatePath(`/templates/${templateId}`);
+  revalidatePath("/templates/" + templateId);
 }
 
 export async function reorderTemplateEntriesAction(
@@ -144,9 +158,12 @@ export async function reorderTemplateEntriesAction(
   blockId: string,
   orderedEntryIds: string[],
 ) {
+  assertValid(idSchema, templateId);
+  assertValid(idSchema, blockId);
+  assertValid(idListSchema, orderedEntryIds);
   const userId = await getCurrentUserId();
   await reorderTemplateEntries(blockId, userId, orderedEntryIds);
-  revalidatePath(`/templates/${templateId}`);
+  revalidatePath("/templates/" + templateId);
 }
 
 export async function updateTemplateEntryRestAction(
@@ -154,35 +171,39 @@ export async function updateTemplateEntryRestAction(
   entryId: string,
   restDurationSecs: number | null,
 ) {
+  assertValid(idSchema, templateId);
+  assertValid(idSchema, entryId);
+  if (restDurationSecs !== null)
+    assertValid(z.number().int().min(0).max(3600), restDurationSecs);
   const userId = await getCurrentUserId();
   await updateTemplateEntryRest(entryId, userId, restDurationSecs);
-  revalidatePath(`/templates/${templateId}`);
+  revalidatePath("/templates/" + templateId);
 }
 
 export async function startSessionFromTemplateAction(templateId: string) {
+  assertValid(idSchema, templateId);
   const userId = await getCurrentUserId();
   await finishActiveWorkouts(userId);
   const workout = await createWorkoutFromTemplate(templateId, userId);
-  redirect(`/sessions/${workout.id}`);
+  redirect("/sessions/" + workout.id);
 }
 
 export async function cloneTemplateAction(templateId: string) {
+  assertValid(idSchema, templateId);
   const userId = await getCurrentUserId();
   const newTemplate = await cloneTemplate(templateId, userId);
   revalidatePath("/templates");
-  redirect(`/templates/${newTemplate.id}`);
+  redirect("/templates/" + newTemplate.id);
 }
 
-export async function updateTemplateTagsAction(
-  templateId: string,
-  tags: string[],
-) {
+export async function updateTemplateTagsAction(templateId: string, tags: string[]) {
+  assertValid(idSchema, templateId);
+  assertValid(z.array(z.string().max(64)).max(50), tags);
   const userId = await getCurrentUserId();
-  // Direct prisma update - simple enough to inline
   const { prisma } = await import("@/lib/prisma");
   const template = await prisma.workoutTemplate.findUnique({ where: { id: templateId } });
   if (!template || template.userId !== userId) throw new Error("Forbidden");
   await prisma.workoutTemplate.update({ where: { id: templateId }, data: { tags } });
-  revalidatePath(`/templates/${templateId}`);
+  revalidatePath("/templates/" + templateId);
   revalidatePath("/templates");
 }

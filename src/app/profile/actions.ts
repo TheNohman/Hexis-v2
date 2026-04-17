@@ -3,6 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { getCurrentUserId } from "@/lib/auth-helpers";
 import { updateUserProfile } from "@/lib/profile/mutations";
+import type { PrimarySport, SportLevel } from "@/generated/prisma/client";
+import { assertValid, profileUpdateSchema } from "@/lib/validation/schemas";
 
 export async function updateProfileAction(data: {
   unitSystem?: string;
@@ -12,9 +14,17 @@ export async function updateProfileAction(data: {
   fcResting?: number | null;
   vmaKmh?: number | null;
   ftp?: number | null;
+  primarySport?: PrimarySport | null;
+  sportLevel?: SportLevel | null;
+  sportObjective?: string | null;
+  weeklySessionTarget?: number | null;
+  sessionDurationMins?: number | null;
+  equipmentAccess?: string[];
+  medicalNotes?: string | null;
 }) {
+  const parsed = assertValid(profileUpdateSchema, data);
   const userId = await getCurrentUserId();
-  await updateUserProfile(userId, data);
+  await updateUserProfile(userId, parsed as typeof data);
   revalidatePath("/profile");
   revalidatePath("/dashboard");
 }
