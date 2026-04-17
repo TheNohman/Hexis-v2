@@ -138,6 +138,7 @@ export async function getWorkoutById(
       blocks: {
         orderBy: { displayOrder: "asc" },
         include: {
+          intervalConfig: true,
           entries: {
             orderBy: { displayOrder: "asc" },
             include: {
@@ -167,13 +168,15 @@ export async function getWorkoutById(
       name: b.name,
       displayOrder: b.displayOrder,
       mode: b.mode,
-      intervalFormat: b.intervalFormat,
-      workSecs: b.workSecs,
-      restSecs: b.restSecs,
-      roundCount: b.roundCount,
-      playbackOrder: b.playbackOrder,
-      countdownLeadSecs: b.countdownLeadSecs,
-      customSequence: b.customSequence,
+      // Flatten the 1:1 IntervalConfig back into the block DTO so UI
+      // consumers keep reading `block.workSecs` etc. as before.
+      intervalFormat: b.intervalConfig?.intervalFormat ?? null,
+      workSecs: b.intervalConfig?.workSecs ?? null,
+      restSecs: b.intervalConfig?.restSecs ?? null,
+      roundCount: b.intervalConfig?.roundCount ?? null,
+      playbackOrder: b.intervalConfig?.playbackOrder ?? null,
+      countdownLeadSecs: b.intervalConfig?.countdownLeadSecs ?? 10,
+      customSequence: b.intervalConfig?.customSequence ?? [],
       completedRounds: b.completedRounds,
       entries: b.entries.map((e) => ({
         id: e.id,
