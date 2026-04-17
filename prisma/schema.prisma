@@ -145,8 +145,9 @@ enum IntervalFormat {
 }
 
 enum PlaybackOrder {
-  CYCLE   // A → B → C → A → B → C (playlist cyclée sur les rounds)
-  SAME    // A × tous les rounds (Tabata pur 1 exo)
+  CYCLE    // A → B → C → A → B → C (playlist cyclée sur les rounds)
+  SAME     // A × tous les rounds (Tabata pur 1 exo)
+  CUSTOM   // séquence explicite par round (customSequence rempli)
 }
 
 enum MaxSource {
@@ -255,6 +256,9 @@ model WorkoutBlock {
   roundCount        Int?
   playbackOrder     PlaybackOrder?  @default(CYCLE)
   countdownLeadSecs Int             @default(10)
+  /// When playbackOrder=CUSTOM, one exerciseId per round. Length matches
+  /// roundCount. Empty / null for CYCLE and SAME.
+  customSequence    String[]        @default([])
   /// Live counter updated as the user completes rounds of the circuit.
   completedRounds   Int             @default(0)
 
@@ -397,6 +401,7 @@ model WorkoutTemplateBlock {
   roundCount        Int?
   playbackOrder     PlaybackOrder?  @default(CYCLE)
   countdownLeadSecs Int             @default(10)
+  customSequence    String[]        @default([])
 
   template WorkoutTemplate        @relation(fields: [templateId], references: [id], onDelete: Cascade)
   entries  WorkoutTemplateEntry[]

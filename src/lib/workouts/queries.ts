@@ -209,6 +209,7 @@ export async function getWorkoutById(
       roundCount: b.roundCount,
       playbackOrder: b.playbackOrder,
       countdownLeadSecs: b.countdownLeadSecs,
+      customSequence: b.customSequence,
       completedRounds: b.completedRounds,
       entries: b.entries.map((e) => ({
         id: e.id,

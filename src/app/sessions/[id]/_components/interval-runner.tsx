@@ -183,14 +183,26 @@ export function IntervalRunner({ workoutId, block, onClose }: Props) {
     }
   }, [secondsLeft, phase, workSecs, restSecs, rounds, currentRound, beep, block.id, workoutId]);
 
-  // Which exercise is up?
+  // Which exercise is up? Three modes:
+  //   SAME   → always the first exo in the playlist
+  //   CUSTOM → read from customSequence[r] (exerciseId lookup)
+  //   CYCLE  → playlist[r % playlist.length]
+  const exercisesById = useMemo(
+    () => new Map(playlist.map((p) => [p.id, p] as const)),
+    [playlist],
+  );
   const exerciseForRound = useCallback(
     (r: number) => {
       if (playlist.length === 0) return null;
       if (block.playbackOrder === "SAME") return playlist[0];
+      if (block.playbackOrder === "CUSTOM") {
+        const id = block.customSequence[r];
+        if (id) return exercisesById.get(id) ?? playlist[0];
+        return playlist[r % playlist.length];
+      }
       return playlist[r % playlist.length];
     },
-    [playlist, block.playbackOrder],
+    [playlist, block.playbackOrder, block.customSequence, exercisesById],
   );
 
   const currentExercise = exerciseForRound(currentRound);

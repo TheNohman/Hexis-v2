@@ -64,6 +64,7 @@ export async function getTemplateById(
       roundCount: b.roundCount,
       playbackOrder: b.playbackOrder,
       countdownLeadSecs: b.countdownLeadSecs,
+      customSequence: b.customSequence,
       entries: b.entries.map((e) => ({
         id: e.id,
         displayOrder: e.displayOrder,

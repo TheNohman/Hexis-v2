@@ -67,8 +67,9 @@ export async function addIntervalTemplateBlockAction(
     workSecs: number;
     restSecs: number;
     roundCount: number;
-    playbackOrder: "CYCLE" | "SAME";
+    playbackOrder: "CYCLE" | "SAME" | "CUSTOM";
     exerciseIds: string[];
+    customSequence?: string[];
   },
 ) {
   const userId = await getCurrentUserId();

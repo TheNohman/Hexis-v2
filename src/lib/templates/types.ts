@@ -29,6 +29,7 @@ export type TemplateDetail = {
     roundCount: number | null;
     playbackOrder: PlaybackOrder | null;
     countdownLeadSecs: number;
+    customSequence: string[];
     entries: {
       id: string;
       displayOrder: number;

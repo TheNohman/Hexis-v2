@@ -73,23 +73,40 @@ export function TemplateIntervalBlockCard({ templateId, block, exercises }: Prop
 
         <div className="pt-2 border-t border-accent/10">
           <p className="text-[11px] uppercase tracking-wider text-muted mb-1.5">
-            Exercices ({playlist.length})
+            {block.playbackOrder === "CUSTOM" ? "Séquence" : "Playlist"} ({playlist.length})
             {block.playbackOrder === "SAME" && " — répétés"}
             {block.playbackOrder === "CYCLE" && playlist.length > 1 && " — en cycle"}
+            {block.playbackOrder === "CUSTOM" && " — personnalisée"}
           </p>
-          <ol className="space-y-1">
-            {playlist.map((ex, i) => (
-              <li key={`${ex.id}-${i}`} className="flex items-center gap-2 text-sm">
-                <span className="text-[10px] font-mono text-subtle w-4">
-                  {String(i + 1).padStart(2, "0")}
-                </span>
-                <span className="truncate">{ex.name}</span>
-              </li>
-            ))}
-            {playlist.length === 0 && (
-              <li className="text-xs text-subtle">Aucun exercice sélectionné.</li>
-            )}
-          </ol>
+          {block.playbackOrder === "CUSTOM" && block.customSequence.length > 0 ? (
+            <ol className="space-y-1">
+              {block.customSequence.map((exId, i) => {
+                const ex = exerciseById.get(exId) ?? playlist.find((p) => p.id === exId);
+                return (
+                  <li key={`seq-${i}`} className="flex items-center gap-2 text-sm">
+                    <span className="text-[10px] font-mono text-accent w-8">
+                      R{String(i + 1).padStart(2, "0")}
+                    </span>
+                    <span className="truncate">{ex?.name ?? exId}</span>
+                  </li>
+                );
+              })}
+            </ol>
+          ) : (
+            <ol className="space-y-1">
+              {playlist.map((ex, i) => (
+                <li key={`${ex.id}-${i}`} className="flex items-center gap-2 text-sm">
+                  <span className="text-[10px] font-mono text-subtle w-4">
+                    {String(i + 1).padStart(2, "0")}
+                  </span>
+                  <span className="truncate">{ex.name}</span>
+                </li>
+              ))}
+              {playlist.length === 0 && (
+                <li className="text-xs text-subtle">Aucun exercice sélectionné.</li>
+              )}
+            </ol>
+          )}
         </div>
       </div>
     </article>

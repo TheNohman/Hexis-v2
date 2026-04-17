@@ -74,8 +74,10 @@ export async function addIntervalTemplateBlock(
     workSecs: number;
     restSecs: number;
     roundCount: number;
-    playbackOrder: "CYCLE" | "SAME";
+    playbackOrder: "CYCLE" | "SAME" | "CUSTOM";
     exerciseIds: string[];
+    /** Required when playbackOrder=CUSTOM: exerciseId per round. */
+    customSequence?: string[];
   },
 ) {
   const template = await prisma.workoutTemplate.findUnique({
@@ -89,6 +91,17 @@ export async function addIntervalTemplateBlock(
       ? 0
       : Math.max(...template.blocks.map((b) => b.displayOrder)) + 1;
 
+  // Only persist customSequence for CUSTOM mode. Truncate / pad to
+  // roundCount so the UI contract stays "length == roundCount".
+  let customSequence: string[] = [];
+  if (data.playbackOrder === "CUSTOM" && data.customSequence) {
+    customSequence = data.customSequence.slice(0, data.roundCount);
+    // Fill missing slots with the first exercise to stay consistent.
+    while (customSequence.length < data.roundCount && data.exerciseIds[0]) {
+      customSequence.push(data.exerciseIds[0]);
+    }
+  }
+
   return prisma.workoutTemplateBlock.create({
     data: {
       templateId,
@@ -100,6 +113,7 @@ export async function addIntervalTemplateBlock(
       restSecs: data.restSecs,
       roundCount: data.roundCount,
       playbackOrder: data.playbackOrder,
+      customSequence,
       entries: {
         create: data.exerciseIds.map((exerciseId, i) => ({
           exerciseId,
@@ -374,6 +388,7 @@ export async function createWorkoutFromTemplate(
           roundCount: block.roundCount,
           playbackOrder: block.playbackOrder,
           countdownLeadSecs: block.countdownLeadSecs,
+          customSequence: block.customSequence,
           entries: {
             create: block.entries.map((entry) => ({
               exerciseId: entry.exerciseId,

@@ -61,6 +61,7 @@ export type WorkoutDetail = {
     roundCount: number | null;
     playbackOrder: PlaybackOrder | null;
     countdownLeadSecs: number;
+    customSequence: string[];
     completedRounds: number;
     entries: {
       id: string;
