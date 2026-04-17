@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth, signOut } from "@/auth";
 import { getCurrentUserId } from "@/lib/auth-helpers";
-import { listRecentWorkouts, getActiveWorkout } from "@/lib/workouts/queries";
+import { listWorkouts, getActiveWorkout } from "@/lib/workouts/queries";
 import { getActiveProgram } from "@/lib/programs/queries";
 import { getTodayWellnessLog } from "@/lib/wellness/queries";
 import { getSportProfile, needsOnboarding } from "@/lib/profile/onboarding";
@@ -20,7 +20,7 @@ export default async function Dashboard() {
   const userId = await getCurrentUserId();
   if (await needsOnboarding(userId)) redirect("/onboarding");
   const [workouts, activeProgram, todayWellness, activeWorkout, profile] = await Promise.all([
-    listRecentWorkouts(userId, 10),
+    listWorkouts(userId, { limit: 10 }),
     getActiveProgram(userId),
     getTodayWellnessLog(userId),
     getActiveWorkout(userId),

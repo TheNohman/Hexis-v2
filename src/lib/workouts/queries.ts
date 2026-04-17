@@ -46,16 +46,18 @@ export async function listExercisesForUser(
 }
 
 /**
- * Returns the most recent workouts for the dashboard.
+ * Returns workouts for the given user, ordered by startedAt desc.
+ * Pass `limit` to cap the result (used by the dashboard's "recent"
+ * panel); omit to fetch all (used by the full history view).
  */
-export async function listRecentWorkouts(
+export async function listWorkouts(
   userId: string,
-  limit = 10,
+  options: { limit?: number } = {},
 ): Promise<WorkoutListItem[]> {
   const workouts = await prisma.workout.findMany({
     where: { userId },
     orderBy: { startedAt: "desc" },
-    take: limit,
+    ...(options.limit ? { take: options.limit } : {}),
     include: {
       blocks: {
         include: { _count: { select: { entries: true } } },
@@ -120,44 +122,6 @@ export async function getActiveWorkout(userId: string): Promise<{
     completedEntries: completed,
     totalEntries: allEntries.length,
   };
-}
-
-/**
- * Returns all workouts for the user, optionally limited.
- */
-export async function listAllWorkouts(
-  userId: string,
-  limit?: number,
-): Promise<WorkoutListItem[]> {
-  const workouts = await prisma.workout.findMany({
-    where: { userId },
-    orderBy: { startedAt: "desc" },
-    ...(limit ? { take: limit } : {}),
-    include: {
-      blocks: {
-        include: { _count: { select: { entries: true } } },
-      },
-    },
-  });
-
-  return workouts.map((w) => {
-    let durationMins: number | null = null;
-    if (w.finishedAt && w.startedAt) {
-      durationMins =
-        Math.round(
-          ((w.finishedAt.getTime() - w.startedAt.getTime()) / 60000) * 10,
-        ) / 10;
-    }
-    return {
-      id: w.id,
-      name: w.name,
-      startedAt: w.startedAt,
-      finishedAt: w.finishedAt,
-      durationMins,
-      blockCount: w.blocks.length,
-      entryCount: w.blocks.reduce((sum, b) => sum + b._count.entries, 0),
-    };
-  });
 }
 
 /**
