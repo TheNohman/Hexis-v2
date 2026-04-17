@@ -28,6 +28,7 @@ export async function incrementCompletedRounds(
   return prisma.workoutBlock.update({
     where: { id: blockId },
     data: { completedRounds: nextCompleted },
+    include: { intervalConfig: { select: { roundCount: true } } },
   });
 }
 
@@ -40,5 +41,6 @@ export async function resetInterval(blockId: string, userId: string) {
   return prisma.workoutBlock.update({
     where: { id: blockId },
     data: { completedRounds: 0 },
+    include: { intervalConfig: { select: { roundCount: true } } },
   });
 }

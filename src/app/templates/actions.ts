@@ -22,6 +22,7 @@ import {
 } from "@/lib/templates/mutations";
 import { cloneTemplate } from "@/lib/templates/clone";
 import { finishActiveWorkouts } from "@/lib/workouts/mutations";
+import { trackEvent } from "@/lib/telemetry/track";
 import type { KpiValueInput } from "@/lib/workouts/types";
 import {
   assertValid,
@@ -36,6 +37,7 @@ const idListSchema = z.array(idSchema).max(200);
 export async function createTemplateAction() {
   const userId = await getCurrentUserId();
   const template = await createTemplate(userId);
+  await trackEvent(userId, "template_created", { templateId: template.id });
   redirect("/templates/" + template.id);
 }
 

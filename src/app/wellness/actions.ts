@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { getCurrentUserId } from "@/lib/auth-helpers";
 import { upsertWellnessLog, deleteWellnessLog } from "@/lib/wellness/mutations";
 import { clearAdviceCache } from "@/lib/mentor/advice";
+import { trackEvent } from "@/lib/telemetry/track";
 import { assertValid, idSchema, wellnessUpsertSchema } from "@/lib/validation/schemas";
 
 export async function upsertWellnessLogAction(data: {
@@ -24,6 +25,12 @@ export async function upsertWellnessLogAction(data: {
   await upsertWellnessLog(userId, parsed);
   // Wellness change materially shifts the advice context; invalidate cache.
   await clearAdviceCache(userId);
+  await trackEvent(userId, "wellness_checkin", {
+    mood: parsed.mood,
+    sleep: parsed.sleep,
+    energy: parsed.energy,
+    stress: parsed.stress,
+  });
   revalidatePath("/profile");
   revalidatePath("/dashboard");
 }
