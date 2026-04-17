@@ -289,6 +289,7 @@ export async function toggleEntryWarmupAction(workoutId: string, entryId: string
  * lost across the redirect.
  */
 export async function deleteWorkoutAction(workoutId: string) {
+  assertValid(idSchema, workoutId);
   const userId = await getCurrentUserId();
   await deleteWorkout(workoutId, userId);
   // History changed → drop cached advice.
@@ -304,6 +305,7 @@ export async function deleteWorkoutAction(workoutId: string) {
  * "one active workout at a time" invariant.
  */
 export async function unfinishWorkoutAction(workoutId: string) {
+  assertValid(idSchema, workoutId);
   const userId = await getCurrentUserId();
   await unfinishWorkout(workoutId, userId);
   await clearAdviceCache(userId);

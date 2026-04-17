@@ -45,3 +45,4 @@ vps_credentials.txt
 next-env.d.ts
 
 /src/generated/prisma
+.claude/worktrees/
