@@ -70,7 +70,7 @@ export function TemplateIntervalBlockCard({ templateId, block, exercises }: Prop
       <ConfirmDialog
         open={confirmDeleteOpen}
         title="Supprimer ce bloc HIIT ?"
-        message={`\u00ab\u00a0${block.name}\u00a0\u00bb sera supprim\u00e9.`}
+        message={`« ${block.name} » sera supprimé.`}
         confirmLabel="Supprimer"
         destructive
         onConfirm={handleConfirmDelete}

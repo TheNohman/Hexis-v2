@@ -29,7 +29,7 @@ export function RedoWorkoutButton({ sourceWorkoutId, hasStrengthExercises }: Pro
         disabled={isPending}
         className="w-full rounded-xl border border-accent/40 bg-accent/5 text-accent py-2.5 text-sm font-semibold hover:bg-accent/10 transition-colors cursor-pointer disabled:opacity-50"
       >
-        {isPending ? "Cr\u00e9ation\u2026" : "Refaire cette s\u00e9ance"}
+        {isPending ? "Création…" : "Refaire cette séance"}
       </button>
     );
   }

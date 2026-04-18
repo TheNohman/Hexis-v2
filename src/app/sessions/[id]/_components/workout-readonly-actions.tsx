@@ -23,7 +23,7 @@ export function WorkoutReadonlyActions({ workoutId }: Props) {
       try {
         await unfinishWorkoutAction(workoutId);
         // Redirect will preempt this, but keep a safety toast in case.
-        toast.show("S\u00e9ance reprise.", { kind: "success" });
+        toast.show("Séance reprise.", { kind: "success" });
       } catch (err) {
         // Next.js redirects throw internally — ignore those.
         if (
@@ -36,7 +36,7 @@ export function WorkoutReadonlyActions({ workoutId }: Props) {
           return;
         }
         console.error(err);
-        toast.show("\u00c9chec de la reprise de s\u00e9ance.", { kind: "error" });
+        toast.show("Échec de la reprise de séance.", { kind: "error" });
       }
     });
   }
@@ -57,7 +57,7 @@ export function WorkoutReadonlyActions({ workoutId }: Props) {
           return;
         }
         console.error(err);
-        toast.show("\u00c9chec de la suppression.", { kind: "error" });
+        toast.show("Échec de la suppression.", { kind: "error" });
       }
     });
   }
@@ -77,7 +77,7 @@ export function WorkoutReadonlyActions({ workoutId }: Props) {
           disabled={busy}
           className="w-full rounded-xl border border-border text-muted py-3 text-sm font-medium hover:bg-surface-hover hover:text-accent transition-colors cursor-pointer disabled:opacity-50"
         >
-          {isUnfinishing ? "Reprise\u2026" : "Reprendre cette s\u00e9ance"}
+          {isUnfinishing ? "Reprise…" : "Reprendre cette séance"}
         </button>
       </div>
 
@@ -88,14 +88,14 @@ export function WorkoutReadonlyActions({ workoutId }: Props) {
         className="w-full rounded-xl border border-danger/40 text-danger py-3 text-xs font-medium hover:bg-danger/10 transition-colors cursor-pointer disabled:opacity-50"
       >
         {isDeleting
-          ? "Suppression\u2026"
-          : "Supprimer cette s\u00e9ance"}
+          ? "Suppression…"
+          : "Supprimer cette séance"}
       </button>
 
       <ConfirmDialog
         open={confirmOpen}
-        title="Supprimer cette s\u00e9ance ?"
-        message="La s\u00e9ance et toutes ses entr\u00e9es seront d\u00e9finitivement supprim\u00e9es. Cette action est irr\u00e9versible."
+        title="Supprimer cette séance ?"
+        message="La séance et toutes ses entrées seront définitivement supprimées. Cette action est irréversible."
         confirmLabel="Supprimer"
         destructive
         onConfirm={handleDelete}

@@ -21,10 +21,10 @@ type Exercise = {
 const TYPE_ORDER: ExerciseType[] = ["STRENGTH", "BODYWEIGHT", "CARDIO", "MOBILITY", "REST"];
 
 const TYPE_DESCRIPTIONS: Record<ExerciseType, string> = {
-  STRENGTH: "Exercices avec charges \u2014 suivi du poids, r\u00e9p\u00e9titions et RPE",
-  BODYWEIGHT: "Exercices au poids de corps \u2014 suivi des r\u00e9p\u00e9titions et RPE",
-  CARDIO: "Exercices d\u2019endurance \u2014 suivi de la dur\u00e9e, distance et fr\u00e9quence cardiaque",
-  MOBILITY: "Exercices de mobilit\u00e9 et souplesse \u2014 suivi de la dur\u00e9e",
+  STRENGTH: "Exercices avec charges — suivi du poids, répétitions et RPE",
+  BODYWEIGHT: "Exercices au poids de corps — suivi des répétitions et RPE",
+  CARDIO: "Exercices d’endurance — suivi de la durée, distance et fréquence cardiaque",
+  MOBILITY: "Exercices de mobilité et souplesse — suivi de la durée",
   REST: "Temps de repos entre les exercices",
 };
 
@@ -33,7 +33,7 @@ const TYPE_FILTERS: { value: ExerciseType | "ALL"; label: string }[] = [
   { value: "STRENGTH", label: "Musculation" },
   { value: "BODYWEIGHT", label: "Poids de corps" },
   { value: "CARDIO", label: "Cardio" },
-  { value: "MOBILITY", label: "Mobilit\u00e9" },
+  { value: "MOBILITY", label: "Mobilité" },
 ];
 
 export function ExerciseList({ exercises }: { exercises: Exercise[] }) {
@@ -92,14 +92,14 @@ export function ExerciseList({ exercises }: { exercises: Exercise[] }) {
         search ? (
           <EmptyState
             icon={Search}
-            title="Aucun exercice trouv\u00e9"
-            description={`Rien ne correspond \u00e0 \u00ab\u00a0${search}\u00a0\u00bb. Essaie un autre mot-cl\u00e9.`}
+            title="Aucun exercice trouvé"
+            description={`Rien ne correspond à « ${search} ». Essaie un autre mot-clé.`}
           />
         ) : (
           <EmptyState
             icon={Dumbbell}
             title="Aucun exercice"
-            description="La biblioth\u00e8que est vide pour cette cat\u00e9gorie."
+            description="La bibliothèque est vide pour cette catégorie."
           />
         )
       ) : (
@@ -130,7 +130,7 @@ export function ExerciseList({ exercises }: { exercises: Exercise[] }) {
                         )}
                         {exercise.kpis.length > 0 && (
                           <p className="text-xs text-subtle mt-1">
-                            {exercise.kpis.map((k) => k.name).join(" \u00b7 ")}
+                            {exercise.kpis.map((k) => k.name).join(" · ")}
                           </p>
                         )}
                       </div>

@@ -61,7 +61,7 @@ export default async function ExerciseDetailPage({
             </h1>
             <p className="text-xs text-muted mt-1">
               {formatExerciseType(exercise.type)}
-              {exercise.description && ` \u2014 ${exercise.description}`}
+              {exercise.description && ` — ${exercise.description}`}
             </p>
           </div>
           <Link
@@ -121,7 +121,7 @@ export default async function ExerciseDetailPage({
                       month: "short",
                       year: "numeric",
                     }).format(pr.date)}
-                    {" \u2014 "}
+                    {" — "}
                     {pr.workoutName}
                   </p>
                 </div>

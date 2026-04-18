@@ -52,7 +52,7 @@ export function ExerciseProgressionChart({ data, exerciseType }: Props) {
     return { val, y };
   });
 
-  const primaryLabel = isCardio ? "Distance / Dur\u00e9e" : "Poids (kg)";
+  const primaryLabel = isCardio ? "Distance / Durée" : "Poids (kg)";
 
   // Trend: first vs last
   const firstVal = data[0].value;

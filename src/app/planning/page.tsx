@@ -141,7 +141,7 @@ async function ProgramsTab({ userId, mentorEnabled }: { userId: string; mentorEn
           <EmptyState
             icon={Calendar}
             title="Aucun programme"
-            description="Cr\u00e9e un programme pour planifier tes semaines d&rsquo;entra\u00eenement."
+            description="Crée un programme pour planifier tes semaines d&rsquo;entraînement."
           />
         )
       ) : (
@@ -193,8 +193,8 @@ async function TemplatesTab({ userId }: { userId: string }) {
       {templates.length === 0 ? (
         <EmptyState
           icon={ClipboardList}
-          title="Aucun mod\u00e8le"
-          description="Un mod\u00e8le est une s\u00e9ance r\u00e9utilisable \u2014 le bloc de base de tes programmes."
+          title="Aucun modèle"
+          description="Un modèle est une séance réutilisable — le bloc de base de tes programmes."
         />
       ) : (
         <ul className="space-y-2">

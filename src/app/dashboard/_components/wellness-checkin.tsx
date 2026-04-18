@@ -14,15 +14,15 @@ type Props = {
   } | null;
 };
 
-const MOOD_LABELS = ["", "Tr\u00e8s mal", "Mal", "Normal", "Bien", "Tr\u00e8s bien"];
-const SLEEP_LABELS = ["", "Tr\u00e8s mal", "Mal", "Correct", "Bien", "Excellent"];
-const ENERGY_LABELS = ["", "\u00c9puis\u00e9", "Fatigu\u00e9", "Normal", "\u00c9nergique", "Plein d'\u00e9nergie"];
-const STRESS_LABELS = ["", "Tr\u00e8s stress\u00e9", "Stress\u00e9", "Normal", "D\u00e9tendu", "Tr\u00e8s d\u00e9tendu"];
+const MOOD_LABELS = ["", "Très mal", "Mal", "Normal", "Bien", "Très bien"];
+const SLEEP_LABELS = ["", "Très mal", "Mal", "Correct", "Bien", "Excellent"];
+const ENERGY_LABELS = ["", "Épuisé", "Fatigué", "Normal", "Énergique", "Plein d'énergie"];
+const STRESS_LABELS = ["", "Très stressé", "Stressé", "Normal", "Détendu", "Très détendu"];
 
-// Emojis picked for monotonic progression (worst \u2192 best) and distinctness.
+// Emojis picked for monotonic progression (worst → best) and distinctness.
 const MOOD_EMOJI = ["", "\ud83d\ude2b", "\ud83d\ude1f", "\ud83d\ude10", "\ud83d\ude0a", "\ud83d\ude04"];
-const SLEEP_EMOJI = ["", "\ud83d\ude35", "\ud83d\ude2a", "\ud83d\ude34", "\ud83d\ude0c", "\u2728"];
-const ENERGY_EMOJI = ["", "\ud83e\udd74", "\ud83d\ude2a", "\ud83d\ude10", "\u26a1", "\ud83d\udd25"];
+const SLEEP_EMOJI = ["", "\ud83d\ude35", "\ud83d\ude2a", "\ud83d\ude34", "\ud83d\ude0c", "✨"];
+const ENERGY_EMOJI = ["", "\ud83e\udd74", "\ud83d\ude2a", "\ud83d\ude10", "⚡", "\ud83d\udd25"];
 const STRESS_EMOJI = ["", "\ud83d\ude30", "\ud83d\ude23", "\ud83d\ude10", "\ud83d\ude0c", "\ud83e\uddd8"];
 
 function todayIso() {
@@ -213,7 +213,7 @@ export function WellnessCheckin({ existingLog }: Props) {
         disabled={isPending}
         className="w-full rounded-lg bg-accent text-white py-2.5 text-sm font-semibold hover:bg-accent-hover transition-colors cursor-pointer disabled:opacity-50"
       >
-        {isPending ? "Sauvegarde\u2026" : "Enregistrer"}
+        {isPending ? "Sauvegarde…" : "Enregistrer"}
       </button>
     </div>
   );

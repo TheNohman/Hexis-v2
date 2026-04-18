@@ -3,8 +3,8 @@
 import type { WellnessLogData } from "@/lib/wellness/queries";
 
 const MOOD_EMOJI = ["", "\ud83d\ude2b", "\ud83d\ude1f", "\ud83d\ude10", "\ud83d\ude0a", "\ud83d\ude04"];
-const SLEEP_EMOJI = ["", "\ud83d\ude34", "\ud83d\ude25", "\ud83d\ude0c", "\ud83d\ude34", "\u2b50"];
-const ENERGY_EMOJI = ["", "\ud83e\udead", "\ud83e\udd71", "\ud83d\ude10", "\u26a1", "\ud83d\udd25"];
+const SLEEP_EMOJI = ["", "\ud83d\ude34", "\ud83d\ude25", "\ud83d\ude0c", "\ud83d\ude34", "⭐"];
+const ENERGY_EMOJI = ["", "\ud83e\udead", "\ud83e\udd71", "\ud83d\ude10", "⚡", "\ud83d\udd25"];
 const STRESS_EMOJI = ["", "\ud83d\ude30", "\ud83d\ude1f", "\ud83d\ude10", "\ud83d\ude0c", "\ud83e\uddd8"];
 
 type Props = { logs: WellnessLogData[] };
@@ -29,7 +29,7 @@ export function WellnessHistorySection({ logs }: Props) {
         {[
           { label: "Humeur", avg: avgMood, emojis: MOOD_EMOJI },
           { label: "Sommeil", avg: avgSleep, emojis: SLEEP_EMOJI },
-          { label: "\u00c9nergie", avg: avgEnergy, emojis: ENERGY_EMOJI },
+          { label: "Énergie", avg: avgEnergy, emojis: ENERGY_EMOJI },
           { label: "Stress", avg: avgStress, emojis: STRESS_EMOJI },
         ].map(({ label, avg, emojis }) => (
           <div key={label} className="rounded-xl border border-border bg-surface p-3 text-center">
@@ -59,7 +59,7 @@ export function WellnessHistorySection({ logs }: Props) {
                 <div className="flex gap-2 text-sm">
                   <span title="Humeur">{MOOD_EMOJI[log.mood]}</span>
                   <span title="Sommeil">{SLEEP_EMOJI[log.sleep]}</span>
-                  <span title="\u00c9nergie">{ENERGY_EMOJI[log.energy]}</span>
+                  <span title="Énergie">{ENERGY_EMOJI[log.energy]}</span>
                   <span title="Stress">{STRESS_EMOJI[log.stress]}</span>
                 </div>
               </div>

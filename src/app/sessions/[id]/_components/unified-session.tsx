@@ -159,7 +159,7 @@ export function UnifiedSession({ workout, exercises, defaultRestSecs = 90 }: Pro
                 type="button"
                 onClick={() => setIsEditingDate(true)}
                 className="text-xs text-subtle hover:text-accent cursor-pointer transition-colors"
-                title="Modifier la date de la s\u00e9ance"
+                title="Modifier la date de la séance"
               >
                 {startedDateLabel}
               </button>
@@ -277,10 +277,10 @@ export function UnifiedSession({ workout, exercises, defaultRestSecs = 90 }: Pro
 
       {restTimer && <CompactRestTimer durationSecs={restTimer.durationSecs} onComplete={handleRestComplete} />}
 
-      <ConfirmDialog open={confirmFinish} title="Terminer la s\u00e9ance"
+      <ConfirmDialog open={confirmFinish} title="Terminer la séance"
         message={allEntries.length === 0
-          ? "Cette s\u00e9ance est vide. Terminer quand m\u00eame ?"
-          : `Il reste ${allEntries.filter((e) => e.status === "PLANNED").length} entr\u00e9e(s) non valid\u00e9e(s). Terminer ?`}
+          ? "Cette séance est vide. Terminer quand même ?"
+          : `Il reste ${allEntries.filter((e) => e.status === "PLANNED").length} entrée(s) non validée(s). Terminer ?`}
         confirmLabel="Terminer" onConfirm={handleFinishConfirmed} onCancel={() => setConfirmFinish(false)}
       />
       <ConfirmDialog

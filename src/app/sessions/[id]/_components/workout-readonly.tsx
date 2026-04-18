@@ -25,7 +25,7 @@ function formatValues(
       return null;
     })
     .filter(Boolean)
-    .join(" \u00b7 ");
+    .join(" · ");
 }
 
 export function WorkoutReadonly({ workout }: Props) {

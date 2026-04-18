@@ -22,7 +22,7 @@ export function NextWorkoutCard({ info }: Props) {
   }
 
   const slotLabel = formatSlotTime(slot.day, slot.startTime);
-  const cycle = info.cycleCount > 1 ? `${cycleLabel(slot.cycle)} \u2014 ` : "";
+  const cycle = info.cycleCount > 1 ? `${cycleLabel(slot.cycle)} — ` : "";
 
   if (!slot.templateId) {
     return (
@@ -31,7 +31,7 @@ export function NextWorkoutCard({ info }: Props) {
           <p className="text-xs text-muted font-medium">{info.programName}</p>
           <p className="text-sm text-subtle mt-0.5">
             {cycle}{slotLabel}
-            {slot.label && ` \u2014 ${slot.label}`}
+            {slot.label && ` — ${slot.label}`}
           </p>
         </div>
         <p className="text-sm text-muted">Aucun template assign&eacute;.</p>
@@ -48,13 +48,13 @@ export function NextWorkoutCard({ info }: Props) {
         <p className="text-xs text-accent font-medium">{info.programName}</p>
         <p className="text-sm text-muted mt-0.5">
           {cycle}{slotLabel}
-          {slot.label && ` \u2014 ${slot.label}`}
+          {slot.label && ` — ${slot.label}`}
         </p>
       </div>
       <p className="text-base font-medium">{slot.templateName}</p>
       <div className="flex items-center gap-2">
         <button type="button" onClick={() => startTransition(() => startProgramWorkoutAction())} disabled={isPending} className="flex-1 rounded-lg bg-accent text-white py-3 text-sm font-semibold hover:bg-accent-hover transition-colors cursor-pointer disabled:opacity-50">
-          {isPending ? "Lancement\u2026" : "Lancer la s\u00e9ance \u2192"}
+          {isPending ? "Lancement…" : "Lancer la séance →"}
         </button>
         <button type="button" onClick={() => startTransition(() => skipSlotAction())} disabled={isPending} className="rounded-lg border border-border px-3 py-3 text-xs text-muted hover:text-foreground transition-colors cursor-pointer disabled:opacity-50" title="Passer">
           Passer

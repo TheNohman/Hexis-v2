@@ -56,7 +56,7 @@ export function Term({ children, definition }: Props) {
           setOpen((v) => !v);
         }}
         onBlur={() => setOpen(false)}
-        aria-label={`D\u00e9finition : ${children}`}
+        aria-label={`Définition : ${children}`}
         className="underline decoration-dotted decoration-accent/60 underline-offset-2 hover:text-accent cursor-help"
       >
         {children}

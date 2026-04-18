@@ -39,8 +39,8 @@ export default async function TemplatesPage() {
           {templates.length === 0 ? (
             <EmptyState
               icon={ClipboardList}
-              title="Aucun mod\u00e8le"
-              description="Un mod\u00e8le est une s\u00e9ance r\u00e9utilisable. Utilise le bouton ci-dessus pour en cr\u00e9er un."
+              title="Aucun modèle"
+              description="Un modèle est une séance réutilisable. Utilise le bouton ci-dessus pour en créer un."
             />
           ) : (
             <ul className="space-y-2">

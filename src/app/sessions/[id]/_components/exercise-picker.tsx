@@ -130,7 +130,7 @@ export function ExercisePicker({ open, onClose, exercises, multiSet, addLabel, o
             onClick={selected ? handleBack : handleClose}
             className="text-sm text-subtle hover:text-foreground cursor-pointer px-3 py-1.5 rounded-lg hover:bg-surface transition-colors"
           >
-            {selected ? "\u2190 Retour" : "Annuler"}
+            {selected ? "← Retour" : "Annuler"}
           </button>
         </header>
 
@@ -220,7 +220,7 @@ export function ExercisePicker({ open, onClose, exercises, multiSet, addLabel, o
               disabled={isPending}
               className="w-full rounded-xl bg-accent text-background py-4 font-bold tracking-wide hover:bg-accent-hover transition-colors cursor-pointer disabled:opacity-50 uppercase"
             >
-              {isPending ? "Ajout\u2026" : addLabel ?? "Ajouter \u00e0 la s\u00e9ance"}
+              {isPending ? "Ajout…" : addLabel ?? "Ajouter à la séance"}
             </button>
           </div>
         )}

@@ -65,7 +65,7 @@ export function TypeConfigForm({ onClose }: Props) {
           disabled={isPending || !label.trim()}
           className="flex-1 rounded-lg bg-accent text-white py-2.5 text-sm font-semibold hover:bg-accent-hover transition-colors cursor-pointer disabled:opacity-50"
         >
-          {isPending ? "Ajout\u2026" : "Ajouter le type"}
+          {isPending ? "Ajout…" : "Ajouter le type"}
         </button>
         <button
           type="button"

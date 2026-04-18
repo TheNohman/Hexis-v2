@@ -34,7 +34,7 @@ export function ManualPRForm({ exerciseId }: Props) {
       return;
     }
     if (!Number.isInteger(r) || r <= 0) {
-      show("Nombre de r\u00e9p\u00e9titions invalide", { kind: "error" });
+      show("Nombre de répétitions invalide", { kind: "error" });
       return;
     }
     const date = achievedAt ? new Date(achievedAt) : undefined;
@@ -47,13 +47,13 @@ export function ManualPRForm({ exerciseId }: Props) {
           reps: r,
           achievedAt: date,
         });
-        show("Record enregistr\u00e9", { kind: "success" });
+        show("Record enregistré", { kind: "success" });
         setWeightKg("");
         setReps("1");
         setOpen(false);
       } catch (err) {
         const msg = err instanceof Error ? err.message : "Erreur inconnue";
-        show(`\u00c9chec : ${msg}`, { kind: "error" });
+        show(`Échec : ${msg}`, { kind: "error" });
       }
     });
   }
@@ -84,7 +84,7 @@ export function ManualPRForm({ exerciseId }: Props) {
           className="text-xs text-subtle hover:text-foreground cursor-pointer"
           aria-label="Fermer"
         >
-          {"\u00d7"}
+          {"×"}
         </button>
       </div>
       <form onSubmit={onSubmit} className="grid grid-cols-3 gap-3">
@@ -101,7 +101,7 @@ export function ManualPRForm({ exerciseId }: Props) {
           />
         </label>
         <label className="flex flex-col gap-1 text-xs text-muted">
-          {"R\u00e9p\u00e9titions"}
+          {"Répétitions"}
           <input
             type="number"
             step="1"

@@ -85,7 +85,7 @@ export function ExerciseCard({ workoutId, blockId, group, onEntryValidated }: Pr
       )}
 
       <ConfirmDialog open={confirmDelete} title="Supprimer l'exercice"
-        message={`Supprimer toutes les s\u00e9ries de "${group.exerciseName}" ?`}
+        message={`Supprimer toutes les séries de "${group.exerciseName}" ?`}
         confirmLabel="Supprimer" destructive onConfirm={handleDeleteAll} onCancel={() => setConfirmDelete(false)} />
     </div>
   );

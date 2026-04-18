@@ -259,8 +259,8 @@ export function TemplateEditor({ template, exercises }: Props) {
 
       <ConfirmDialog
         open={confirmDeleteOpen}
-        title="Supprimer ce mod\u00e8le ?"
-        message={`\u00ab\u00a0${template.name}\u00a0\u00bb sera d\u00e9finitivement supprim\u00e9. Les s\u00e9ances d\u00e9j\u00e0 lanc\u00e9es depuis ce mod\u00e8le ne seront pas affect\u00e9es.`}
+        title="Supprimer ce modèle ?"
+        message={`« ${template.name} » sera définitivement supprimé. Les séances déjà lancées depuis ce modèle ne seront pas affectées.`}
         confirmLabel="Supprimer"
         destructive
         onConfirm={handleDelete}

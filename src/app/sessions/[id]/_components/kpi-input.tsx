@@ -22,7 +22,7 @@ export function KpiInput({ kpi, valueNumeric, valueText, onChange, autoFocus }: 
       <label className="flex flex-col gap-1.5 min-w-0">
         <span className="text-[10px] uppercase text-muted">
           {kpi.name}
-          {kpi.isRequired ? "" : " \u00b7"}
+          {kpi.isRequired ? "" : " ·"}
         </span>
         <input
           type="time"
@@ -46,7 +46,7 @@ export function KpiInput({ kpi, valueNumeric, valueText, onChange, autoFocus }: 
       <label className="flex flex-col gap-1.5 min-w-0">
         <span className="text-[10px] uppercase text-muted">
           {kpi.name}
-          {kpi.isRequired ? "" : " \u00b7"}
+          {kpi.isRequired ? "" : " ·"}
         </span>
         <input
           type="text"
@@ -67,7 +67,7 @@ export function KpiInput({ kpi, valueNumeric, valueText, onChange, autoFocus }: 
       <span className="text-[10px] uppercase text-muted">
         {kpi.name}
         {kpi.unit ? ` (${kpi.unit})` : ""}
-        {kpi.isRequired ? "" : " \u00b7"}
+        {kpi.isRequired ? "" : " ·"}
       </span>
       <input
         type="number"

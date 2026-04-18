@@ -90,7 +90,7 @@ export function BlockSection({
           <button
             type="button"
             className="cursor-grab touch-none text-muted hover:text-foreground shrink-0 p-3 -ml-3 transition-colors"
-            aria-label="R\u00e9organiser le bloc"
+            aria-label="Réorganiser le bloc"
             {...attributes}
             {...listeners}
           >
@@ -146,7 +146,7 @@ export function BlockSection({
       <ConfirmDialog
         open={confirmDeleteOpen}
         title="Supprimer ce bloc ?"
-        message={`\u00ab\u00a0${block.name}\u00a0\u00bb et tous ses exercices seront supprim\u00e9s de la s\u00e9ance.`}
+        message={`« ${block.name} » et tous ses exercices seront supprimés de la séance.`}
         confirmLabel="Supprimer"
         destructive
         onConfirm={() => {

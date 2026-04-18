@@ -378,7 +378,7 @@ export function ProfileForm({ profile, sportProfile, showEnduranceRefs = false }
         disabled={isPending}
         className="w-full rounded-lg bg-accent text-white py-2.5 text-sm font-semibold hover:bg-accent-hover transition-colors cursor-pointer disabled:opacity-50"
       >
-        {isPending ? "Sauvegarde\u2026" : "Sauvegarder"}
+        {isPending ? "Sauvegarde…" : "Sauvegarder"}
       </button>
     </form>
   );
