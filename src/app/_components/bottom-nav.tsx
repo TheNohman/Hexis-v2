@@ -3,12 +3,30 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
+/**
+ * Navigation items. `matchPrefixes` lists pathname prefixes that count as
+ * "active" for this item — beyond the canonical `href`. Useful when sub-surfaces
+ * live under different URL roots but belong to the same section conceptually.
+ */
 const NAV_ITEMS = [
-  { href: "/dashboard", label: "Accueil", icon: "home" },
-  { href: "/planning", label: "Planification", icon: "calendar" },
-  { href: "/exercises", label: "Exercices", icon: "target" },
-  { href: "/profile", label: "Profil", icon: "user" },
-  { href: "/stats", label: "Stats", icon: "chart" },
+  { href: "/dashboard", label: "Accueil", icon: "home", matchPrefixes: [] },
+  {
+    href: "/planning",
+    label: "Planification",
+    icon: "calendar",
+    // /programs/* and /templates/* are planning surfaces too (cycles +
+    // session models). They don't live under /planning/ but belong there.
+    matchPrefixes: ["/planning", "/programs", "/templates"],
+  },
+  { href: "/exercises", label: "Exercices", icon: "target", matchPrefixes: [] },
+  {
+    href: "/profile",
+    label: "Profil",
+    icon: "user",
+    // /mentor is reached from the profile hub — count it under Profil.
+    matchPrefixes: ["/profile", "/mentor"],
+  },
+  { href: "/stats", label: "Stats", icon: "chart", matchPrefixes: ["/stats", "/history"] },
 ] as const;
 
 function NavIcon({ name, active }: { name: string; active: boolean }) {
@@ -85,8 +103,14 @@ export function BottomNav() {
     <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-border bg-background/80 backdrop-blur-lg pb-[env(safe-area-inset-bottom)]">
       <div className="flex items-stretch justify-around max-w-2xl mx-auto">
         {NAV_ITEMS.map((item) => {
-          const isActive =
-            pathname === item.href || pathname.startsWith(item.href + "/");
+          // A route is active for this item if it matches the canonical href
+          // or any of the declared prefixes (allows sub-surfaces under other
+          // URL roots to highlight the correct tab).
+          const prefixes =
+            item.matchPrefixes.length > 0 ? item.matchPrefixes : [item.href];
+          const isActive = prefixes.some(
+            (p) => pathname === p || pathname.startsWith(p + "/"),
+          );
           return (
             <Link
               key={item.href}
