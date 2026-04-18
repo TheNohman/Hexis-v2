@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { nextDisplayOrder } from "@/lib/ordering";
 import {
   assertOwnership,
   assertTemplateBlockOwnership,
@@ -55,10 +56,7 @@ export async function addTemplateBlock(
   });
   assertOwnership(template, userId);
 
-  const nextOrder =
-    template.blocks.length === 0
-      ? 0
-      : Math.max(...template.blocks.map((b) => b.displayOrder)) + 1;
+  const nextOrder = nextDisplayOrder(template.blocks);
 
   return prisma.workoutTemplateBlock.create({
     data: {
@@ -100,10 +98,7 @@ export async function addIntervalTemplateBlock(
   });
   assertOwnership(template, userId);
 
-  const nextOrder =
-    template.blocks.length === 0
-      ? 0
-      : Math.max(...template.blocks.map((b) => b.displayOrder)) + 1;
+  const nextOrder = nextDisplayOrder(template.blocks);
 
   // Only persist customSequence for CUSTOM mode. Truncate / pad to
   // roundCount so the UI contract stays "length == roundCount".
@@ -220,10 +215,7 @@ export async function addTemplateEntry(
     throw new Error("Forbidden exercise");
   }
 
-  const nextOrder =
-    block.entries.length === 0
-      ? 0
-      : Math.max(...block.entries.map((e) => e.displayOrder)) + 1;
+  const nextOrder = nextDisplayOrder(block.entries);
 
   return prisma.workoutTemplateEntry.create({
     data: {
@@ -267,8 +259,7 @@ export async function duplicateTemplateEntry(
     },
   });
 
-  const nextOrder =
-    Math.max(...entry.block.entries.map((e) => e.displayOrder)) + 1;
+  const nextOrder = nextDisplayOrder(entry.block.entries);
 
   return prisma.workoutTemplateEntry.create({
     data: {

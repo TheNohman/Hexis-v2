@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { nextDisplayOrder } from "@/lib/ordering";
 import {
   assertBlockOwnership,
   assertOwnership,
@@ -18,10 +19,7 @@ export async function addBlock(
   });
   assertOwnership(workout, userId);
 
-  const nextOrder =
-    workout.blocks.length === 0
-      ? 0
-      : Math.max(...workout.blocks.map((b) => b.displayOrder)) + 1;
+  const nextOrder = nextDisplayOrder(workout.blocks);
 
   return prisma.workoutBlock.create({
     data: {

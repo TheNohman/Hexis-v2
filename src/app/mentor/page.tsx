@@ -7,28 +7,9 @@ import {
   getRemainingRateLimit,
 } from "@/lib/mentor/advice";
 import { RegenerateButton } from "./_components/regenerate-button";
+import { formatRelative } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
-
-/**
- * Render a date as a French relative phrase ("aujourd'hui", "hier",
- * "il y a N jours"). Past 7 days we fall back to a short numeric date.
- */
-function formatRelativeFr(date: Date): string {
-  const now = new Date();
-  const startOfDay = (d: Date) =>
-    new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
-  const diffDays = Math.round(
-    (startOfDay(now) - startOfDay(date)) / (24 * 60 * 60 * 1000),
-  );
-  if (diffDays <= 0) return "aujourd'hui";
-  if (diffDays === 1) return "hier";
-  if (diffDays < 7) return `il y a ${diffDays} jours`;
-  return new Intl.DateTimeFormat("fr-FR", {
-    day: "numeric",
-    month: "short",
-  }).format(date);
-}
 
 export default async function MentorPage() {
   const userId = await getCurrentUserId();
@@ -171,7 +152,7 @@ export default async function MentorPage() {
                 >
                   <div className="flex items-center justify-between gap-3 mb-1.5">
                     <span className="text-[11px] uppercase tracking-wider text-subtle">
-                      {formatRelativeFr(h.createdAt)}
+                      {formatRelative(h.createdAt)}
                     </span>
                     <span className="text-[11px] text-subtle tabular-nums">
                       {new Intl.DateTimeFormat("fr-FR", {

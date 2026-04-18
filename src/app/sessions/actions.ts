@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { getCurrentUserId } from "@/lib/auth-helpers";
+import { computeDurationMins } from "@/lib/format";
 import {
   addBlock,
   addEntry,
@@ -233,12 +234,7 @@ export async function finishWorkoutAction(workoutId: string) {
     let totalSets = 0;
     let totalVolume = 0;
     if (workout) {
-      if (workout.finishedAt) {
-        durationMins =
-          Math.round(
-            ((workout.finishedAt.getTime() - workout.startedAt.getTime()) / 60000) * 10,
-          ) / 10;
-      }
+      durationMins = computeDurationMins(workout.startedAt, workout.finishedAt);
       for (const block of workout.blocks) {
         for (const entry of block.entries) {
           totalSets += 1;

@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { computeDurationMins } from "@/lib/format";
 import type { Prisma } from "@/generated/prisma/client";
 
 // --------------- Types ---------------
@@ -91,13 +92,7 @@ export async function listWorkoutHistory(
 
   const items: HistoryItem[] = workouts.map((w) => {
     // Duration
-    let durationMins: number | null = null;
-    if (w.finishedAt && w.startedAt) {
-      durationMins =
-        Math.round(
-          ((w.finishedAt.getTime() - w.startedAt.getTime()) / 60000) * 10,
-        ) / 10;
-    }
+    const durationMins = computeDurationMins(w.startedAt, w.finishedAt);
 
     // Count blocks and entries
     const blockCount = w.blocks.length;
