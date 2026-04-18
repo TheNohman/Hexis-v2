@@ -17,13 +17,13 @@
   --border: #D4D4D8;
   --border-hover: #A1A1AA;
 
-  /* Accent — electric blue. Sharp, trustworthy, signals precision. */
-  /* Rule: text-on-blue must be BLACK (5.66:1). White fails AA (3.71:1). */
-  /* For text-on-white, use --accent-ink (AA-compliant darker blue). */
-  --accent: #3B82F6;         /* fills (text-on-blue must be black — 5.66:1) */
-  --accent-hover: #2563EB;
-  --accent-light: #DBEAFE;   /* soft bg variant */
-  --accent-ink: #1E40AF;     /* 7.5:1 on white — for links/text in blue family */
+  /* Accent — ocean teal. Deep, saturated, evokes water and endurance. */
+  /* Rule: text-on-teal must be BLACK (5.70:1). White fails AA (3.68:1). */
+  /* For text-on-white, use --accent-ink (AA-compliant darker teal). */
+  --accent: #0891B2;         /* fills (text-on-teal must be black — 5.70:1) */
+  --accent-hover: #0E7490;
+  --accent-light: #CFFAFE;   /* soft bg variant (cyan-100) */
+  --accent-ink: #155E75;     /* 7.34:1 on white — for links/text in teal family */
   --accent-foreground: #0A0A0A;
 
   /* Secondary palette. Rules: pastel = FILL only with dark text. */
@@ -48,7 +48,7 @@
   --danger-light: #FEE2E2;   /* legacy alias */
 
   /* Focus ring — 3:1 contrast against adjacent bg (WCAG 1.4.11) */
-  --focus-ring: #1E40AF;     /* accent-ink (blue dark) */
+  --focus-ring: #155E75;     /* accent-ink (ocean teal dark) */
   --focus-ring-offset: #FFFFFF;
 
   /* Shadows — bumped so cards lift off #EEEEEE bg */
