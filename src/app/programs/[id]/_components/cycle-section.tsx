@@ -8,7 +8,6 @@ import {
   computeSlotDate,
   formatSlotDateShort,
   isToday,
-  dayLabel,
 } from "@/lib/programs/utils";
 import { SlotCard } from "./slot-card";
 

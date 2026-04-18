@@ -61,7 +61,7 @@ export function NextWorkoutCard({ info }: Props) {
             {slot.label && ` — ${slot.label}`}
           </p>
         </div>
-        <p className="text-sm text-muted">Aucun template assigné.</p>
+        <p className="text-sm text-muted">Aucun modèle assigné.</p>
         <button
           type="button"
           onClick={() => startTransition(() => skipSlotAction())}
@@ -201,7 +201,7 @@ function SlotPickerDialog({
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className="font-display font-bold text-[15px] truncate">
-                        {s.templateName ?? "(sans template)"}
+                        {s.templateName ?? "(sans modèle)"}
                       </span>
                       {today && (
                         <span className="inline-flex items-center rounded-full bg-signal px-2 py-0.5 text-[9px] font-bold uppercase tracking-widest text-foreground">

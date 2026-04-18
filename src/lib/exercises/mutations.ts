@@ -131,7 +131,7 @@ export async function deleteExercise(
 
   if (templateUsageCount > 0) {
     throw new Error(
-      "Impossible de supprimer cet exercice car il est utilisé dans des templates",
+      "Impossible de supprimer cet exercice car il est utilisé dans des modèles",
     );
   }
 

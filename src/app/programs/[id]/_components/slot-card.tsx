@@ -247,7 +247,7 @@ export function SlotCard({
             </p>
           ) : (
             <p className="text-[15px] font-medium text-subtle italic mt-0.5">
-              Choisir un template
+              Choisir un modèle
             </p>
           )}
         </div>

@@ -72,7 +72,7 @@ export default async function PlanningPage(props: Props) {
         {tab === "programs" ? (
           <ProgramsTab userId={userId} mentorEnabled={mentorEnabled} />
         ) : (
-          <TemplatesTab userId={userId} />
+          <TemplatesTab userId={userId} mentorEnabled={mentorEnabled} />
         )}
       </div>
     </main>
@@ -209,19 +209,36 @@ async function ProgramsTab({ userId, mentorEnabled }: { userId: string; mentorEn
   );
 }
 
-async function TemplatesTab({ userId }: { userId: string }) {
+async function TemplatesTab({
+  userId,
+  mentorEnabled,
+}: {
+  userId: string;
+  mentorEnabled: boolean;
+}) {
   const templates = await listTemplates(userId);
 
   return (
     <div className="space-y-4">
-      <form action={createTemplateAction}>
-        <button
-          type="submit"
-          className="w-full rounded-xl bg-foreground text-background py-3.5 font-semibold hover:opacity-90 transition-opacity cursor-pointer shadow-card"
-        >
-          + Nouveau modèle
-        </button>
-      </form>
+      <div className="flex gap-2">
+        <form action={createTemplateAction} className="flex-1">
+          <button
+            type="submit"
+            className="w-full rounded-xl bg-foreground text-background py-3.5 font-semibold hover:opacity-90 transition-opacity cursor-pointer shadow-card"
+          >
+            + Nouveau modèle
+          </button>
+        </form>
+        {mentorEnabled && (
+          <Link
+            href="/templates/create-ai"
+            className="shrink-0 rounded-xl bg-accent text-accent-foreground px-5 py-3.5 flex items-center gap-2 hover:bg-accent-hover transition-colors text-sm font-semibold"
+          >
+            <Sparkles className="h-4 w-4" aria-hidden="true" />
+            Générer avec l&rsquo;IA
+          </Link>
+        )}
+      </div>
 
       {templates.length === 0 ? (
         <EmptyState

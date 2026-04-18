@@ -219,7 +219,7 @@ export function ProgramEditor({ program, templates }: Props) {
                 Prochaine séance
               </p>
               <p className="font-display font-bold text-base leading-tight mt-0.5">
-                {currentSlot.templateName ?? "Séance sans template"}
+                {currentSlot.templateName ?? "Séance sans modèle"}
               </p>
               <p className="text-[11px] text-background/70 mt-0.5">
                 {formatSlotDate(nextDate)}

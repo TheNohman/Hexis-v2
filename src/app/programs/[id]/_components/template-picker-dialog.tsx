@@ -100,7 +100,7 @@ export function TemplatePickerDialog({
             id="template-picker-title"
             className="font-display font-bold text-base tracking-tight"
           >
-            Choisir un template
+            Choisir un modèle
           </h3>
           <button
             type="button"
@@ -128,8 +128,8 @@ export function TemplatePickerDialog({
                 setCursor(0);
               }}
               onKeyDown={handleInputKey}
-              placeholder="Rechercher un template…"
-              aria-label="Rechercher un template"
+              placeholder="Rechercher un modèle…"
+              aria-label="Rechercher un modèle"
               aria-controls="template-picker-list"
               aria-autocomplete="list"
               className="w-full rounded-xl border border-border bg-background pl-9 pr-3 py-2.5 text-sm focus:outline-none focus:border-accent-ink transition-colors"
@@ -137,7 +137,7 @@ export function TemplatePickerDialog({
           </div>
           {templates.length > 0 && (
             <p className="text-[11px] text-subtle mt-1.5 px-1 tabular-nums">
-              {filtered.length} / {templates.length} templates
+              {filtered.length} / {templates.length} modèles
               {filtered.length > 0 && (
                 <span className="ml-2 text-subtle/80">
                   ↑↓ naviguer · ↵ sélectionner
@@ -161,13 +161,13 @@ export function TemplatePickerDialog({
               onClick={() => onSelect(null)}
               className="w-full text-left rounded-xl px-3 py-3 text-sm font-medium text-danger hover:bg-danger-soft transition-colors cursor-pointer"
             >
-              Retirer le template
+              Retirer le modèle
             </button>
           )}
 
           {templates.length === 0 ? (
             <p className="text-sm text-subtle text-center py-6">
-              Aucun template disponible. Crée-en un d&rsquo;abord.
+              Aucun modèle disponible. Crée-en un d&rsquo;abord.
             </p>
           ) : filtered.length === 0 ? (
             <p className="text-sm text-subtle text-center py-6">

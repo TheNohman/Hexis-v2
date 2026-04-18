@@ -11,7 +11,7 @@ export async function createTemplate(userId: string, name?: string) {
   return prisma.workoutTemplate.create({
     data: {
       userId,
-      name: name?.trim() || "Nouveau template",
+      name: name?.trim() || "Nouveau modèle",
     },
   });
 }

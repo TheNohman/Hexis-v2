@@ -21,8 +21,13 @@ import {
   updateTemplateEntryRest,
 } from "@/lib/templates/mutations";
 import { cloneTemplate } from "@/lib/templates/clone";
+import { materializeAITemplate } from "@/lib/templates/ai-create";
 import { finishActiveWorkouts } from "@/lib/workouts/mutations";
 import { trackEvent } from "@/lib/telemetry/track";
+import { buildMentorContext } from "@/lib/mentor/context";
+import { generateTemplate } from "@/lib/mentor/openai";
+import { parseGeneratedTemplate } from "@/lib/mentor/parser";
+import { prisma } from "@/lib/prisma";
 import type { KpiValueInput } from "@/lib/workouts/types";
 import {
   assertValid,
@@ -196,6 +201,74 @@ export async function cloneTemplateAction(templateId: string) {
   const newTemplate = await cloneTemplate(templateId, userId);
   revalidatePath("/templates");
   redirect("/templates/" + newTemplate.id);
+}
+
+// ─── AI generation ────────────────────────────────────────────────
+
+/**
+ * Ask the AI to generate a template based on user's goals + existing exercises.
+ * Returns the raw JSON preview (not yet persisted) so the user can review.
+ */
+export async function generateAITemplateAction(goals: string): Promise<{
+  error?: string;
+  preview?: string;
+}> {
+  assertValid(z.string().max(2000), goals);
+  const userId = await getCurrentUserId();
+
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { mentorEnabled: true },
+  });
+  if (!user?.mentorEnabled) {
+    return { error: "L'IA n'est pas activée sur ton compte." };
+  }
+
+  const context = await buildMentorContext(userId);
+  const raw = await generateTemplate(context, goals);
+
+  if (!raw) {
+    return { error: "L'IA n'a pas pu générer de modèle." };
+  }
+
+  return { preview: raw };
+}
+
+/**
+ * Confirm and persist an AI-generated template from its raw JSON preview.
+ */
+export async function confirmAITemplateAction(rawJson: string): Promise<{
+  error?: string;
+}> {
+  assertValid(z.string().max(100000), rawJson);
+  const userId = await getCurrentUserId();
+
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { mentorEnabled: true },
+  });
+  if (!user?.mentorEnabled) {
+    return { error: "L'IA n'est pas activée sur ton compte." };
+  }
+
+  const parsed = parseGeneratedTemplate(rawJson);
+  if (!parsed) {
+    return { error: "Impossible de lire le modèle généré." };
+  }
+
+  let templateId: string;
+  try {
+    templateId = await materializeAITemplate(userId, parsed);
+  } catch (e) {
+    if (e instanceof Error && e.message.includes("Aucun exercice")) {
+      return { error: e.message };
+    }
+    throw e;
+  }
+
+  await trackEvent(userId, "template_created", { templateId, source: "ai" });
+  revalidatePath("/templates");
+  redirect(`/templates/${templateId}`);
 }
 
 export async function updateTemplateTagsAction(templateId: string, tags: string[]) {

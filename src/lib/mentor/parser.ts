@@ -32,6 +32,37 @@ export type GeneratedProgram = {
 };
 
 /**
+ * Single-template generation (no cycles/slots — just a session template).
+ */
+export type GeneratedTemplate = {
+  name: string;
+  blocks: GeneratedBlock[];
+};
+
+export function parseGeneratedTemplate(content: string): GeneratedTemplate | null {
+  const jsonMatch = content.match(/```json\s*([\s\S]*?)```/);
+  const jsonStr = jsonMatch ? jsonMatch[1].trim() : content.trim();
+
+  try {
+    const parsed = JSON.parse(jsonStr);
+    if (
+      !parsed.name ||
+      typeof parsed.name !== "string" ||
+      !parsed.blocks ||
+      !Array.isArray(parsed.blocks)
+    ) {
+      return null;
+    }
+    return {
+      name: parsed.name,
+      blocks: parsed.blocks as GeneratedBlock[],
+    };
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Parse AI response to extract a structured program JSON.
  * Returns null if parsing fails.
  */

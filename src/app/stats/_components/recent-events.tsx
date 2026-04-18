@@ -12,7 +12,7 @@ const EVENT_LABELS: Record<string, string> = {
   pr_manual_added: "PR ajouté manuellement",
   wellness_checkin: "Bien-être enregistré",
   mentor_advice_regenerated: "Conseil mentor régénéré",
-  template_created: "Template créé",
+  template_created: "Modèle créé",
   program_created: "Programme créé",
 };
 
@@ -24,7 +24,7 @@ const COUNT_LABELS: Record<string, (n: number) => string> = {
   pr_detected: (n) => `${n} PR détecté${n > 1 ? "s" : ""}`,
   pr_manual_added: (n) => `${n} PR ajouté${n > 1 ? "s" : ""} manuellement`,
   wellness_checkin: (n) => `${n} check-in${n > 1 ? "s" : ""} bien-être`,
-  template_created: (n) => `${n} template${n > 1 ? "s" : ""} créé${n > 1 ? "s" : ""}`,
+  template_created: (n) => `${n} modèle${n > 1 ? "s" : ""} créé${n > 1 ? "s" : ""}`,
   program_created: (n) => `${n} programme${n > 1 ? "s" : ""} créé${n > 1 ? "s" : ""}`,
   onboarding_completed: (n) => `${n} onboarding terminé${n > 1 ? "s" : ""}`,
   mentor_advice_regenerated: (n) => `${n} conseil${n > 1 ? "s" : ""} mentor`,
