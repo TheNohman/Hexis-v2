@@ -37,21 +37,9 @@ model User {
   bodyWeightKg     Float?   // dernier poids de corps connu
   mentorEnabled    Boolean  @default(false)     // active le mentor IA
 
-  // Sport profile (filled at onboarding)
-  primarySport         PrimarySport?
-  sportLevel           SportLevel?
-  sportObjective       String?        // free-text objectif principal (tagué via preset)
-  weeklySessionTarget  Int?           // nombre de séances/semaine visées
-  sessionDurationMins  Int?           // durée typique max par séance
-  equipmentAccess      String[]       @default([]) // "gym_full", "gym_basic", "home", "bike", "pool", "running"
-  medicalNotes         String?        // douleurs, contraintes, infos kiné
-  onboardingCompletedAt DateTime?     // null = onboarding pas encore fait
-
-  // Endurance references (used to derive training zones / paces)
-  fcMax             Int?    // fréquence cardiaque max (bpm)
-  fcResting         Int?    // fréquence cardiaque au repos (bpm)
-  vmaKmh            Float?  // vitesse maximale aérobie en km/h (course)
-  ftp               Int?    // functional threshold power en W (vélo)
+  // Extracted 1:1 relations (see UserSportProfile / UserEnduranceRefs)
+  sportProfile   UserSportProfile?
+  enduranceRefs  UserEnduranceRefs?
 
   // Mentor advice cache
   lastAdvice       String?
@@ -59,6 +47,40 @@ model User {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+/// Sport profile filled at onboarding (primary sport, level, objective,
+/// availability, equipment, medical notes). Split off from User to keep
+/// the god-object slim: these fields are only read on the profile/mentor
+/// paths, never on the hot auth path.
+model UserSportProfile {
+  id                    String        @id @default(cuid())
+  userId                String        @unique
+  primarySport          PrimarySport?
+  sportLevel            SportLevel?
+  sportObjective        String?
+  weeklySessionTarget   Int?
+  sessionDurationMins   Int?
+  equipmentAccess       String[]      @default([])
+  medicalNotes          String?
+  onboardingCompletedAt DateTime?
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
+  user                  User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+/// Endurance reference values (used to derive HR / pace / power zones).
+/// Split off from User for the same reason as UserSportProfile.
+model UserEnduranceRefs {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  fcMax     Int?
+  fcResting Int?
+  vmaKmh    Float?
+  ftp       Int?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Account {
