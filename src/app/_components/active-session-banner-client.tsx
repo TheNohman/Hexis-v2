@@ -46,29 +46,30 @@ export function ActiveSessionBannerClient({
       <Link
         href={`/sessions/${sessionId}`}
         className="fixed top-[env(safe-area-inset-top)] left-0 right-0 z-40 mx-auto max-w-2xl px-3 pt-2"
+        aria-label="Reprendre la séance en cours"
       >
-        <div className="rounded-xl border border-accent/30 bg-accent/10 backdrop-blur-md px-4 py-2.5 flex items-center justify-between gap-3 shadow-lg hover:bg-accent/15 transition-colors">
-        <div className="flex items-center gap-3 min-w-0">
-          <span className="relative flex h-2 w-2 shrink-0">
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent opacity-60" />
-            <span className="relative inline-flex h-2 w-2 rounded-full bg-accent" />
-          </span>
-          <div className="min-w-0">
-            <p className="text-[11px] uppercase tracking-wider text-accent font-semibold">
-              S&eacute;ance en cours
-            </p>
-            <p className="text-sm font-medium truncate">
-              {name}{" "}
-              <span className="text-xs text-muted tabular-nums">
-                &middot; {completedEntries}/{totalEntries} &middot; {elapsedLabel}
-              </span>
-            </p>
+        <div className="rounded-xl border border-signal/40 bg-signal-light/80 backdrop-blur-md px-4 py-2.5 flex items-center justify-between gap-3 shadow-lg hover:bg-signal-light transition-colors">
+          <div className="flex items-center gap-3 min-w-0">
+            <span className="relative flex h-2.5 w-2.5 shrink-0" aria-hidden="true">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-signal opacity-70" />
+              <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-signal" />
+            </span>
+            <div className="min-w-0">
+              <p className="text-[11px] uppercase tracking-wider text-signal-ink font-bold">
+                Séance en cours
+              </p>
+              <p className="text-sm font-medium truncate">
+                {name}{" "}
+                <span className="text-xs text-muted tabular-nums">
+                  · {completedEntries}/{totalEntries} · {elapsedLabel}
+                </span>
+              </p>
+            </div>
           </div>
+          <span className="text-xs font-bold text-signal-ink whitespace-nowrap">
+            Reprendre →
+          </span>
         </div>
-        <span className="text-xs font-semibold text-accent whitespace-nowrap">
-          Reprendre &rarr;
-        </span>
-      </div>
       </Link>
     </>
   );

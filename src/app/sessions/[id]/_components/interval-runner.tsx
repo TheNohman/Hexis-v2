@@ -278,20 +278,22 @@ export function IntervalRunner({ workoutId, block, onClose }: Props) {
     rawDispatch({ type: "RESET", leadSecs: cfg.leadSecs });
   }
 
-  // Phase palette — dark immersive base with electric-blue energy on WORK,
-  // warm peach on REST, muted dark on GET_READY, and black on DONE.
+  // Phase palette — immersive. WORK uses the SIGNAL orange (this is THE
+  // high-intensity moment of the app, the only place signal is allowed
+  // in a full-bleed way). REST cools down to lavender-soft tones for
+  // recovery. GET_READY + DONE stay black for focus/finality.
   const bg =
     state.phase === "WORK"
-      ? "bg-accent"
+      ? "bg-signal"
       : state.phase === "REST"
-        ? "bg-[color:var(--peach)]"
+        ? "bg-[color:var(--lavender)]"
         : state.phase === "GET_READY"
           ? "bg-foreground"
           : "bg-foreground";
-  // Text color per phase — bg-accent requires black text (AA rule).
+  // Text color per phase — signal orange requires black text (6.9:1).
   const fg =
     state.phase === "WORK"
-      ? "text-accent-foreground"
+      ? "text-foreground"
       : state.phase === "REST"
         ? "text-foreground"
         : "text-background";

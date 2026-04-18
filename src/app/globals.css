@@ -26,17 +26,25 @@
   --accent-ink: #155E75;     /* 7.34:1 on white — for links/text in teal family */
   --accent-foreground: #0A0A0A;
 
-  /* Secondary palette. Rules: pastel = FILL only with dark text. */
+  /* Secondary palette — retuned to live in the teal family, no more */
+  /* ghosts of the coral/lime eras. Pastel = FILL only with dark text. */
   /* *-ink variants for readable text-on-white (all ≥ 4.5:1). */
-  --lavender: #C8B6E8;       /* chip fills */
+  --lavender: #C8B6E8;       /* stays — cool analogous to teal */
   --lavender-soft: #EFE8FA;
-  --lavender-ink: #6B4FA3;   /* 5.5:1 on white */
+  --lavender-ink: #5B3A94;   /* deeper, less "wellness-pastel" */
   --peach: #FFB8A8;
   --peach-soft: #FFE8E0;
-  --peach-ink: #B5390F;      /* 5.2:1 on white */
+  --peach-ink: #9F2B0E;      /* deeper rust, no longer coral-era orange */
   --butter: #F5E960;
   --butter-soft: #FCF6CE;
-  --butter-ink: #7A6300;     /* 5.4:1 on white */
+  --butter-ink: #6B5600;     /* deeper warm brown */
+
+  /* SIGNAL — reserved accent for high-intensity moments only.
+   * Use in: interval WORK phase, active-session banner, PR badges.
+   * NEVER for CTAs, chips, or decorative fills. Rarity = power. */
+  --signal: #F97316;
+  --signal-ink: #9A3412;     /* 7.5:1 on white for any text use */
+  --signal-light: #FFEDD5;
 
   /* Semantic — done aliases accent for consistency */
   --done: var(--accent);
@@ -127,6 +135,9 @@
   --color-butter: var(--butter);
   --color-butter-soft: var(--butter-soft);
   --color-butter-ink: var(--butter-ink);
+  --color-signal: var(--signal);
+  --color-signal-ink: var(--signal-ink);
+  --color-signal-light: var(--signal-light);
   --color-focus-ring: var(--focus-ring);
   --shadow-sm: var(--shadow-sm);
   --shadow-card: var(--shadow-card);
@@ -138,7 +149,14 @@
 }
 
 body {
-  background: var(--background);
+  /* Atmospheric gradient mesh — teal glow top-left, signal warmth bottom-right.
+   * Intentionally subtle (6% / 4% opacity) so cards still lift off the canvas.
+   * Fixed attachment = the mesh stays put while content scrolls. */
+  background:
+    radial-gradient(ellipse 900px 600px at 10% -10%, rgba(8, 145, 178, 0.10) 0%, transparent 55%),
+    radial-gradient(ellipse 700px 500px at 100% 105%, rgba(249, 115, 22, 0.06) 0%, transparent 55%),
+    var(--background);
+  background-attachment: fixed;
   color: var(--foreground);
 }
 
