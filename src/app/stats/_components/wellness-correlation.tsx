@@ -1,5 +1,3 @@
-import { Card } from "@/app/_components/card";
-
 type Point = {
   date: string;
   mood: number;
@@ -26,11 +24,11 @@ export function WellnessCorrelation({ points }: Props) {
   const active = points.filter((p) => p.volume > 0);
   if (active.length < 5) {
     return (
-      <Card as="section" className="text-center">
+      <section className="rounded-2xl bg-surface shadow-card p-5 text-center">
         <p className="text-sm text-subtle">
-          Encore trop peu de jours d&rsquo;entra&icirc;nement pour mesurer une corrélation.
+          Encore trop peu de jours d&rsquo;entraînement pour mesurer une corrélation.
         </p>
-      </Card>
+      </section>
     );
   }
 
@@ -41,10 +39,10 @@ export function WellnessCorrelation({ points }: Props) {
     /** Whether "higher is better" for this signal (stress is inverted — high stress = low detente). */
     positiveIsGood: boolean;
   }> = [
-    { key: "sleep", icon: "💤", label: "Sommeil", positiveIsGood: true },
-    { key: "energy", icon: "⚡", label: "Énergie", positiveIsGood: true },
-    { key: "mood", icon: "🙂", label: "Humeur", positiveIsGood: true },
-    { key: "stress", icon: "🧘", label: "Détente", positiveIsGood: true },
+    { key: "sleep", icon: "\u{1F4A4}", label: "Sommeil", positiveIsGood: true },
+    { key: "energy", icon: "\u{26A1}", label: "Énergie", positiveIsGood: true },
+    { key: "mood", icon: "\u{1F642}", label: "Humeur", positiveIsGood: true },
+    { key: "stress", icon: "\u{1F9D8}", label: "Détente", positiveIsGood: true },
   ];
 
   const rows = dims.map((dim) => {
@@ -52,8 +50,6 @@ export function WellnessCorrelation({ points }: Props) {
     const ys = active.map((p) => p.volume);
     const r = pearson(xs, ys);
     const { verdict, tone } = interpret(r);
-    // Bucketed average: split wellness by rating 1-2 vs 4-5 and compare
-    // mean volume.
     const low = active.filter((p) => p[dim.key] <= 2).map((p) => p.volume);
     const high = active.filter((p) => p[dim.key] >= 4).map((p) => p.volume);
     const lowAvg = low.length ? avg(low) : null;
@@ -72,43 +68,77 @@ export function WellnessCorrelation({ points }: Props) {
 
   return (
     <section className="space-y-3">
-      <h2 className="text-xs font-semibold text-muted uppercase tracking-wider">
+      <h2 className="font-display font-bold text-lg tracking-tight">
         Bien-être ↔ volume d&rsquo;entraînement
       </h2>
-      <div className="rounded-xl border border-border bg-surface divide-y divide-border overflow-hidden">
-        {rows.map((row) => (
-          <div key={row.key} className="p-3 flex items-center gap-3">
-            <span className="text-xl shrink-0">{row.icon}</span>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-baseline justify-between gap-2">
-                <p className="text-sm font-semibold">{row.label}</p>
-                <p
-                  className={`text-xs font-mono tabular-nums ${
-                    row.tone === "pos"
-                      ? "text-done"
-                      : row.tone === "neg"
-                        ? "text-danger"
-                        : "text-subtle"
-                  }`}
+      <ul className="rounded-2xl bg-surface shadow-card divide-y divide-border overflow-hidden">
+        {rows.map((row) => {
+          // r ∈ [-1, 1] → bar position 0..100 with midpoint at 50
+          const pct = Math.max(0, Math.min(100, (row.r + 1) * 50));
+          return (
+            <li key={row.key} className="p-3.5 flex items-center gap-3">
+              <span aria-hidden="true" className="text-xl shrink-0">
+                {row.icon}
+              </span>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-baseline justify-between gap-2">
+                  <p className="text-sm font-display font-bold">{row.label}</p>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span
+                      className={`inline-flex items-center gap-1 text-[10px] uppercase tracking-widest font-semibold rounded-full px-2 py-0.5 ${
+                        row.tone === "pos"
+                          ? "bg-done/20 text-foreground"
+                          : row.tone === "neg"
+                            ? "bg-danger-soft text-danger"
+                            : "bg-surface-hover text-muted"
+                      }`}
+                    >
+                      <span aria-hidden="true">
+                        {row.tone === "pos" ? "↑" : row.tone === "neg" ? "↓" : "→"}
+                      </span>
+                      {row.tone === "pos" ? "positif" : row.tone === "neg" ? "négatif" : "neutre"}
+                    </span>
+                    <span className="font-display font-bold text-sm tabular-nums">
+                      {row.r >= 0 ? "+" : ""}
+                      {row.r.toFixed(2)}
+                    </span>
+                  </div>
+                </div>
+                {/* Visual bar: -1 ← 0 → +1, marker shows r. Redundant with numeric r. */}
+                <div
+                  className="relative h-1.5 rounded-full bg-surface-hover mt-2 overflow-hidden"
+                  aria-hidden="true"
                 >
-                  r = {row.r >= 0 ? "+" : ""}
-                  {row.r.toFixed(2)}
-                </p>
+                  <div className="absolute inset-y-0 left-1/2 w-px bg-border" />
+                  <div
+                    className={`absolute top-0 h-full rounded-full ${
+                      row.tone === "pos"
+                        ? "bg-done"
+                        : row.tone === "neg"
+                          ? "bg-danger"
+                          : "bg-muted"
+                    }`}
+                    style={{
+                      left: row.r >= 0 ? "50%" : `${pct}%`,
+                      width: `${Math.abs(pct - 50)}%`,
+                    }}
+                  />
+                </div>
+                <p className="text-[11px] text-muted mt-1.5">{row.verdict}</p>
+                {row.lowAvg != null && row.highAvg != null && (
+                  <p className="text-[10px] text-subtle tabular-nums mt-0.5">
+                    Bas ({row.lowDays} j) : {formatVolume(row.lowAvg)} · Élevé (
+                    {row.highDays} j) : {formatVolume(row.highAvg)}
+                  </p>
+                )}
               </div>
-              <p className="text-[11px] text-muted mt-0.5">{row.verdict}</p>
-              {row.lowAvg != null && row.highAvg != null && (
-                <p className="text-[11px] text-subtle tabular-nums mt-0.5">
-                  Bas ({row.lowDays} j): {formatVolume(row.lowAvg)} ·
-                  Élevé ({row.highDays} j): {formatVolume(row.highAvg)}
-                </p>
-              )}
-            </div>
-          </div>
-        ))}
-      </div>
+            </li>
+          );
+        })}
+      </ul>
       <p className="text-[10px] text-subtle text-center">
-        Basé sur {active.length} jours d&rsquo;entraînement. r ∈ [-1, 1] :
-        +1 = corrélation parfaitement positive, 0 = aucune, -1 = parfaitement négative.
+        Basé sur {active.length} jours d&rsquo;entraînement. r ∈ [-1, 1] : +1 = corrélation
+        parfaitement positive, 0 = aucune, -1 = parfaitement négative.
       </p>
     </section>
   );
