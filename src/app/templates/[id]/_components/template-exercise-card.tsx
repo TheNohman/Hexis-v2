@@ -15,11 +15,10 @@ type Entry = TemplateDetail["blocks"][number]["entries"][number];
 
 type Props = {
   templateId: string;
-  blockId: string;
   group: ExerciseGroup<Entry>;
 };
 
-export function TemplateExerciseCard({ templateId, blockId, group }: Props) {
+export function TemplateExerciseCard({ templateId, group }: Props) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [editingRest, setEditingRest] = useState(false);
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
@@ -97,7 +96,6 @@ export function TemplateExerciseCard({ templateId, blockId, group }: Props) {
         {group.sets.map((entry, idx) => (
           <TemplateSetRow
             key={entry.id}
-            templateId={templateId}
             entry={entry}
             setNumber={idx + 1}
             onDuplicate={() =>
@@ -177,13 +175,11 @@ export function TemplateExerciseCard({ templateId, blockId, group }: Props) {
 }
 
 function TemplateSetRow({
-  templateId: _templateId,
   entry,
   setNumber,
   onDuplicate,
   onDelete,
 }: {
-  templateId: string;
   entry: Entry;
   setNumber: number;
   onDuplicate: () => void;

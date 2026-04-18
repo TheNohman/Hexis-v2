@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition, useMemo, useCallback } from "react";
+import { useState, useTransition, useMemo } from "react";
 import { addMeasurementAction, deleteMeasurementAction } from "@/app/measurements/actions";
 import { TimeSeriesChart } from "@/app/profile/_components/time-series-chart";
 import { type Period, PERIODS, filterByPeriod, dateFmtFull } from "@/lib/date-utils";
@@ -38,7 +38,7 @@ export function MeasurementsList({ entries, typeConfigs }: Props) {
     });
   }
 
-  function handleAdd(e: React.FormEvent<HTMLFormElement>, type: string, unit: string) {
+  function handleAdd(e: React.FormEvent<HTMLFormElement>, type: string) {
     e.preventDefault();
     const form = new FormData(e.currentTarget);
     const value = parseFloat(form.get("value") as string);
@@ -64,7 +64,7 @@ export function MeasurementsList({ entries, typeConfigs }: Props) {
           isPending={isPending}
           showForm={addingType === config.slug}
           onShowForm={() => setAddingType(addingType === config.slug ? null : config.slug)}
-          onAdd={(e) => handleAdd(e, config.slug, config.unit)}
+          onAdd={(e) => handleAdd(e, config.slug)}
           onDelete={(id) => startTransition(() => deleteMeasurementAction(id, config.slug))}
         />
       ))}
@@ -181,7 +181,6 @@ function MeasurementTypeSection({
           {chartData.length >= 2 && (
             <TimeSeriesChart
               data={chartData}
-              unit={config.unit}
               gradientId={`mFill-${config.slug}`}
               color={config.color ?? undefined}
               height={160}

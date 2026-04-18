@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
 import Link from "next/link";
 import {
   DndContext,
@@ -54,9 +54,13 @@ export function TemplateEditor({ template, exercises }: Props) {
   const [isPending, startTransition] = useTransition();
 
   const [optimisticBlocks, setOptimisticBlocks] = useState(template.blocks);
-  useEffect(() => {
+  // Sync optimistic state with server-provided `template.blocks` using the
+  // React 19 "reset state during render" pattern (avoids setState in effect).
+  const [prevBlocks, setPrevBlocks] = useState(template.blocks);
+  if (prevBlocks !== template.blocks) {
+    setPrevBlocks(template.blocks);
     setOptimisticBlocks(template.blocks);
-  }, [template.blocks]);
+  }
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),

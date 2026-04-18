@@ -1,7 +1,7 @@
 "use client";
 
 import type { ProgramSlotDetail } from "@/lib/programs/types";
-import { cycleLabel, dayLabel } from "@/lib/programs/utils";
+import { cycleLabel } from "@/lib/programs/utils";
 import { SlotCard } from "./slot-card";
 
 type Props = {

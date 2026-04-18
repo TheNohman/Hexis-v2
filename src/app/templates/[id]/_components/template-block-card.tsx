@@ -3,7 +3,6 @@
 import { useState, useTransition } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { TouchSensor, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
 import type { ExerciseListItem } from "@/lib/workouts/types";
 import type { TemplateDetail } from "@/lib/templates/types";
 import {
@@ -133,7 +132,6 @@ export function TemplateBlockCard({ templateId, block, exercises }: Props) {
             <TemplateExerciseCard
               key={`${group.exerciseId}-${group.sets[0].id}`}
               templateId={templateId}
-              blockId={block.id}
               group={group}
             />
           ))

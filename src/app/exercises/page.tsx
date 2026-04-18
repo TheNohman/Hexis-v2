@@ -2,7 +2,7 @@ import Link from "next/link";
 import { getCurrentUserId } from "@/lib/auth-helpers";
 import { listExercisesForUser } from "@/lib/workouts/queries";
 import { formatExerciseType } from "@/lib/format";
-import { createExerciseAction, deleteExerciseAction } from "./actions";
+import { createExerciseAction } from "./actions";
 import type { ExerciseType } from "@/generated/prisma/enums";
 import { ExerciseList } from "./_components/exercise-list";
 
