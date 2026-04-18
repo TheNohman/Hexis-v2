@@ -1,8 +1,8 @@
 import type { HTMLAttributes, ReactNode } from "react";
 
-export type CardVariant = "default" | "accent" | "done" | "danger" | "dashed";
-export type CardPadding = "none" | "sm" | "md" | "lg";
-export type CardRounded = "md" | "lg" | "xl" | "2xl";
+export type CardVariant = "default" | "accent" | "done" | "danger" | "dashed" | "hero" | "plain";
+export type CardPadding = "none" | "sm" | "md" | "lg" | "xl";
+export type CardRounded = "md" | "lg" | "xl" | "2xl" | "3xl";
 export type CardAs = "div" | "section" | "article" | "li";
 
 type Props = Omit<HTMLAttributes<HTMLElement>, "children"> & {
@@ -21,6 +21,7 @@ const PADDING: Record<CardPadding, string> = {
   sm: "p-3",
   md: "p-4",
   lg: "p-5",
+  xl: "p-6",
 };
 
 const ROUNDED: Record<CardRounded, string> = {
@@ -28,14 +29,17 @@ const ROUNDED: Record<CardRounded, string> = {
   lg: "rounded-lg",
   xl: "rounded-xl",
   "2xl": "rounded-2xl",
+  "3xl": "rounded-3xl",
 };
 
 const VARIANT: Record<CardVariant, string> = {
-  default: "border border-border bg-surface",
-  accent: "border border-accent/30 bg-accent/5",
-  done: "border border-done/40 bg-done/10",
-  danger: "border border-danger/30 bg-danger-light",
+  default: "bg-surface shadow-card",
+  plain: "bg-surface",
+  accent: "bg-accent text-accent-foreground",
+  done: "bg-done/20 text-foreground",
+  danger: "bg-danger-light text-foreground",
   dashed: "border border-dashed border-border",
+  hero: "bg-foreground text-background shadow-hero",
 };
 
 /**

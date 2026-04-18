@@ -1,48 +1,78 @@
 @import "tailwindcss";
 
 :root {
-  --background: #FFFFFF;
-  --foreground: #111827;
-  --accent: #6366F1;
-  --accent-hover: #4F46E5;
-  --accent-light: rgba(99, 102, 241, 0.08);
-  --surface: #F9FAFB;
-  --surface-hover: #F3F4F6;
-  --border: #E5E7EB;
-  --border-hover: #D1D5DB;
+  /* Surfaces */
+  --background: #EEEEEE;
+  --surface: #FFFFFF;
+  --surface-elevated: #FFFFFF;
+  --surface-hover: #F7F7F7;
+
+  /* Ink */
+  --foreground: #0A0A0A;
   --muted: #6B7280;
   --subtle: #9CA3AF;
-  --done: #10B981;
-  --done-light: rgba(16, 185, 129, 0.08);
-  --planned: #3B82F6;
-  --planned-light: rgba(59, 130, 246, 0.08);
-  --danger: #EF4444;
-  --danger-light: rgba(239, 68, 68, 0.08);
-  --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
-  --shadow: 0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06);
+  --border: #E5E7EB;
+  --border-hover: #D1D5DB;
+
+  /* Accent — lime */
+  --accent: #C4F542;
+  --accent-hover: #B8E933;
+  --accent-light: rgba(196, 245, 66, 0.18);
+  --accent-foreground: #0A0A0A;
+
+  /* Secondary palette chips */
+  --lavender: #C8B6E8;
+  --peach: #FFB8A8;
+  --butter: #F5E960;
+
+  /* Semantic */
+  --done: #86EFAC;
+  --done-light: rgba(134, 239, 172, 0.25);
+  --planned: #C8B6E8;
+  --planned-light: rgba(200, 182, 232, 0.25);
+  --danger: #FCA5A5;
+  --danger-light: rgba(252, 165, 165, 0.25);
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-card: 0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.02);
+  --shadow-hero: 0 4px 24px rgba(0,0,0,0.06);
+  --shadow-floating: 0 8px 32px rgba(0,0,0,0.12);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0F1117;
+    --background: #0A0A0A;
+    --surface: #1A1A1A;
+    --surface-elevated: #1F1F1F;
+    --surface-hover: #242424;
+
     --foreground: #F3F4F6;
-    --accent: #818CF8;
-    --accent-hover: #6366F1;
-    --accent-light: rgba(129, 140, 248, 0.12);
-    --surface: rgba(255, 255, 255, 0.04);
-    --surface-hover: rgba(255, 255, 255, 0.07);
-    --border: rgba(255, 255, 255, 0.08);
-    --border-hover: rgba(255, 255, 255, 0.15);
     --muted: #9CA3AF;
     --subtle: #6B7280;
-    --done: #34D399;
-    --done-light: rgba(52, 211, 153, 0.1);
-    --planned: #60A5FA;
-    --planned-light: rgba(96, 165, 250, 0.1);
-    --danger: #F87171;
-    --danger-light: rgba(248, 113, 113, 0.1);
+    --border: rgba(255, 255, 255, 0.08);
+    --border-hover: rgba(255, 255, 255, 0.15);
+
+    --accent: #C4F542;
+    --accent-hover: #D4FF52;
+    --accent-light: rgba(196, 245, 66, 0.14);
+    --accent-foreground: #0A0A0A;
+
+    --lavender: #C8B6E8;
+    --peach: #FFB8A8;
+    --butter: #F5E960;
+
+    --done: #86EFAC;
+    --done-light: rgba(134, 239, 172, 0.15);
+    --planned: #C8B6E8;
+    --planned-light: rgba(200, 182, 232, 0.15);
+    --danger: #FCA5A5;
+    --danger-light: rgba(252, 165, 165, 0.15);
+
     --shadow-sm: none;
-    --shadow: none;
+    --shadow-card: none;
+    --shadow-hero: 0 4px 24px rgba(0,0,0,0.4);
+    --shadow-floating: 0 8px 32px rgba(0,0,0,0.5);
   }
 }
 
@@ -52,7 +82,9 @@
   --color-accent: var(--accent);
   --color-accent-hover: var(--accent-hover);
   --color-accent-light: var(--accent-light);
+  --color-accent-foreground: var(--accent-foreground);
   --color-surface: var(--surface);
+  --color-surface-elevated: var(--surface-elevated);
   --color-surface-hover: var(--surface-hover);
   --color-border: var(--border);
   --color-border-hover: var(--border-hover);
@@ -64,8 +96,13 @@
   --color-planned-light: var(--planned-light);
   --color-danger: var(--danger);
   --color-danger-light: var(--danger-light);
+  --color-lavender: var(--lavender);
+  --color-peach: var(--peach);
+  --color-butter: var(--butter);
   --shadow-sm: var(--shadow-sm);
-  --shadow-card: var(--shadow);
+  --shadow-card: var(--shadow-card);
+  --shadow-hero: var(--shadow-hero);
+  --shadow-floating: var(--shadow-floating);
   --font-sans: var(--font-dm-sans);
   --font-mono: var(--font-geist-mono);
   --font-display: var(--font-outfit);
@@ -83,15 +120,15 @@ body {
 ::-webkit-scrollbar-thumb:hover { background: var(--border-hover); }
 
 ::selection {
-  background: var(--accent-light);
-  color: var(--foreground);
+  background: var(--accent);
+  color: var(--accent-foreground);
 }
 
 input:-webkit-autofill,
 input:-webkit-autofill:hover,
 input:-webkit-autofill:focus {
   -webkit-text-fill-color: var(--foreground);
-  -webkit-box-shadow: 0 0 0px 1000px var(--background) inset;
+  -webkit-box-shadow: 0 0 0px 1000px var(--surface) inset;
   transition: background-color 5000s ease-in-out 0s;
 }
 

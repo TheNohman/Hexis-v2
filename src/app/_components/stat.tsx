@@ -23,18 +23,19 @@ type Props = {
 export function Stat({ value, label, variant = "default", dense = false, className = "" }: Props) {
   const valueClass =
     variant === "accent"
-      ? "text-accent"
+      ? "text-foreground"
       : variant === "done"
-        ? "text-done"
-        : "";
-  const outerPadding = dense ? "py-2" : "p-3";
-  const valueSize = dense ? "text-sm font-bold" : "text-xl font-display font-bold";
+        ? "text-foreground"
+        : "text-foreground";
+  const outerPadding = dense ? "py-2 px-3" : "p-4";
+  const rounded = dense ? "rounded-xl" : "rounded-2xl";
+  const valueSize = dense
+    ? "text-base font-display font-extrabold"
+    : "text-2xl font-display font-black";
   return (
-    <div
-      className={`rounded-lg border border-border bg-surface ${outerPadding} text-center ${className}`}
-    >
-      <p className={`${valueSize} tabular-nums ${valueClass}`}>{value}</p>
-      <p className="text-[10px] text-muted mt-0.5 uppercase tracking-wider">{label}</p>
+    <div className={`${rounded} bg-surface shadow-card ${outerPadding} ${className}`}>
+      <p className="text-[10px] text-muted uppercase tracking-widest font-semibold">{label}</p>
+      <p className={`${valueSize} tabular-nums mt-1.5 ${valueClass}`}>{value}</p>
     </div>
   );
 }
