@@ -8,37 +8,43 @@
   --surface-elevated: #FFFFFF;
   --surface-hover: #F7F7F7;
 
-  /* Ink */
-  --foreground: #0A0A0A;
-  --muted: #6B7280;
-  --subtle: #9CA3AF;
+  /* Ink — 4 levels of gray below black */
+  --foreground: #0A0A0A;     /* h1, hero values */
+  --ink-strong: #1F2937;     /* section titles */
+  --muted: #4B5563;          /* body secondary */
+  --subtle: #9CA3AF;         /* captions, placeholders */
   --border: #E5E7EB;
   --border-hover: #D1D5DB;
 
-  /* Accent — lime */
-  --accent: #C4F542;
+  /* Accent — lime (also used for "done" — unified) */
+  --accent: #C4F542;         /* fills, chips, big CTAs */
   --accent-hover: #B8E933;
-  --accent-light: rgba(196, 245, 66, 0.18);
+  --accent-light: #E8F5D6;   /* soft bg variant */
+  --accent-ink: #5C7A0E;     /* readable darker lime for TEXT on white (WCAG AA) */
   --accent-foreground: #0A0A0A;
 
-  /* Secondary palette chips */
+  /* Secondary palette + soft variants for backgrounds */
   --lavender: #C8B6E8;
+  --lavender-soft: #EFE8FA;
   --peach: #FFB8A8;
+  --peach-soft: #FFE8E0;
   --butter: #F5E960;
+  --butter-soft: #FCF6CE;
 
-  /* Semantic */
-  --done: #86EFAC;
-  --done-light: rgba(134, 239, 172, 0.25);
+  /* Semantic — done aliases accent for consistency */
+  --done: var(--accent);
+  --done-light: var(--accent-light);
   --planned: #C8B6E8;
-  --planned-light: rgba(200, 182, 232, 0.25);
-  --danger: #FCA5A5;
-  --danger-light: rgba(252, 165, 165, 0.25);
+  --planned-light: #EFE8FA;
+  --danger: #EF4444;         /* strong — icons, critical text */
+  --danger-soft: #FEE2E2;    /* soft bg for warnings */
+  --danger-light: #FEE2E2;   /* legacy alias */
 
-  /* Shadows */
-  --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
-  --shadow-card: 0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.02);
-  --shadow-hero: 0 4px 24px rgba(0,0,0,0.06);
-  --shadow-floating: 0 8px 32px rgba(0,0,0,0.12);
+  /* Shadows — bumped so cards lift off #EEEEEE bg */
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+  --shadow-card: 0 2px 8px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-hero: 0 8px 32px rgba(0,0,0,0.08);
+  --shadow-floating: 0 12px 40px rgba(0,0,0,0.14);
 }
 
 /* Dark mode disabled — app is light-only for now. */
@@ -84,6 +90,7 @@
   --color-accent: var(--accent);
   --color-accent-hover: var(--accent-hover);
   --color-accent-light: var(--accent-light);
+  --color-accent-ink: var(--accent-ink);
   --color-accent-foreground: var(--accent-foreground);
   --color-surface: var(--surface);
   --color-surface-elevated: var(--surface-elevated);
@@ -97,10 +104,15 @@
   --color-planned: var(--planned);
   --color-planned-light: var(--planned-light);
   --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
   --color-danger-light: var(--danger-light);
+  --color-ink-strong: var(--ink-strong);
   --color-lavender: var(--lavender);
+  --color-lavender-soft: var(--lavender-soft);
   --color-peach: var(--peach);
+  --color-peach-soft: var(--peach-soft);
   --color-butter: var(--butter);
+  --color-butter-soft: var(--butter-soft);
   --shadow-sm: var(--shadow-sm);
   --shadow-card: var(--shadow-card);
   --shadow-hero: var(--shadow-hero);

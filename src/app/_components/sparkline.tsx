@@ -1,3 +1,5 @@
+import { useId } from "react";
+
 type Props = {
   values: number[];
   color?: string;
@@ -5,12 +7,14 @@ type Props = {
   height?: number;
   strokeWidth?: number;
   className?: string;
+  /** If true, draws a soft gradient area below the line. */
+  fill?: boolean;
 };
 
 /**
- * Minimal SVG sparkline. Draws a smooth polyline of `values` mapped to the
- * given box. Designed for stat cards (~60×24px default). Gracefully handles
- * flat or empty series.
+ * Smooth SVG sparkline with gradient area. Draws a Catmull-Rom-ish bezier
+ * curve through `values`. Designed for stat cards (~64×24px default).
+ * Gracefully handles flat or empty series.
  */
 export function Sparkline({
   values,
@@ -19,7 +23,10 @@ export function Sparkline({
   height = 24,
   strokeWidth = 1.75,
   className = "",
+  fill = true,
 }: Props) {
+  const gradientId = `spark-grad-${useId().replace(/:/g, "")}`;
+
   if (values.length === 0) {
     return (
       <svg
@@ -37,13 +44,24 @@ export function Sparkline({
   const span = max - min || 1;
   const stepX = values.length > 1 ? width / (values.length - 1) : 0;
 
-  const points = values.map((v, i) => {
-    const x = i * stepX;
-    const y = height - ((v - min) / span) * (height - strokeWidth) - strokeWidth / 2;
-    return `${x.toFixed(2)},${y.toFixed(2)}`;
-  });
+  const points = values.map((v, i) => ({
+    x: i * stepX,
+    y: height - ((v - min) / span) * (height - strokeWidth) - strokeWidth / 2,
+  }));
 
-  const linePath = `M ${points.join(" L ")}`;
+  // Smooth curve via cubic Bezier with monotone-ish control points.
+  let linePath = `M ${points[0].x.toFixed(2)},${points[0].y.toFixed(2)}`;
+  for (let i = 0; i < points.length - 1; i++) {
+    const p0 = points[i - 1] ?? points[i];
+    const p1 = points[i];
+    const p2 = points[i + 1];
+    const p3 = points[i + 2] ?? p2;
+    const cp1x = p1.x + (p2.x - p0.x) / 6;
+    const cp1y = p1.y + (p2.y - p0.y) / 6;
+    const cp2x = p2.x - (p3.x - p1.x) / 6;
+    const cp2y = p2.y - (p3.y - p1.y) / 6;
+    linePath += ` C ${cp1x.toFixed(2)},${cp1y.toFixed(2)} ${cp2x.toFixed(2)},${cp2y.toFixed(2)} ${p2.x.toFixed(2)},${p2.y.toFixed(2)}`;
+  }
   const areaPath = `${linePath} L ${width},${height} L 0,${height} Z`;
 
   return (
@@ -54,7 +72,15 @@ export function Sparkline({
       className={className}
       aria-hidden="true"
     >
-      <path d={areaPath} fill={color} fillOpacity={0.18} />
+      {fill && (
+        <defs>
+          <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={color} stopOpacity="0.35" />
+            <stop offset="100%" stopColor={color} stopOpacity="0" />
+          </linearGradient>
+        </defs>
+      )}
+      {fill && <path d={areaPath} fill={`url(#${gradientId})`} />}
       <path
         d={linePath}
         fill="none"
