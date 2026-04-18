@@ -328,6 +328,42 @@ export async function updateTemplateEntryRest(
 }
 
 /**
+ * Upsert KPI values on a template entry. Used by the program-editor inline
+ * panel to tweak planned numbers (weight, reps, duration…) without leaving
+ * the program page.
+ */
+export async function updateTemplateEntryValues(
+  entryId: string,
+  userId: string,
+  values: KpiValueInput[],
+) {
+  await assertTemplateEntryOwnership(entryId, userId);
+
+  await prisma.$transaction(
+    values.map((v) =>
+      prisma.templateEntryKpiValue.upsert({
+        where: {
+          entryId_kpiDefinitionId: {
+            entryId,
+            kpiDefinitionId: v.kpiDefinitionId,
+          },
+        },
+        create: {
+          entryId,
+          kpiDefinitionId: v.kpiDefinitionId,
+          valueNumeric: v.valueNumeric ?? null,
+          valueText: v.valueText ?? null,
+        },
+        update: {
+          valueNumeric: v.valueNumeric ?? null,
+          valueText: v.valueText ?? null,
+        },
+      }),
+    ),
+  );
+}
+
+/**
  * Create a workout from a template, with all entries in PLANNED status.
  * KPI values from the template are stored as plannedNumeric/plannedText.
  */

@@ -1,9 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import {
   Pencil,
   X as XIcon,
+  ChevronDown,
   Dumbbell,
   HeartPulse,
   Flame,
@@ -22,7 +24,11 @@ type Props = {
    *  is hidden (day is fixed by the group), date is implied by the parent. */
   scheduledDate: Date | null;
   isCurrent: boolean;
+  /** Toggle the inline detail panel (when a template is assigned) OR open
+   *  the template picker (when no template is assigned). Parent decides. */
   onClickTemplate: () => void;
+  /** True when the inline detail panel below this slot is expanded. */
+  isExpanded?: boolean;
   onDelete: () => void;
   onUpdateDay: (day: number) => void;
   onUpdateTime: (startTime: string | null) => void;
@@ -135,6 +141,7 @@ export function SlotCard({
   scheduledDate,
   isCurrent,
   onClickTemplate,
+  isExpanded = false,
   onDelete,
   onUpdateDay,
   onUpdateTime,
@@ -150,9 +157,9 @@ export function SlotCard({
 
   return (
     <div
-      className={`group/slot relative overflow-hidden rounded-2xl bg-surface shadow-card hover:shadow-hero hover:-translate-y-0.5 transition-all ${
+      className={`group/slot relative overflow-hidden rounded-2xl bg-surface shadow-card hover:shadow-hero transition-all ${
         isCurrent ? "ring-2 ring-accent" : ""
-      }`}
+      } ${isExpanded ? "ring-1 ring-accent-ink/20" : "hover:-translate-y-0.5"}`}
     >
       {/* Category band — vertical 4px stripe left side */}
       <span
@@ -191,14 +198,20 @@ export function SlotCard({
           </label>
         )}
 
-        {/* Template + label + inline time */}
+        {/* Template + label + inline time.
+            When a template is assigned, clicking expands the inline params
+            panel (handled by the parent). When empty, opens the picker. */}
         <div
           className="flex-1 min-w-0 cursor-pointer"
           onClick={onClickTemplate}
           role="button"
           tabIndex={0}
+          aria-expanded={hasTemplate ? isExpanded : undefined}
           onKeyDown={(e) => {
-            if (e.key === "Enter" || e.key === " ") onClickTemplate();
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              onClickTemplate();
+            }
           }}
         >
           {/* Top row: category chip OR custom label */}
@@ -283,6 +296,27 @@ export function SlotCard({
 
         {/* Actions */}
         <div className="flex items-center shrink-0">
+          {hasTemplate && slot.templateId && (
+            <Link
+              href={`/templates/${slot.templateId}`}
+              onClick={(e) => e.stopPropagation()}
+              aria-label="Modifier la séance"
+              title="Ouvrir le modèle complet"
+              className="min-h-[32px] min-w-[32px] flex items-center justify-center text-subtle hover:text-accent-ink cursor-pointer transition-colors rounded-lg opacity-0 group-hover/slot:opacity-100 focus:opacity-100"
+            >
+              <Pencil className="h-3.5 w-3.5" aria-hidden="true" />
+            </Link>
+          )}
+          {hasTemplate && (
+            <span
+              aria-hidden="true"
+              className={`ml-0.5 text-subtle transition-transform ${
+                isExpanded ? "rotate-180" : ""
+              }`}
+            >
+              <ChevronDown className="h-3.5 w-3.5" />
+            </span>
+          )}
           {!slot.label && !editingLabel && hasTemplate && (
             <button
               type="button"

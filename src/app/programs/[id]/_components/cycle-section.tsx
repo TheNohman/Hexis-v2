@@ -1,5 +1,6 @@
 "use client";
 
+import { CopyPlus } from "lucide-react";
 import type { ProgramSlotDetail } from "@/lib/programs/types";
 import {
   cycleLabel,
@@ -10,14 +11,18 @@ import {
   isToday,
 } from "@/lib/programs/utils";
 import { SlotCard } from "./slot-card";
+import { SlotEntriesPanel } from "./slot-entries-panel";
 
 type Props = {
   cycle: number;
+  cycleCount: number;
   cycleDays: number;
   startDate: Date | null;
   slots: ProgramSlotDetail[];
   currentSlotId: string | null;
+  expandedSlotId: string | null;
   onSlotClickTemplate: (slotId: string) => void;
+  onChangeTemplate: (slotId: string) => void;
   onAddSlot: () => void;
   onAddSlotAtDay: (cycle: number, day: number) => void;
   onDeleteSlot: (slotId: string) => void;
@@ -25,23 +30,29 @@ type Props = {
     slotId: string,
     data: { day?: number; startTime?: string | null; label?: string | null },
   ) => void;
+  onCloneCycle: (sourceCycle: number) => void;
   isPending: boolean;
 };
 
 export function CycleSection({
   cycle,
+  cycleCount,
   cycleDays,
   startDate,
   slots,
   currentSlotId,
+  expandedSlotId,
   onSlotClickTemplate,
+  onChangeTemplate,
   onAddSlot,
   onAddSlotAtDay,
   onDeleteSlot,
   onUpdateSlot,
+  onCloneCycle,
   isPending,
 }: Props) {
   const isCurrent = slots.some((s) => s.id === currentSlotId);
+  const canClone = cycle + 1 < cycleCount && slots.length > 0;
   const cycleRange = computeCycleRange(startDate, cycleDays, cycle);
 
   // Group slots by day when a start date is set — makes multi-session days obvious.
@@ -83,6 +94,18 @@ export function CycleSection({
                 En cours
               </span>
             )}
+            {canClone && (
+              <button
+                type="button"
+                onClick={() => onCloneCycle(cycle)}
+                disabled={isPending}
+                aria-label="Dupliquer ce cycle vers le suivant"
+                title="Dupliquer ce cycle vers le suivant"
+                className="inline-flex items-center justify-center min-h-[28px] min-w-[28px] rounded-full text-muted hover:text-accent-ink hover:bg-accent-light transition-colors cursor-pointer disabled:opacity-50"
+              >
+                <CopyPlus className="w-3.5 h-3.5" aria-hidden="true" />
+              </button>
+            )}
           </div>
           {cycleRange ? (
             <p className="text-[15px] font-display font-bold text-foreground leading-tight mt-0.5">
@@ -101,7 +124,9 @@ export function CycleSection({
           startDate={startDate}
           slotsByDay={slotsByDay}
           currentSlotId={currentSlotId}
+          expandedSlotId={expandedSlotId}
           onSlotClickTemplate={onSlotClickTemplate}
+          onChangeTemplate={onChangeTemplate}
           onAddSlotAtDay={onAddSlotAtDay}
           onDeleteSlot={onDeleteSlot}
           onUpdateSlot={onUpdateSlot}
@@ -115,19 +140,28 @@ export function CycleSection({
             </div>
           ) : (
             slots.map((slot) => (
-              <SlotCard
-                key={slot.id}
-                slot={slot}
-                cycleDays={cycleDays}
-                scheduledDate={null}
-                isCurrent={slot.id === currentSlotId}
-                onClickTemplate={() => onSlotClickTemplate(slot.id)}
-                onDelete={() => onDeleteSlot(slot.id)}
-                onUpdateDay={(day) => onUpdateSlot(slot.id, { day })}
-                onUpdateTime={(startTime) => onUpdateSlot(slot.id, { startTime })}
-                onUpdateLabel={(label) => onUpdateSlot(slot.id, { label })}
-                isPending={isPending}
-              />
+              <div key={slot.id} className="space-y-2">
+                <SlotCard
+                  slot={slot}
+                  cycleDays={cycleDays}
+                  scheduledDate={null}
+                  isCurrent={slot.id === currentSlotId}
+                  isExpanded={slot.id === expandedSlotId}
+                  onClickTemplate={() => onSlotClickTemplate(slot.id)}
+                  onDelete={() => onDeleteSlot(slot.id)}
+                  onUpdateDay={(day) => onUpdateSlot(slot.id, { day })}
+                  onUpdateTime={(startTime) => onUpdateSlot(slot.id, { startTime })}
+                  onUpdateLabel={(label) => onUpdateSlot(slot.id, { label })}
+                  isPending={isPending}
+                />
+                {slot.id === expandedSlotId && slot.templateId && (
+                  <SlotEntriesPanel
+                    templateId={slot.templateId}
+                    templateName={slot.templateName}
+                    onChangeTemplate={() => onChangeTemplate(slot.id)}
+                  />
+                )}
+              </div>
             ))
           )}
           <button
@@ -150,7 +184,9 @@ function DateGroupedDays({
   startDate,
   slotsByDay,
   currentSlotId,
+  expandedSlotId,
   onSlotClickTemplate,
+  onChangeTemplate,
   onAddSlotAtDay,
   onDeleteSlot,
   onUpdateSlot,
@@ -161,7 +197,9 @@ function DateGroupedDays({
   startDate: Date;
   slotsByDay: Map<number, ProgramSlotDetail[]>;
   currentSlotId: string | null;
+  expandedSlotId: string | null;
   onSlotClickTemplate: (slotId: string) => void;
+  onChangeTemplate: (slotId: string) => void;
   onAddSlotAtDay: (cycle: number, day: number) => void;
   onDeleteSlot: (slotId: string) => void;
   onUpdateSlot: (
@@ -246,21 +284,30 @@ function DateGroupedDays({
             ) : (
               <div className="space-y-2">
                 {slotsForDay.map((slot) => (
-                  <SlotCard
-                    key={slot.id}
-                    slot={slot}
-                    cycleDays={cycleDays}
-                    scheduledDate={date}
-                    isCurrent={slot.id === currentSlotId}
-                    onClickTemplate={() => onSlotClickTemplate(slot.id)}
-                    onDelete={() => onDeleteSlot(slot.id)}
-                    onUpdateDay={(d) => onUpdateSlot(slot.id, { day: d })}
-                    onUpdateTime={(startTime) =>
-                      onUpdateSlot(slot.id, { startTime })
-                    }
-                    onUpdateLabel={(label) => onUpdateSlot(slot.id, { label })}
-                    isPending={isPending}
-                  />
+                  <div key={slot.id} className="space-y-2">
+                    <SlotCard
+                      slot={slot}
+                      cycleDays={cycleDays}
+                      scheduledDate={date}
+                      isCurrent={slot.id === currentSlotId}
+                      isExpanded={slot.id === expandedSlotId}
+                      onClickTemplate={() => onSlotClickTemplate(slot.id)}
+                      onDelete={() => onDeleteSlot(slot.id)}
+                      onUpdateDay={(d) => onUpdateSlot(slot.id, { day: d })}
+                      onUpdateTime={(startTime) =>
+                        onUpdateSlot(slot.id, { startTime })
+                      }
+                      onUpdateLabel={(label) => onUpdateSlot(slot.id, { label })}
+                      isPending={isPending}
+                    />
+                    {slot.id === expandedSlotId && slot.templateId && (
+                      <SlotEntriesPanel
+                        templateId={slot.templateId}
+                        templateName={slot.templateName}
+                        onChangeTemplate={() => onChangeTemplate(slot.id)}
+                      />
+                    )}
+                  </div>
                 ))}
               </div>
             )}

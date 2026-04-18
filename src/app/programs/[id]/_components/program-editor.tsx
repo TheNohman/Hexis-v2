@@ -14,6 +14,7 @@ import {
   updateStartDateAction,
   updateProgramDescriptionAction,
   fillProgramCyclesAction,
+  cloneCycleAction,
 } from "@/app/programs/actions";
 import type { ProgramDetail } from "@/lib/programs/types";
 import {
@@ -37,6 +38,7 @@ export function ProgramEditor({ program, templates, mentorEnabled }: Props) {
   const toast = useToast();
   const [isPending, startTransition] = useTransition();
   const [editingSlotId, setEditingSlotId] = useState<string | null>(null);
+  const [expandedSlotId, setExpandedSlotId] = useState<string | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -83,6 +85,21 @@ export function ProgramEditor({ program, templates, mentorEnabled }: Props) {
     }
   }
 
+  async function handleCloneCycle(sourceCycle: number) {
+    const result = await cloneCycleAction(program.id, sourceCycle, sourceCycle + 1);
+    if (result.error) {
+      toast.show(result.error, { kind: "error" });
+    } else {
+      const n = result.copied ?? 0;
+      toast.show(
+        n === 0
+          ? "Rien à dupliquer."
+          : `${n} créneau${n > 1 ? "x" : ""} dupliqué${n > 1 ? "s" : ""} dans le cycle suivant.`,
+        { kind: "success" },
+      );
+    }
+  }
+
   async function handleFillCycles() {
     setFilling(true);
     try {
@@ -123,7 +140,17 @@ export function ProgramEditor({ program, templates, mentorEnabled }: Props) {
       ? computeSlotDate(program.startDate, program.cycleDays, currentSlot.cycle, currentSlot.day)
       : null;
   const slotCount = program.slots.filter((s) => s.templateId).length;
-  const emptySlotCount = program.slots.filter((s) => !s.templateId).length;
+  // All (cycle, day) positions that have NO assigned template — either an
+  // empty slot exists there, or no slot exists at all. These are the AI targets.
+  const assignedKeySet = new Set(
+    program.slots.filter((s) => s.templateId).map((s) => `${s.cycle}:${s.day}`),
+  );
+  let emptySlotCount = 0;
+  for (let c = 0; c < program.cycleCount; c++) {
+    for (let d = 0; d < program.cycleDays; d++) {
+      if (!assignedKeySet.has(`${c}:${d}`)) emptySlotCount++;
+    }
+  }
   const canFillWithAI = mentorEnabled && emptySlotCount > 0;
   const fillTooltip = !mentorEnabled
     ? "Active le Mentor IA dans ton profil"
@@ -445,17 +472,30 @@ export function ProgramEditor({ program, templates, mentorEnabled }: Props) {
           <CycleSection
             key={cycle}
             cycle={cycle}
+            cycleCount={program.cycleCount}
             cycleDays={program.cycleDays}
             startDate={program.startDate}
             slots={slots}
             currentSlotId={program.isActive ? program.currentSlotId : null}
-            onSlotClickTemplate={(slotId) => setEditingSlotId(slotId)}
+            expandedSlotId={expandedSlotId}
+            onSlotClickTemplate={(slotId) => {
+              const slot = program.slots.find((s) => s.id === slotId);
+              // No template yet → straight to picker. Otherwise toggle the
+              // inline detail panel below the slot card.
+              if (!slot?.templateId) {
+                setEditingSlotId(slotId);
+              } else {
+                setExpandedSlotId((cur) => (cur === slotId ? null : slotId));
+              }
+            }}
+            onChangeTemplate={(slotId) => setEditingSlotId(slotId)}
             onAddSlot={() => handleAddSlot(cycle)}
             onAddSlotAtDay={(cycle, day) =>
               startTransition(() => addSlotAction(program.id, cycle, { day }))
             }
             onDeleteSlot={handleDeleteSlot}
             onUpdateSlot={handleUpdateSlot}
+            onCloneCycle={handleCloneCycle}
             isPending={isPending}
           />
         ))}

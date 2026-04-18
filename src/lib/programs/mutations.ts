@@ -192,6 +192,54 @@ export async function deleteSlot(slotId: string, userId: string) {
   return prisma.programSlot.delete({ where: { id: slotId } });
 }
 
+/**
+ * Clone all slots from `sourceCycle` into `targetCycle`. If `targetCycle` is
+ * outside the current cycle count, the program's `cycleCount` is grown first.
+ * Existing slots on the target cycle are preserved — clones are added on top.
+ */
+export async function cloneCycle(
+  programId: string,
+  userId: string,
+  sourceCycle: number,
+  targetCycle: number,
+) {
+  const program = await prisma.program.findUnique({ where: { id: programId } });
+  if (!program || program.userId !== userId) throw new Error("Forbidden");
+  if (sourceCycle < 0 || sourceCycle >= program.cycleCount) {
+    throw new Error("Invalid source cycle");
+  }
+  if (targetCycle < 0 || targetCycle > 11) throw new Error("Invalid target cycle");
+  if (sourceCycle === targetCycle) throw new Error("Source and target are identical");
+
+  // Grow cycleCount if needed
+  if (targetCycle >= program.cycleCount) {
+    await prisma.program.update({
+      where: { id: programId },
+      data: { cycleCount: targetCycle + 1 },
+    });
+  }
+
+  const sourceSlots = await prisma.programSlot.findMany({
+    where: { programId, cycle: sourceCycle },
+    orderBy: [{ day: "asc" }, { startTime: "asc" }],
+  });
+
+  if (sourceSlots.length === 0) return { copied: 0 };
+
+  await prisma.programSlot.createMany({
+    data: sourceSlots.map((s) => ({
+      programId,
+      cycle: targetCycle,
+      day: s.day,
+      startTime: s.startTime,
+      label: s.label,
+      templateId: s.templateId,
+    })),
+  });
+
+  return { copied: sourceSlots.length };
+}
+
 // --------------- Create workout from current program slot ---------------
 
 function applySuggestion(

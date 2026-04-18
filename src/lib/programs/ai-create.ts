@@ -155,6 +155,7 @@ export async function materializeProgramFills(
   userId: string,
   programId: string,
   fills: GeneratedFill[],
+  createForKey?: Set<string>,
 ): Promise<FillResult> {
   const program = await prisma.program.findUnique({
     where: { id: programId },
@@ -182,6 +183,7 @@ export async function materializeProgramFills(
     const key = `${s.cycle}:${s.day}`;
     if (!emptyByKey.has(key)) emptyByKey.set(key, s.id);
   }
+  const createKeys = new Set(createForKey ?? []);
 
   let created = 0;
   let skipped = 0;
@@ -190,10 +192,26 @@ export async function materializeProgramFills(
   for (const fill of fills) {
     const key = `${fill.cycle}:${fill.day}`;
     const slotId = emptyByKey.get(key);
-    if (!slotId) {
+    const canCreate = !slotId && createKeys.has(key);
+    if (!slotId && !canCreate) {
       skipped++;
       reasons.push(`Slot cycle ${fill.cycle + 1} jour ${fill.day + 1} non vide`);
       continue;
+    }
+    // Bounds check for new slot creation
+    if (canCreate) {
+      if (
+        fill.cycle < 0 ||
+        fill.cycle >= program.cycleCount ||
+        fill.day < 0 ||
+        fill.day >= program.cycleDays
+      ) {
+        skipped++;
+        reasons.push(
+          `Slot cycle ${fill.cycle + 1} jour ${fill.day + 1} hors limites`,
+        );
+        continue;
+      }
     }
 
     // Count matched exercises in the generated template
@@ -298,17 +316,27 @@ export async function materializeProgramFills(
       },
     });
 
-    await prisma.programSlot.update({
-      where: { id: slotId },
-      data: {
-        templateId: template.id,
-        label: fill.label ?? undefined,
-      },
-    });
-
-    // Consume the slot so a later fill on the same (cycle,day) doesn't
-    // re-fill what we just wrote.
-    emptyByKey.delete(key);
+    if (slotId) {
+      await prisma.programSlot.update({
+        where: { id: slotId },
+        data: {
+          templateId: template.id,
+          label: fill.label ?? undefined,
+        },
+      });
+      emptyByKey.delete(key);
+    } else {
+      await prisma.programSlot.create({
+        data: {
+          programId,
+          cycle: fill.cycle,
+          day: fill.day,
+          templateId: template.id,
+          label: fill.label ?? null,
+        },
+      });
+      createKeys.delete(key);
+    }
     created++;
   }
 

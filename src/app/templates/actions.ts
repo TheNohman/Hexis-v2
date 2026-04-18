@@ -19,7 +19,10 @@ import {
   reorderTemplateBlocks,
   reorderTemplateEntries,
   updateTemplateEntryRest,
+  updateTemplateEntryValues,
 } from "@/lib/templates/mutations";
+import { getTemplateById } from "@/lib/templates/queries";
+import type { TemplateDetail } from "@/lib/templates/types";
 import { cloneTemplate } from "@/lib/templates/clone";
 import { materializeAITemplate } from "@/lib/templates/ai-create";
 import { finishActiveWorkouts } from "@/lib/workouts/mutations";
@@ -185,6 +188,35 @@ export async function updateTemplateEntryRestAction(
   const userId = await getCurrentUserId();
   await updateTemplateEntryRest(entryId, userId, restDurationSecs);
   revalidatePath("/templates/" + templateId);
+}
+
+export async function updateTemplateEntryValuesAction(
+  templateId: string,
+  entryId: string,
+  values: KpiValueInput[],
+) {
+  assertValid(idSchema, templateId);
+  assertValid(idSchema, entryId);
+  assertValid(kpiValuesArraySchema, values);
+  const userId = await getCurrentUserId();
+  await updateTemplateEntryValues(entryId, userId, values);
+  revalidatePath("/templates/" + templateId);
+  // Revalidate program pages too — the inline panel on /programs/[id]
+  // reads the same template detail and needs fresh values after an edit.
+  revalidatePath("/programs", "layout");
+}
+
+/**
+ * Fetch a single template's full detail. Used by the program-editor's inline
+ * slot panel to lazy-load entries on expand (keeps the initial /programs/[id]
+ * payload small).
+ */
+export async function getTemplateDetailAction(
+  templateId: string,
+): Promise<TemplateDetail | null> {
+  assertValid(idSchema, templateId);
+  const userId = await getCurrentUserId();
+  return getTemplateById(templateId, userId);
 }
 
 export async function startSessionFromTemplateAction(templateId: string) {

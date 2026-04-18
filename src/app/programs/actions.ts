@@ -14,6 +14,7 @@ import {
   addSlot,
   updateSlot,
   deleteSlot,
+  cloneCycle,
   createWorkoutFromProgramSlot,
   createWorkoutFromSpecificSlot,
   skipCurrentSlot,
@@ -107,16 +108,42 @@ export async function fillProgramCyclesAction(programId: string): Promise<{
     return { error: "Programme introuvable." };
   }
 
-  const emptySlots = program.slots
-    .filter((s) => !s.templateId)
-    .map((s) => ({ cycle: s.cycle, day: s.day }));
+  // Keys that already have an assigned template — never re-generate these.
+  const assignedKeys = new Set<string>();
+  for (const s of program.slots) {
+    if (s.templateId) assignedKeys.add(`${s.cycle}:${s.day}`);
+  }
 
-  if (emptySlots.length === 0) {
+  // Keys that have an existing empty slot (templateId === null) — reuse them.
+  const emptyExistingKeys = new Set<string>();
+  for (const s of program.slots) {
+    if (!s.templateId) {
+      const k = `${s.cycle}:${s.day}`;
+      if (!assignedKeys.has(k)) emptyExistingKeys.add(k);
+    }
+  }
+
+  // Compute every (cycle, day) position in the program grid that has no
+  // assigned template — these are all targets for the AI.
+  const emptyKeys: { cycle: number; day: number; key: string }[] = [];
+  const createForKey = new Set<string>();
+  for (let c = 0; c < program.cycleCount; c++) {
+    for (let d = 0; d < program.cycleDays; d++) {
+      const key = `${c}:${d}`;
+      if (assignedKeys.has(key)) continue;
+      emptyKeys.push({ cycle: c, day: d, key });
+      if (!emptyExistingKeys.has(key)) createForKey.add(key);
+    }
+  }
+
+  if (emptyKeys.length === 0) {
     return {
       error:
         "Aucun slot vide à remplir. Tous les créneaux ont déjà un modèle assigné.",
     };
   }
+
+  const emptySlots = emptyKeys.map(({ cycle, day }) => ({ cycle, day }));
 
   const existingSlots = program.slots
     .filter((s) => s.templateId)
@@ -145,10 +172,34 @@ export async function fillProgramCyclesAction(programId: string): Promise<{
     return { error: "L'IA a répondu mais le format est invalide." };
   }
 
-  const result = await materializeProgramFills(userId, programId, fills);
+  const result = await materializeProgramFills(
+    userId,
+    programId,
+    fills,
+    createForKey,
+  );
   revalidatePath(`/programs/${programId}`);
   revalidatePath("/dashboard");
   return { result };
+}
+
+export async function cloneCycleAction(
+  programId: string,
+  sourceCycle: number,
+  targetCycle: number,
+): Promise<{ error?: string; copied?: number }> {
+  assertValid(idSchema, programId);
+  assertValid(z.number().int().min(0).max(11), sourceCycle);
+  assertValid(z.number().int().min(0).max(11), targetCycle);
+  const userId = await getCurrentUserId();
+  try {
+    const { copied } = await cloneCycle(programId, userId, sourceCycle, targetCycle);
+    revalidatePath(`/programs/${programId}`);
+    revalidatePath("/planning");
+    return { copied };
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Erreur inconnue" };
+  }
 }
 
 export async function updateCycleCountAction(programId: string, cycleCount: number) {
