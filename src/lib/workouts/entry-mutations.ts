@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { nextDisplayOrder } from "@/lib/ordering";
 import {
   assertBlockOwnership,
   assertEntryOwnership,
@@ -30,10 +31,7 @@ export async function addEntry(
     throw new Error("Forbidden exercise");
   }
 
-  const nextOrder =
-    block.entries.length === 0
-      ? 0
-      : Math.max(...block.entries.map((e) => e.displayOrder)) + 1;
+  const nextOrder = nextDisplayOrder(block.entries);
 
   return prisma.workoutEntry.create({
     data: {
@@ -74,8 +72,7 @@ export async function duplicateEntry(entryId: string, userId: string) {
     },
   });
 
-  const nextOrder =
-    Math.max(...entry.block.entries.map((e) => e.displayOrder)) + 1;
+  const nextOrder = nextDisplayOrder(entry.block.entries);
 
   return prisma.workoutEntry.create({
     data: {

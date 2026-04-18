@@ -10,6 +10,7 @@ import {
   SortableContext, verticalListSortingStrategy, arrayMove, sortableKeyboardCoordinates,
 } from "@dnd-kit/sortable";
 import type { ExerciseListItem, WorkoutDetail } from "@/lib/workouts/types";
+import { formatShortDateTime } from "@/lib/format";
 import {
   addBlockAction, bulkValidateWorkoutAction, finishWorkoutAction,
   renameWorkoutAction, reorderBlocksAction, setWorkoutStartedAtAction,
@@ -51,13 +52,7 @@ export function UnifiedSession({ workout, exercises, defaultRestSecs = 90 }: Pro
   // --- Retro logging: backdate + bulk-validate ---
   const [isEditingDate, setIsEditingDate] = useState(false);
   const [confirmBulk, setConfirmBulk] = useState(false);
-  const startedDateLabel = new Intl.DateTimeFormat("fr-FR", {
-    weekday: "short",
-    day: "numeric",
-    month: "short",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(workout.startedAt);
+  const startedDateLabel = formatShortDateTime(workout.startedAt);
   const startedLocalIso = toLocalDatetimeInputValue(workout.startedAt);
 
   function handleBulkValidate() {

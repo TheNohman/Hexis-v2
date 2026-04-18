@@ -49,6 +49,60 @@ export function timeStringToSeconds(value: string): number | null {
 }
 
 /**
+ * Compute a workout's duration in minutes from its timestamps.
+ * Returns null when not finished yet. One decimal precision.
+ */
+export function computeDurationMins(
+  startedAt: Date | null | undefined,
+  finishedAt: Date | null | undefined,
+): number | null {
+  if (!startedAt || !finishedAt) return null;
+  return Math.round(((finishedAt.getTime() - startedAt.getTime()) / 60000) * 10) / 10;
+}
+
+/** "jeu. 16 avr., 20:05" — short weekday + short month + time. */
+export function formatShortDateTime(d: Date): string {
+  return new Intl.DateTimeFormat("fr-FR", {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(d);
+}
+
+/** "jeudi 16 avril 2026" — long weekday + long month + year. */
+export function formatLongDate(d: Date): string {
+  return new Intl.DateTimeFormat("fr-FR", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  }).format(d);
+}
+
+/**
+ * French relative label for a past date: "aujourd'hui", "hier",
+ * "il y a N jours" up to 7 days. Beyond that, falls back to a short
+ * numeric date ("16 avr.").
+ */
+export function formatRelative(d: Date): string {
+  const now = new Date();
+  const startOfDay = (x: Date) =>
+    new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime();
+  const diffDays = Math.round(
+    (startOfDay(now) - startOfDay(d)) / (24 * 60 * 60 * 1000),
+  );
+  if (diffDays <= 0) return "aujourd'hui";
+  if (diffDays === 1) return "hier";
+  if (diffDays < 7) return `il y a ${diffDays} jours`;
+  return new Intl.DateTimeFormat("fr-FR", {
+    day: "numeric",
+    month: "short",
+  }).format(d);
+}
+
+/**
  * Format an exercise type label in French.
  */
 export function formatExerciseType(

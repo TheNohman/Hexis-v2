@@ -5,6 +5,7 @@ import { listBodyWeightEntries } from "@/lib/bodyweight/queries";
 import { getActiveWorkout } from "@/lib/workouts/queries";
 import { listPersonalBests } from "@/lib/prs/detect";
 import { sanitiseForPrompt } from "@/lib/mentor/sanitize";
+import { computeDurationMins } from "@/lib/format";
 
 export type MentorContext = {
   user: {
@@ -244,10 +245,7 @@ export async function buildMentorContext(userId: string): Promise<MentorContext>
       weeklyVolume: stats.weeklyVolume,
     },
     recentWorkouts: recentWorkouts.map((w) => {
-      let durationMins: number | null = null;
-      if (w.finishedAt && w.startedAt) {
-        durationMins = Math.round(((w.finishedAt.getTime() - w.startedAt.getTime()) / 60000) * 10) / 10;
-      }
+      const durationMins = computeDurationMins(w.startedAt, w.finishedAt);
 
       // Group entries by exercise
       const exerciseMap = new Map<string, {
