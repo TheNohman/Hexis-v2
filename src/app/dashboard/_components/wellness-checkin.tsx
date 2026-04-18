@@ -63,14 +63,14 @@ function RatingRow({
               aria-pressed={isActive}
               className={`flex-1 rounded-lg py-1.5 px-1 flex flex-col items-center gap-0.5 cursor-pointer transition-all ${
                 isActive
-                  ? "bg-accent/15 border-2 border-accent scale-105"
-                  : "bg-surface border border-border hover:border-accent/50"
+                  ? "bg-accent-light border-2 border-accent-ink scale-105"
+                  : "bg-surface border border-border hover:border-accent-ink/50"
               }`}
             >
               <span className="text-base leading-none">{emojis[n]}</span>
               <span
                 className={`text-[9px] leading-tight text-center ${
-                  isActive ? "text-accent font-semibold" : "text-subtle"
+                  isActive ? "text-accent-ink font-semibold" : "text-subtle"
                 }`}
               >
                 {labels[n]}
@@ -136,13 +136,13 @@ export function WellnessCheckin({ existingLog }: Props) {
       <button
         type="button"
         onClick={() => setExpanded(true)}
-        className="w-full rounded-xl border border-border bg-surface p-3.5 flex items-center justify-between hover:bg-surface-hover transition-colors cursor-pointer"
+        className="w-full rounded-2xl bg-surface shadow-card p-3.5 flex items-center justify-between gap-3 hover:shadow-hero transition-shadow cursor-pointer"
       >
-        <div className="flex flex-col items-start gap-0.5">
-          <span className="text-xs text-muted">Bien-&ecirc;tre du jour</span>
-          <span className="text-[10px] text-subtle">{todayLabel}</span>
+        <div className="flex flex-col items-start gap-0.5 min-w-0">
+          <span className="text-[10px] font-semibold text-muted uppercase tracking-widest">Bien-être du jour</span>
+          <span className="text-[11px] text-subtle">{todayLabel}</span>
         </div>
-        <span className="text-sm">
+        <span className="text-base shrink-0" aria-label="Tes ressentis du jour">
           {MOOD_EMOJI[mood]} {SLEEP_EMOJI[sleep]} {ENERGY_EMOJI[energy]} {STRESS_EMOJI[stress]}
         </span>
       </button>
@@ -154,20 +154,41 @@ export function WellnessCheckin({ existingLog }: Props) {
       <button
         type="button"
         onClick={() => setExpanded(true)}
-        className="w-full rounded-xl border border-dashed border-border p-3.5 text-xs text-muted hover:text-foreground hover:border-accent transition-colors cursor-pointer text-center"
+        className="group w-full rounded-2xl bg-surface shadow-card p-4 flex items-center gap-3 hover:shadow-hero transition-shadow cursor-pointer text-left"
       >
-        Comment te sens-tu aujourd&rsquo;hui ?
+        <span
+          aria-hidden="true"
+          className="shrink-0 w-11 h-11 rounded-xl bg-lavender-soft flex items-center justify-center text-xl"
+        >
+          🌤️
+        </span>
+        <div className="flex-1 min-w-0">
+          <p className="font-display font-bold text-[15px] leading-tight">
+            Check-in bien-être
+          </p>
+          <p className="text-xs text-muted mt-0.5">
+            30 secondes — humeur, sommeil, énergie, stress
+          </p>
+        </div>
+        <span
+          aria-hidden="true"
+          className="shrink-0 text-muted group-hover:text-foreground transition-colors"
+        >
+          →
+        </span>
       </button>
     );
   }
 
   return (
-    <div id="wellness" className="rounded-xl border border-border bg-surface p-4 space-y-4">
+    <div id="wellness" className="rounded-2xl bg-surface shadow-card p-4 space-y-4">
       <div className="flex items-center justify-between">
         <h3 className="text-xs font-semibold text-muted uppercase tracking-wider">
-          Bien-&ecirc;tre
+          Bien-être
           {isBackfill && (
-            <span className="ml-2 text-[10px] text-accent normal-case">Rattrapage</span>
+            <span className="ml-2 text-[10px] text-accent-ink normal-case font-semibold">
+              Rattrapage
+            </span>
           )}
         </h3>
         <button
@@ -192,7 +213,8 @@ export function WellnessCheckin({ existingLog }: Props) {
         onChange={(e) => setNotes(e.target.value)}
         placeholder="Note du jour (optionnel) — ex: bas du dos tendu, présentation stressante demain, cycle J3…"
         rows={2}
-        className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:border-accent transition-colors resize-none"
+        aria-label="Note du jour"
+        className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:border-accent-ink transition-colors resize-none"
       />
 
       <label className="flex items-center justify-between gap-3 rounded-lg border border-border/70 bg-background/60 px-3 py-2">
@@ -211,7 +233,7 @@ export function WellnessCheckin({ existingLog }: Props) {
         type="button"
         onClick={handleSave}
         disabled={isPending}
-        className="w-full rounded-lg bg-accent text-white py-2.5 text-sm font-semibold hover:bg-accent-hover transition-colors cursor-pointer disabled:opacity-50"
+        className="w-full rounded-xl bg-foreground text-background py-2.5 text-sm font-semibold hover:bg-ink-strong transition-colors cursor-pointer disabled:opacity-50"
       >
         {isPending ? "Sauvegarde…" : "Enregistrer"}
       </button>

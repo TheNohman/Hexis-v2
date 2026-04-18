@@ -102,14 +102,15 @@ export default async function Dashboard() {
     <main className="flex-1 flex flex-col items-center px-4 py-6 pb-28">
       <div className="max-w-2xl w-full space-y-5">
         {/* Welcome header */}
-        <header className="flex items-center justify-between">
+        <header className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
-            <div
-              className="shrink-0 w-12 h-12 rounded-full bg-accent text-accent-foreground flex items-center justify-center font-display font-extrabold text-base"
-              aria-hidden="true"
+            <Link
+              href="/profile"
+              aria-label="Voir mon profil"
+              className="shrink-0 w-12 h-12 rounded-full bg-accent text-accent-foreground flex items-center justify-center font-display font-extrabold text-base hover:shadow-card transition-shadow"
             >
-              {initials(displayName)}
-            </div>
+              <span aria-hidden="true">{initials(displayName)}</span>
+            </Link>
             <div className="min-w-0">
               <h1 className="font-display font-extrabold tracking-tight text-[28px] sm:text-[32px] leading-tight truncate">
                 Salut, {firstName ?? "toi"} <span aria-hidden="true">👋</span>
@@ -118,33 +119,23 @@ export default async function Dashboard() {
             </div>
           </div>
 
-          <div className="flex items-center gap-2 shrink-0">
-            <Link
-              href="/mentor"
-              className="hidden sm:inline-flex text-[11px] font-semibold uppercase tracking-widest text-muted hover:text-foreground transition-colors py-1.5 px-2"
-            >
-              Mentor
-            </Link>
-            <Link
-              href="/profile"
-              className="inline-flex text-[11px] font-semibold uppercase tracking-widest text-muted hover:text-foreground transition-colors py-1.5 px-2"
-            >
-              Profil
-            </Link>
-            <form
-              action={async () => {
-                "use server";
-                await signOut({ redirectTo: "/" });
-              }}
-            >
-              <button
-                type="submit"
-                className="text-[11px] font-semibold uppercase tracking-widest text-muted hover:text-foreground transition-colors py-1.5 px-2 cursor-pointer"
-              >
-                Quitter
-              </button>
-            </form>
-          </div>
+          <Link
+            href="/mentor"
+            aria-label="Ouvrir le Mentor IA"
+            className="shrink-0 w-11 h-11 rounded-full bg-surface shadow-card flex items-center justify-center hover:shadow-hero transition-shadow"
+          >
+            <span aria-hidden="true" className="text-lg">💡</span>
+          </Link>
+
+          <form
+            action={async () => {
+              "use server";
+              await signOut({ redirectTo: "/" });
+            }}
+            className="sr-only-focusable"
+          >
+            <button type="submit">Quitter</button>
+          </form>
         </header>
 
         {/* Active session — hero black card */}
@@ -211,36 +202,41 @@ export default async function Dashboard() {
           </Link>
         ) : null}
 
-        {/* Primary CTA — new free session */}
+        {/* Free session CTA — primary if no program slot, secondary otherwise */}
         <form action={createWorkoutAction}>
           <button
             type="submit"
-            className="w-full rounded-full bg-accent text-accent-foreground py-4 font-semibold hover:bg-accent-hover transition-colors cursor-pointer shadow-card"
+            className={
+              activeProgram && !activeWorkout
+                ? "w-full rounded-xl bg-transparent border border-border text-foreground py-3 text-sm font-semibold hover:bg-surface hover:border-foreground/40 transition-colors cursor-pointer"
+                : "w-full rounded-full bg-accent text-accent-foreground py-4 font-semibold hover:bg-accent-hover transition-colors cursor-pointer shadow-card"
+            }
           >
             + Nouvelle séance libre
           </button>
         </form>
 
-        {/* Quick stats — this week */}
-        <section className="grid grid-cols-2 gap-3">
-          <div className="rounded-2xl bg-surface shadow-card p-4 col-span-2 sm:col-span-1">
-            <div className="flex items-start justify-between">
+        {/* Quick stats — balanced 2-card row */}
+        <section className="grid grid-cols-2 gap-3" aria-label="Statistiques">
+          <div className="rounded-2xl bg-surface shadow-card p-4">
+            <p className="text-[10px] font-semibold text-muted uppercase tracking-widest">
+              Cette semaine
+            </p>
+            <div className="mt-2 flex items-end justify-between gap-2">
               <div>
-                <p className="text-[10px] font-semibold text-muted uppercase tracking-widest">
-                  Cette semaine
-                </p>
-                <p className="font-display font-black text-3xl tabular-nums mt-1.5">
+                <p className="font-display font-black text-3xl tabular-nums leading-none">
                   {week.total}
                 </p>
-                <p className="text-xs text-muted mt-0.5">
+                <p className="text-[11px] text-muted mt-1">
                   séance{week.total > 1 ? "s" : ""}
                 </p>
               </div>
               <MiniBarChart
                 values={week.bars}
                 highlightIndex={week.todayIdx}
-                width={104}
-                height={44}
+                labels={["L", "M", "M", "J", "V", "S", "D"]}
+                width={108}
+                height={52}
               />
             </div>
           </div>
@@ -249,8 +245,8 @@ export default async function Dashboard() {
             <p className="text-[10px] font-semibold text-muted uppercase tracking-widest">
               Durée moyenne
             </p>
-            <div className="mt-1.5 flex items-end justify-between gap-2">
-              <p className="font-display font-black text-3xl tabular-nums">
+            <div className="mt-2 flex items-end justify-between gap-2">
+              <p className="font-display font-black text-3xl tabular-nums leading-none">
                 {avgDuration != null ? avgDuration : "—"}
                 {avgDuration != null && (
                   <span className="text-sm text-muted font-sans font-medium ml-0.5">
@@ -258,20 +254,8 @@ export default async function Dashboard() {
                   </span>
                 )}
               </p>
-              <Sparkline values={durations} width={64} height={28} />
+              <Sparkline values={durations} width={72} height={36} />
             </div>
-          </div>
-
-          <div className="rounded-2xl bg-accent text-accent-foreground p-4">
-            <p className="text-[10px] font-semibold uppercase tracking-widest opacity-70">
-              Total suivi
-            </p>
-            <p className="font-display font-black text-3xl tabular-nums mt-1.5">
-              {workouts.length}
-            </p>
-            <p className="text-xs opacity-70 mt-0.5">
-              séance{workouts.length > 1 ? "s" : ""} récentes
-            </p>
           </div>
         </section>
 
@@ -305,7 +289,7 @@ export default async function Dashboard() {
                   <li key={workout.id}>
                     <Link
                       href={`/sessions/${workout.id}`}
-                      className="group flex items-center gap-3 rounded-2xl bg-surface shadow-card p-3 hover:shadow-hero transition-shadow"
+                      className="group flex items-center gap-3 rounded-2xl bg-surface shadow-card p-3 hover:shadow-hero hover:-translate-y-0.5 transition-all"
                     >
                       <div
                         className={`shrink-0 w-14 h-14 rounded-2xl flex items-center justify-center font-display font-extrabold text-base ${THUMB_CLASS[tone]}`}

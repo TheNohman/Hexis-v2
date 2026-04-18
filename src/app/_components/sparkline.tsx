@@ -18,10 +18,10 @@ type Props = {
  */
 export function Sparkline({
   values,
-  color = "var(--lavender)",
+  color = "var(--lavender-ink)",
   width = 64,
   height = 24,
-  strokeWidth = 1.75,
+  strokeWidth = 2.25,
   className = "",
   fill = true,
 }: Props) {
@@ -75,7 +75,7 @@ export function Sparkline({
       {fill && (
         <defs>
           <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor={color} stopOpacity="0.35" />
+            <stop offset="0%" stopColor={color} stopOpacity="0.5" />
             <stop offset="100%" stopColor={color} stopOpacity="0" />
           </linearGradient>
         </defs>
