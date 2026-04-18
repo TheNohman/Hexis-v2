@@ -100,10 +100,12 @@ export function RecentEvents({
   return (
     <section className="space-y-3">
       <div className="flex items-center justify-between">
-        <h2 className="text-xs font-semibold text-muted uppercase tracking-wider">
-          Activit&eacute; r&eacute;cente
+        <h2 className="font-display font-bold text-lg tracking-tight">
+          Activité récente
         </h2>
-        <span className="text-[10px] text-subtle">30 derniers jours</span>
+        <span className="text-[10px] uppercase tracking-widest font-semibold text-subtle">
+          30 derniers jours
+        </span>
       </div>
 
       {countRows.length > 0 && (
@@ -111,7 +113,7 @@ export function RecentEvents({
           {countRows.map((row) => (
             <span
               key={row.name}
-              className="rounded-full border border-border bg-surface px-2.5 py-1 text-[11px] font-medium text-muted"
+              className="rounded-full bg-surface shadow-card px-3 py-1 text-[11px] font-semibold text-muted tabular-nums"
             >
               {row.label}
             </span>
@@ -120,16 +122,25 @@ export function RecentEvents({
       )}
 
       {events.length === 0 ? (
-        <p className="text-sm text-subtle">Aucune activit&eacute; enregistr&eacute;e.</p>
+        <p className="text-sm text-subtle">Aucune activité enregistrée.</p>
       ) : (
-        <ul className="divide-y divide-border rounded-xl border border-border bg-surface">
+        <ul className="divide-y divide-border rounded-2xl bg-surface shadow-card overflow-hidden">
           {events.map((ev) => {
             const summary = summarizePayload(ev.name, ev.payload);
             return (
-              <li key={ev.id} className="flex items-center justify-between gap-3 px-3.5 py-2.5">
+              <li
+                key={ev.id}
+                className="flex items-center justify-between gap-3 px-4 py-3"
+              >
                 <div className="min-w-0">
-                  <p className="text-sm font-medium truncate">{labelForEvent(ev.name)}</p>
-                  {summary && <p className="text-[11px] text-subtle truncate">{summary}</p>}
+                  <p className="text-sm font-display font-bold truncate">
+                    {labelForEvent(ev.name)}
+                  </p>
+                  {summary && (
+                    <p className="text-[11px] text-subtle truncate mt-0.5 tabular-nums">
+                      {summary}
+                    </p>
+                  )}
                 </div>
                 <span className="text-[11px] text-muted shrink-0 tabular-nums">
                   {formatRelative(ev.createdAt)}

@@ -21,11 +21,19 @@ type Exercise = {
 const TYPE_ORDER: ExerciseType[] = ["STRENGTH", "BODYWEIGHT", "CARDIO", "MOBILITY", "REST"];
 
 const TYPE_DESCRIPTIONS: Record<ExerciseType, string> = {
-  STRENGTH: "Exercices avec charges — suivi du poids, répétitions et RPE",
-  BODYWEIGHT: "Exercices au poids de corps — suivi des répétitions et RPE",
-  CARDIO: "Exercices d’endurance — suivi de la durée, distance et fréquence cardiaque",
-  MOBILITY: "Exercices de mobilité et souplesse — suivi de la durée",
-  REST: "Temps de repos entre les exercices",
+  STRENGTH: "Avec charges — poids, répétitions et RPE",
+  BODYWEIGHT: "Poids de corps — répétitions et RPE",
+  CARDIO: "Endurance — durée, distance, fréquence cardiaque",
+  MOBILITY: "Mobilité et souplesse — durée",
+  REST: "Temps de repos",
+};
+
+const TYPE_TONE: Record<ExerciseType, string> = {
+  STRENGTH: "bg-accent text-accent-foreground",
+  BODYWEIGHT: "bg-[var(--lavender)] text-foreground",
+  CARDIO: "bg-[var(--peach)] text-foreground",
+  MOBILITY: "bg-[var(--butter)] text-foreground",
+  REST: "bg-surface-hover text-muted",
 };
 
 const TYPE_FILTERS: { value: ExerciseType | "ALL"; label: string }[] = [
@@ -35,6 +43,13 @@ const TYPE_FILTERS: { value: ExerciseType | "ALL"; label: string }[] = [
   { value: "CARDIO", label: "Cardio" },
   { value: "MOBILITY", label: "Mobilité" },
 ];
+
+function exerciseInitials(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "?";
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[1][0]).toUpperCase();
+}
 
 export function ExerciseList({ exercises }: { exercises: Exercise[] }) {
   const [search, setSearch] = useState("");
@@ -66,25 +81,30 @@ export function ExerciseList({ exercises }: { exercises: Exercise[] }) {
         value={search}
         onChange={(e) => setSearch(e.target.value)}
         placeholder="Rechercher un exercice..."
-        className="w-full rounded-xl border border-border bg-surface px-4 py-3 text-sm placeholder:text-subtle focus:outline-none focus:border-accent transition-colors"
+        aria-label="Rechercher un exercice"
+        className="w-full rounded-xl bg-surface shadow-card px-4 py-3 text-sm placeholder:text-subtle focus:outline-none focus:ring-2 focus:ring-accent/60 transition-shadow"
       />
 
       {/* Type filter pills */}
-      <div className="flex gap-2 overflow-x-auto pb-1">
-        {TYPE_FILTERS.map((f) => (
-          <button
-            key={f.value}
-            type="button"
-            onClick={() => setTypeFilter(f.value)}
-            className={`shrink-0 rounded-full px-3.5 py-1.5 text-xs font-medium transition-colors cursor-pointer ${
-              typeFilter === f.value
-                ? "bg-accent text-white"
-                : "bg-surface border border-border text-muted hover:text-foreground hover:border-accent/50"
-            }`}
-          >
-            {f.label}
-          </button>
-        ))}
+      <div className="flex gap-2 overflow-x-auto pb-1" role="group" aria-label="Filtrer par type">
+        {TYPE_FILTERS.map((f) => {
+          const active = typeFilter === f.value;
+          return (
+            <button
+              key={f.value}
+              type="button"
+              onClick={() => setTypeFilter(f.value)}
+              aria-pressed={active}
+              className={`shrink-0 rounded-full px-3.5 py-1.5 text-xs font-semibold transition-all cursor-pointer ${
+                active
+                  ? "bg-foreground text-background shadow-card"
+                  : "bg-surface shadow-card text-muted hover:text-foreground hover:shadow-hero"
+              }`}
+            >
+              {f.label}
+            </button>
+          );
+        })}
       </div>
 
       {/* Results */}
@@ -93,7 +113,7 @@ export function ExerciseList({ exercises }: { exercises: Exercise[] }) {
           <EmptyState
             icon={Search}
             title="Aucun exercice trouvé"
-            description={`Rien ne correspond à « ${search} ». Essaie un autre mot-clé.`}
+            description={`Rien ne correspond à « ${search} ». Essaie un autre mot-clé.`}
           />
         ) : (
           <EmptyState
@@ -104,42 +124,60 @@ export function ExerciseList({ exercises }: { exercises: Exercise[] }) {
         )
       ) : (
         Array.from(grouped.entries()).map(([type, items]) => (
-          <section key={type} className="space-y-2">
+          <section key={type} className="space-y-2.5">
             <div>
-              <h2 className="text-xs font-semibold text-muted uppercase tracking-wider">
+              <h2 className="text-[10px] uppercase tracking-widest font-semibold text-muted">
                 {formatExerciseType(type)}
               </h2>
               <p className="text-[11px] text-subtle mt-0.5">{TYPE_DESCRIPTIONS[type]}</p>
             </div>
-            <ul className="space-y-1.5">
+            <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
               {items.map((exercise) => (
-                <li key={exercise.id} className="rounded-xl border border-border bg-surface hover:bg-surface-hover transition-colors">
-                  <Link href={`/exercises/${exercise.id}`} className="block p-3.5">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <p className="font-medium text-sm">
-                          {exercise.name}
-                          {exercise.isSystem && (
-                            <span className="ml-2 text-[10px] text-subtle bg-surface-hover rounded px-1.5 py-0.5">
-                              syst&egrave;me
-                            </span>
-                          )}
-                        </p>
-                        {exercise.description && (
-                          <p className="text-xs text-muted mt-0.5">{exercise.description}</p>
-                        )}
-                        {exercise.kpis.length > 0 && (
-                          <p className="text-xs text-subtle mt-1">
-                            {exercise.kpis.map((k) => k.name).join(" · ")}
-                          </p>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-2 shrink-0">
-                        {!exercise.isSystem && <DeleteButton exerciseId={exercise.id} />}
-                        <span className="text-xs text-subtle">&rarr;</span>
-                      </div>
+                <li key={exercise.id} className="relative">
+                  <Link
+                    href={`/exercises/${exercise.id}`}
+                    className="group flex items-start gap-3 rounded-2xl bg-surface shadow-card p-3 hover:shadow-hero hover:-translate-y-0.5 transition-all"
+                  >
+                    <div
+                      className={`shrink-0 w-11 h-11 rounded-xl flex items-center justify-center font-display font-extrabold text-xs ${TYPE_TONE[exercise.type]}`}
+                      aria-hidden="true"
+                    >
+                      {exerciseInitials(exercise.name)}
                     </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-1.5">
+                        <p className="font-display font-bold text-[14px] truncate">
+                          {exercise.name}
+                        </p>
+                        {exercise.isSystem && (
+                          <span className="shrink-0 inline-flex items-center rounded-full bg-background px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-subtle">
+                            sys
+                          </span>
+                        )}
+                      </div>
+                      {exercise.description && (
+                        <p className="text-[11px] text-muted mt-0.5 line-clamp-1">
+                          {exercise.description}
+                        </p>
+                      )}
+                      {exercise.kpis.length > 0 && (
+                        <p className="text-[10px] text-subtle mt-1 truncate">
+                          {exercise.kpis.map((k) => k.name).join(" · ")}
+                        </p>
+                      )}
+                    </div>
+                    <span
+                      className="shrink-0 text-subtle group-hover:text-foreground transition-colors"
+                      aria-hidden="true"
+                    >
+                      →
+                    </span>
                   </Link>
+                  {!exercise.isSystem && (
+                    <div className="absolute top-2 right-2">
+                      <DeleteButton exerciseId={exercise.id} />
+                    </div>
+                  )}
                 </li>
               ))}
             </ul>
@@ -147,8 +185,9 @@ export function ExerciseList({ exercises }: { exercises: Exercise[] }) {
         ))
       )}
 
-      <p className="text-xs text-subtle text-center">
-        {filtered.length} exercice{filtered.length > 1 ? "s" : ""} trouv&eacute;{filtered.length > 1 ? "s" : ""}
+      <p className="text-[11px] text-subtle text-center tabular-nums">
+        {filtered.length} exercice{filtered.length > 1 ? "s" : ""} trouvé
+        {filtered.length > 1 ? "s" : ""}
       </p>
     </div>
   );
@@ -158,8 +197,12 @@ function DeleteButton({ exerciseId }: { exerciseId: string }) {
   const deleteWithId = deleteExerciseAction.bind(null, exerciseId);
   return (
     <form action={deleteWithId} onClick={(e) => e.stopPropagation()}>
-      <button type="submit" className="shrink-0 text-xs text-danger hover:text-danger/80 transition-colors cursor-pointer">
-        Supprimer
+      <button
+        type="submit"
+        aria-label="Supprimer cet exercice"
+        className="text-[10px] font-semibold text-subtle hover:text-danger hover:bg-danger-soft transition-colors px-2 py-1 rounded-md cursor-pointer"
+      >
+        Suppr.
       </button>
     </form>
   );
