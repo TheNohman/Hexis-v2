@@ -1,6 +1,7 @@
 @import "tailwindcss";
 
 :root {
+  color-scheme: light;
   /* Surfaces */
   --background: #EEEEEE;
   --surface: #FFFFFF;
@@ -40,7 +41,8 @@
   --shadow-floating: 0 8px 32px rgba(0,0,0,0.12);
 }
 
-@media (prefers-color-scheme: dark) {
+/* Dark mode disabled — app is light-only for now. */
+@media (prefers-color-scheme: dark-disabled) {
   :root {
     --background: #0A0A0A;
     --surface: #1A1A1A;
