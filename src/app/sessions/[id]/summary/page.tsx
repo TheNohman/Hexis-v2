@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { getTodayWellnessLog } from "@/lib/wellness/queries";
 import { formatDuration } from "@/lib/format";
 import { Stat } from "@/app/_components/stat";
+import { Card } from "@/app/_components/card";
 
 export const dynamic = "force-dynamic";
 
@@ -171,7 +172,7 @@ export default async function SessionSummaryPage({
         )}
 
         {wellness && (
-          <section className="rounded-xl border border-border bg-surface p-4">
+          <Card as="section">
             <p className="text-[11px] uppercase tracking-wider text-muted font-semibold mb-2">
               Bien-être du jour
             </p>
@@ -181,7 +182,7 @@ export default async function SessionSummaryPage({
               <WellnessReadout label="Énergie" level={wellness.energy} />
               <WellnessReadout label="Stress" level={wellness.stress} />
             </div>
-          </section>
+          </Card>
         )}
 
         {/* Blocks recap */}
@@ -195,9 +196,11 @@ export default async function SessionSummaryPage({
                 (e) => e.status === "DONE" || e.status === "SKIPPED",
               ).length;
               return (
-                <li
+                <Card
+                  as="li"
+                  padding="sm"
                   key={block.id}
-                  className="rounded-xl border border-border bg-surface p-3 flex items-center justify-between"
+                  className="flex items-center justify-between"
                 >
                   <div className="min-w-0">
                     <p className="text-sm font-medium truncate">{block.name}</p>
@@ -210,7 +213,7 @@ export default async function SessionSummaryPage({
                   <span className="text-xs text-accent">
                     {block.mode === "INTERVAL" ? "🔥 HIIT" : "💪 Muscu"}
                   </span>
-                </li>
+                </Card>
               );
             })}
           </ul>

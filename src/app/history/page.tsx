@@ -4,6 +4,7 @@ import { getCurrentUserId } from "@/lib/auth-helpers";
 import { listWorkoutHistory } from "@/lib/history/queries";
 import { formatDuration } from "@/lib/format";
 import { EmptyState } from "@/app/_components/empty-state";
+import { Card } from "@/app/_components/card";
 import { DeleteWorkoutButton } from "./_components/delete-workout-button";
 import { HistoryFlash } from "./_components/history-flash";
 
@@ -83,9 +84,12 @@ export default async function HistoryPage({
         ) : (
           <ul className="space-y-2">
             {items.map((workout) => (
-              <li
+              <Card
+                as="li"
+                padding="none"
+                hover
                 key={workout.id}
-                className="relative rounded-xl border border-border bg-surface hover:bg-surface-hover transition-colors"
+                className="relative"
               >
                 <Link
                   href={`/sessions/${workout.id}`}
@@ -138,7 +142,7 @@ export default async function HistoryPage({
                     workoutName={workout.name}
                   />
                 </div>
-              </li>
+              </Card>
             ))}
           </ul>
         )}

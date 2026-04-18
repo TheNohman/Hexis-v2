@@ -12,6 +12,7 @@ import { NextWorkoutCard } from "./_components/next-workout-card";
 import { WellnessCheckin } from "./_components/wellness-checkin";
 import { SportHero } from "./_components/sport-hero";
 import { BeginnerTip } from "./_components/beginner-tip";
+import { Card } from "@/app/_components/card";
 
 export const dynamic = "force-dynamic";
 
@@ -146,14 +147,14 @@ export default async function Dashboard() {
           </div>
 
           {workouts.length === 0 ? (
-            <div className="rounded-xl border border-dashed border-border p-8 text-center">
+            <Card variant="dashed" padding="lg" className="text-center p-8">
               <p className="text-muted">
                 Aucune s&eacute;ance pour le moment.
               </p>
               <p className="text-sm text-subtle mt-1">
                 Lance ta premi&egrave;re s&eacute;ance avec le bouton ci-dessus.
               </p>
-            </div>
+            </Card>
           ) : (
             <ul className="space-y-2">
               {workouts.map((workout) => (

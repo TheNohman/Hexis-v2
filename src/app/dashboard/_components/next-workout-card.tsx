@@ -4,6 +4,7 @@ import { useTransition } from "react";
 import { startProgramWorkoutAction, skipSlotAction } from "@/app/programs/actions";
 import type { ActiveProgramInfo } from "@/lib/programs/types";
 import { formatSlotTime, cycleLabel } from "@/lib/programs/utils";
+import { Card } from "@/app/_components/card";
 
 type Props = { info: ActiveProgramInfo };
 
@@ -14,10 +15,10 @@ export function NextWorkoutCard({ info }: Props) {
 
   if (!slot) {
     return (
-      <div className="rounded-xl border border-border bg-surface p-4">
+      <Card>
         <p className="text-xs text-muted font-medium">{info.programName}</p>
         <p className="text-sm text-subtle mt-1">Aucun cr&eacute;neau configur&eacute;.</p>
-      </div>
+      </Card>
     );
   }
 
@@ -26,7 +27,7 @@ export function NextWorkoutCard({ info }: Props) {
 
   if (!slot.templateId) {
     return (
-      <div className="rounded-xl border border-border bg-surface p-4 space-y-3">
+      <Card className="space-y-3">
         <div>
           <p className="text-xs text-muted font-medium">{info.programName}</p>
           <p className="text-sm text-subtle mt-0.5">
@@ -38,12 +39,12 @@ export function NextWorkoutCard({ info }: Props) {
         <button type="button" onClick={() => startTransition(() => skipSlotAction())} disabled={isPending} className="text-xs text-accent hover:text-accent-hover cursor-pointer transition-colors disabled:opacity-50">
           Passer &rarr;
         </button>
-      </div>
+      </Card>
     );
   }
 
   return (
-    <div className="rounded-xl border border-accent/30 bg-accent/5 p-4 space-y-3">
+    <Card variant="accent" className="space-y-3">
       <div>
         <p className="text-xs text-accent font-medium">{info.programName}</p>
         <p className="text-sm text-muted mt-0.5">
@@ -60,6 +61,6 @@ export function NextWorkoutCard({ info }: Props) {
           Passer
         </button>
       </div>
-    </div>
+    </Card>
   );
 }
