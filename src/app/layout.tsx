@@ -14,7 +14,7 @@ const dmSans = DM_Sans({
 const outfit = Outfit({
   variable: "--font-outfit",
   subsets: ["latin"],
-  weight: ["500", "600", "700"],
+  weight: ["500", "600", "700", "800", "900"],
 });
 
 const geistMono = Geist_Mono({
@@ -44,9 +44,15 @@ export default function RootLayout({
       className={`${dmSans.variable} ${outfit.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-dvh pt-[env(safe-area-inset-top)] pb-[calc(60px+env(safe-area-inset-bottom))]">
+        <a
+          href="#main-content"
+          className="sr-only-focusable fixed top-3 left-3 z-[100] rounded-xl bg-foreground text-background px-4 py-2 text-sm font-semibold shadow-floating"
+        >
+          Aller au contenu principal
+        </a>
         <ToastProvider>
           <ActiveSessionBanner />
-          {children}
+          <div id="main-content">{children}</div>
           <BottomNav />
         </ToastProvider>
       </body>
