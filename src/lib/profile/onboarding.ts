@@ -20,6 +20,9 @@ export type SportProfile = SportProfileInput & {
  * Returns the sport-profile block for a user, or null fields if they haven't
  * completed onboarding yet. Never throws — callers can use nullish values
  * to render an empty onboarding-needed UI.
+ *
+ * Reads the 1:1 `UserSportProfile` relation and flattens it with the
+ * `mentorEnabled` flag (still on User).
  */
 export async function getSportProfile(userId: string): Promise<{
   primarySport: PrimarySport | null;
@@ -35,29 +38,34 @@ export async function getSportProfile(userId: string): Promise<{
   const user = await prisma.user.findUnique({
     where: { id: userId },
     select: {
-      primarySport: true,
-      sportLevel: true,
-      sportObjective: true,
-      weeklySessionTarget: true,
-      sessionDurationMins: true,
-      equipmentAccess: true,
-      medicalNotes: true,
-      onboardingCompletedAt: true,
       mentorEnabled: true,
+      sportProfile: {
+        select: {
+          primarySport: true,
+          sportLevel: true,
+          sportObjective: true,
+          weeklySessionTarget: true,
+          sessionDurationMins: true,
+          equipmentAccess: true,
+          medicalNotes: true,
+          onboardingCompletedAt: true,
+        },
+      },
     },
   });
 
   if (!user) throw new Error("User not found");
 
+  const sp = user.sportProfile;
   return {
-    primarySport: user.primarySport,
-    sportLevel: user.sportLevel,
-    sportObjective: user.sportObjective,
-    weeklySessionTarget: user.weeklySessionTarget,
-    sessionDurationMins: user.sessionDurationMins,
-    equipmentAccess: user.equipmentAccess,
-    medicalNotes: user.medicalNotes,
-    onboardingCompletedAt: user.onboardingCompletedAt,
+    primarySport: sp?.primarySport ?? null,
+    sportLevel: sp?.sportLevel ?? null,
+    sportObjective: sp?.sportObjective ?? null,
+    weeklySessionTarget: sp?.weeklySessionTarget ?? null,
+    sessionDurationMins: sp?.sessionDurationMins ?? null,
+    equipmentAccess: sp?.equipmentAccess ?? [],
+    medicalNotes: sp?.medicalNotes ?? null,
+    onboardingCompletedAt: sp?.onboardingCompletedAt ?? null,
     mentorEnabled: user.mentorEnabled,
   };
 }
@@ -65,24 +73,33 @@ export async function getSportProfile(userId: string): Promise<{
 /**
  * Save the sport profile from the onboarding wizard. Also flags onboarding
  * as complete and writes mentor-opt-in flag in one transaction so a partial
- * completion can't leave the user in an invalid state.
+ * completion can't leave the user in an invalid state. The sport-profile
+ * fields land in `UserSportProfile`; `mentorEnabled` stays on `User`.
  */
 export async function saveSportProfile(
   userId: string,
   data: SportProfileInput,
 ): Promise<void> {
+  const sportData = {
+    primarySport: data.primarySport,
+    sportLevel: data.sportLevel,
+    sportObjective: data.sportObjective,
+    weeklySessionTarget: data.weeklySessionTarget,
+    sessionDurationMins: data.sessionDurationMins,
+    equipmentAccess: data.equipmentAccess,
+    medicalNotes: data.medicalNotes,
+    onboardingCompletedAt: new Date(),
+  };
   await prisma.user.update({
     where: { id: userId },
     data: {
-      primarySport: data.primarySport,
-      sportLevel: data.sportLevel,
-      sportObjective: data.sportObjective,
-      weeklySessionTarget: data.weeklySessionTarget,
-      sessionDurationMins: data.sessionDurationMins,
-      equipmentAccess: data.equipmentAccess,
-      medicalNotes: data.medicalNotes,
       mentorEnabled: data.mentorEnabled,
-      onboardingCompletedAt: new Date(),
+      sportProfile: {
+        upsert: {
+          create: sportData,
+          update: sportData,
+        },
+      },
     },
   });
 }
@@ -94,7 +111,9 @@ export async function saveSportProfile(
 export async function needsOnboarding(userId: string): Promise<boolean> {
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    select: { onboardingCompletedAt: true },
+    select: {
+      sportProfile: { select: { onboardingCompletedAt: true } },
+    },
   });
-  return !user?.onboardingCompletedAt;
+  return !user?.sportProfile?.onboardingCompletedAt;
 }
