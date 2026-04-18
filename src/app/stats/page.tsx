@@ -8,9 +8,13 @@ import { RecentEvents } from "./_components/recent-events";
 
 export const dynamic = "force-dynamic";
 
+function thirtyDaysAgo(): Date {
+  return new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+}
+
 export default async function StatsPage() {
   const userId = await getCurrentUserId();
-  const since30d = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+  const since30d = thirtyDaysAgo();
   const [stats, wellnessPerf, recentEvents, eventCounts] = await Promise.all([
     getWorkoutStats(userId),
     getWellnessPerformanceCorrelation(userId, 30),

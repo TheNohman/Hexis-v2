@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState, useTransition } from "react";
+import { useCallback, useState, useTransition } from "react";
 import Link from "next/link";
 import {
   DndContext, closestCenter, PointerSensor, KeyboardSensor, TouchSensor,
@@ -34,7 +34,14 @@ export function UnifiedSession({ workout, exercises, defaultRestSecs = 90 }: Pro
   const [optimisticBlocks, setOptimisticBlocks] = useState(workout.blocks);
   const [confirmFinish, setConfirmFinish] = useState(false);
 
-  useEffect(() => { setOptimisticBlocks(workout.blocks); }, [workout.blocks]);
+  // Sync optimistic state with server-provided `workout.blocks` using the
+  // React 19 "reset state during render" pattern — setting state inside an
+  // effect triggers the react-hooks/set-state-in-effect lint error.
+  const [prevBlocks, setPrevBlocks] = useState(workout.blocks);
+  if (prevBlocks !== workout.blocks) {
+    setPrevBlocks(workout.blocks);
+    setOptimisticBlocks(workout.blocks);
+  }
 
   // Entry-level progress only makes sense for STANDARD blocks. INTERVAL
   // blocks track completion via completedRounds / roundCount separately.

@@ -10,7 +10,6 @@ type DataPoint = {
 
 type Props = {
   data: DataPoint[];
-  unit: string;
   gradientId: string;
   color?: string; // CSS color override (default: var(--accent))
   height?: number;
@@ -18,7 +17,6 @@ type Props = {
 
 export function TimeSeriesChart({
   data,
-  unit,
   gradientId,
   color,
   height = 180,

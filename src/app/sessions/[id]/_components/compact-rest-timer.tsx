@@ -9,11 +9,19 @@ type Props = {
 };
 
 export function CompactRestTimer({ durationSecs, onComplete }: Props) {
+  // Reset remaining when durationSecs changes using the "reset state during
+  // render" pattern (React 19 preferred). We track the previous durationSecs
+  // in state alongside `remaining`; when it changes, we synchronously return
+  // the new initial value instead of scheduling a setState inside an effect.
+  const [prevDuration, setPrevDuration] = useState(durationSecs);
   const [remaining, setRemaining] = useState(durationSecs);
+  if (prevDuration !== durationSecs) {
+    setPrevDuration(durationSecs);
+    setRemaining(durationSecs);
+  }
   const intervalRef = useRef<ReturnType<typeof setInterval>>(undefined);
 
   useEffect(() => {
-    setRemaining(durationSecs);
     intervalRef.current = setInterval(() => {
       setRemaining((prev) => {
         if (prev <= 1) {

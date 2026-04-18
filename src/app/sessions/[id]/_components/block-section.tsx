@@ -9,7 +9,6 @@ import {
   KeyboardSensor,
   useSensor,
   useSensors,
-  type DragEndEvent,
 } from "@dnd-kit/core";
 import {
   SortableContext,
@@ -78,9 +77,9 @@ export function BlockSection({
     }),
   );
 
-  function handleExerciseDragEnd(_event: DragEndEvent) {
-    // TODO: implement exercise group reordering
-  }
+  // TODO: implement exercise group reordering. Placeholder handler kept
+  // so the DndContext wiring above stays consistent across block types.
+  function handleExerciseDragEnd() {}
 
   return (
     <section ref={setNodeRef} style={style} className="space-y-3">

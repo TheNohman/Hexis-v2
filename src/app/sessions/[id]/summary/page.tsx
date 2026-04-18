@@ -49,7 +49,6 @@ export default async function SessionSummaryPage({
     .filter((e) => e.status === "DONE" && !e.isWarmup && e.exercise.type === "STRENGTH");
 
   let totalVolume = 0;
-  let totalSets = strengthEntries.length;
   for (const e of strengthEntries) {
     const weight = e.values.find((v) => v.kpiSlug === "weight_kg")?.valueNumeric ?? 0;
     const reps = e.values.find((v) => v.kpiSlug === "reps")?.valueNumeric ?? 0;

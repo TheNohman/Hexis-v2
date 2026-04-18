@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import type { ProgramSlotDetail } from "@/lib/programs/types";
-import { dayLabel } from "@/lib/programs/utils";
 
 type Props = {
   slot: ProgramSlotDetail;
