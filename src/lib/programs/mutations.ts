@@ -180,38 +180,39 @@ function applySuggestion(
   return lastValue;
 }
 
-export async function createWorkoutFromProgramSlot(userId: string) {
-  // 1. Get active program with current slot
-  const program = await prisma.program.findFirst({
-    where: { userId, isActive: true },
-    include: {
-      currentSlot: {
-        include: {
-          template: {
-            include: {
-              blocks: {
-                orderBy: { displayOrder: "asc" },
-                include: {
-                  entries: {
-                    orderBy: { displayOrder: "asc" },
-                    include: {
-                      values: true,
-                      exercise: { select: { type: true } },
-                    },
-                  },
-                },
-              },
-            },
-          },
-        },
-      },
-    },
-  });
-
-  if (!program?.currentSlot?.template) throw new Error("No template for current slot");
-
-  const slot = program.currentSlot!;
-  const template = slot.template!;
+/**
+ * Internal helper: build + persist a new workout from a hydrated (slot, template)
+ * pair, applying progressive-overload suggestions from the last completed workout
+ * of the same slot. Callers control cursor advancement.
+ */
+async function buildWorkoutFromSlot(
+  userId: string,
+  program: { id: string },
+  slot: {
+    id: string;
+    templateId: string | null;
+    template: {
+      name: string;
+      blocks: Array<{
+        name: string;
+        displayOrder: number;
+        entries: Array<{
+          exerciseId: string;
+          displayOrder: number;
+          restDurationSecs: number | null;
+          exercise: { type: ExerciseType };
+          values: Array<{
+            kpiDefinitionId: string;
+            valueNumeric: number | null;
+            valueText: string | null;
+          }>;
+        }>;
+      }>;
+    } | null;
+  },
+) {
+  if (!slot.template) throw new Error("No template for slot");
+  const template = slot.template;
 
   // 2. Find last completed workout for this same slot
   const lastWorkout = await prisma.workout.findFirst({
@@ -345,10 +346,80 @@ export async function createWorkoutFromProgramSlot(userId: string) {
     },
   });
 
-  // 5. Advance the cursor
-  await advanceCursor(program.id);
-
   return workout;
+}
+
+/**
+ * Create a workout from the CURRENT program cursor slot, then advance the cursor.
+ * Used by "Lancer la séance" on the dashboard.
+ */
+export async function createWorkoutFromProgramSlot(userId: string) {
+  const program = await prisma.program.findFirst({
+    where: { userId, isActive: true },
+    include: {
+      currentSlot: {
+        include: {
+          template: {
+            include: {
+              blocks: {
+                orderBy: { displayOrder: "asc" },
+                include: {
+                  entries: {
+                    orderBy: { displayOrder: "asc" },
+                    include: {
+                      values: true,
+                      exercise: { select: { type: true } },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  });
+
+  if (!program?.currentSlot?.template) throw new Error("No template for current slot");
+
+  const workout = await buildWorkoutFromSlot(userId, program, program.currentSlot);
+  await advanceCursor(program.id);
+  return workout;
+}
+
+/**
+ * Create a workout from a SPECIFIC program slot (user chose a different session
+ * than the scheduled one). Does NOT advance the cursor — the user's scheduled
+ * next session stays as-is for their next launch.
+ */
+export async function createWorkoutFromSpecificSlot(userId: string, slotId: string) {
+  const slot = await prisma.programSlot.findUnique({
+    where: { id: slotId },
+    include: {
+      program: { select: { userId: true, id: true } },
+      template: {
+        include: {
+          blocks: {
+            orderBy: { displayOrder: "asc" },
+            include: {
+              entries: {
+                orderBy: { displayOrder: "asc" },
+                include: {
+                  values: true,
+                  exercise: { select: { type: true } },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  });
+
+  if (!slot || slot.program.userId !== userId) throw new Error("Forbidden");
+  if (!slot.template) throw new Error("No template for slot");
+
+  return buildWorkoutFromSlot(userId, { id: slot.program.id }, slot);
 }
 
 // --------------- Cursor management ---------------

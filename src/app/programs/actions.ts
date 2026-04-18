@@ -15,6 +15,7 @@ import {
   updateSlot,
   deleteSlot,
   createWorkoutFromProgramSlot,
+  createWorkoutFromSpecificSlot,
   skipCurrentSlot,
 } from "@/lib/programs/mutations";
 import { buildMentorContext } from "@/lib/mentor/context";
@@ -115,6 +116,17 @@ export async function startProgramWorkoutAction() {
   const userId = await getCurrentUserId();
   await finishActiveWorkouts(userId);
   const workout = await createWorkoutFromProgramSlot(userId);
+  revalidatePath("/dashboard");
+  redirect(`/sessions/${workout.id}`);
+}
+
+/** Start a workout from a specific program slot (user picked a different session
+ * than the scheduled one). Does NOT advance the cursor. */
+export async function startSpecificProgramSlotAction(slotId: string) {
+  assertValid(idSchema, slotId);
+  const userId = await getCurrentUserId();
+  await finishActiveWorkouts(userId);
+  const workout = await createWorkoutFromSpecificSlot(userId, slotId);
   revalidatePath("/dashboard");
   redirect(`/sessions/${workout.id}`);
 }

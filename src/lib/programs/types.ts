@@ -48,4 +48,7 @@ export type ActiveProgramInfo = {
     templateId: string | null;
     templateName: string | null;
   } | null;
+  /** All program slots that have a template assigned — for the "choose another
+   * session" picker on the dashboard. */
+  allSlots: ProgramSlotDetail[];
 };

@@ -66,6 +66,11 @@ export async function getActiveProgram(userId: string): Promise<ActiveProgramInf
       currentSlot: {
         include: { template: { select: { name: true } } },
       },
+      slots: {
+        where: { templateId: { not: null } },
+        orderBy: [{ cycle: "asc" }, { day: "asc" }, { startTime: "asc" }],
+        include: { template: { select: { name: true } } },
+      },
     },
   });
 
@@ -87,5 +92,14 @@ export async function getActiveProgram(userId: string): Promise<ActiveProgramInf
           templateName: program.currentSlot.template?.name ?? null,
         }
       : null,
+    allSlots: program.slots.map((s) => ({
+      id: s.id,
+      cycle: s.cycle,
+      day: s.day,
+      startTime: s.startTime,
+      label: s.label,
+      templateId: s.templateId,
+      templateName: s.template?.name ?? null,
+    })),
   };
 }
