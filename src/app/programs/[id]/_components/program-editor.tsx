@@ -464,6 +464,18 @@ export function ProgramEditor({ program, templates, mentorEnabled }: Props) {
         </button>
       )}
 
+      {/* Onboarding nudge — brand-new program with no slots and no description */}
+      {program.slots.length === 0 && !program.description && (
+        <Card rounded="2xl" padding="lg" className="bg-accent-light/40 border-accent/30 space-y-2 animate-fade-in-up">
+          <p className="text-[10px] uppercase tracking-widest font-bold text-accent-ink">
+            Pour commencer
+          </p>
+          <p className="text-sm text-foreground leading-relaxed">
+            Décris ton objectif dans la description ci-dessus (ex. « prise de masse 3×/sem, 1h max, pas de barre »), puis laisse l&apos;IA générer {emptySlotCount} séance{emptySlotCount > 1 ? "s" : ""} — ou ajoute-les manuellement dans le cycle ci-dessous.
+          </p>
+        </Card>
+      )}
+
       {/* ══════════════════════════════════════════════════════════════
           CYCLES — chapter-style sections
          ══════════════════════════════════════════════════════════════ */}
@@ -476,6 +488,9 @@ export function ProgramEditor({ program, templates, mentorEnabled }: Props) {
             cycleDays={program.cycleDays}
             startDate={program.startDate}
             slots={slots}
+            nextCycleSlotCount={
+              cycles.find((c) => c.cycle === cycle + 1)?.slots.length ?? 0
+            }
             currentSlotId={program.isActive ? program.currentSlotId : null}
             expandedSlotId={expandedSlotId}
             onSlotClickTemplate={(slotId) => {

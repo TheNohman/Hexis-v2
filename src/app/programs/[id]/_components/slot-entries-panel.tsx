@@ -66,9 +66,9 @@ export function SlotEntriesPanel({
   }, [templateId]);
 
   return (
-    <div className="rounded-2xl bg-surface-hover/60 border border-border/60 p-3 sm:p-4 space-y-3 animate-fade-in-up">
-      <div className="flex items-center justify-between gap-2 flex-wrap">
-        <div className="min-w-0">
+    <div className="relative rounded-b-2xl bg-surface-hover/60 shadow-card border border-t-0 border-border/60 px-3 py-3 sm:px-4 sm:py-4 space-y-3 animate-fade-in-up">
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0 flex-1">
           <p className="text-[10px] uppercase tracking-widest font-bold text-muted">
             Contenu de la séance
           </p>
@@ -76,21 +76,24 @@ export function SlotEntriesPanel({
             {templateName ?? "Modèle"}
           </p>
         </div>
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-1.5 shrink-0 flex-wrap justify-end">
           <button
             type="button"
             onClick={onChangeTemplate}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface px-3 py-1.5 text-[11px] font-semibold text-muted hover:text-foreground hover:bg-surface-hover transition-colors cursor-pointer"
+            title="Changer de modèle"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface px-2.5 py-1.5 text-[11px] font-semibold text-muted hover:text-foreground hover:bg-surface-hover transition-colors cursor-pointer"
           >
             <Repeat className="w-3 h-3" aria-hidden="true" />
-            Changer de modèle
+            <span className="hidden sm:inline">Changer</span>
           </button>
           <Link
             href={`/templates/${templateId}`}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-foreground text-background px-3 py-1.5 text-[11px] font-semibold hover:opacity-90 transition-opacity"
+            title="Ouvrir le modèle complet"
+            className="inline-flex items-center gap-1.5 rounded-lg bg-foreground text-background px-2.5 py-1.5 text-[11px] font-semibold hover:opacity-90 transition-opacity"
           >
             <ExternalLink className="w-3 h-3" aria-hidden="true" />
-            Ouvrir le modèle complet
+            <span className="hidden sm:inline">Éditer le modèle</span>
+            <span className="sm:hidden">Éditer</span>
           </Link>
         </div>
       </div>
@@ -332,7 +335,7 @@ function KpiField({
           }
         }}
         aria-label={value.kpiName}
-        className="w-16 rounded-lg bg-background border border-border px-2 py-1 text-xs font-semibold tabular-nums focus:outline-none focus:border-accent-ink transition-colors disabled:opacity-50"
+        className="w-[68px] rounded-lg bg-background border border-border px-2 py-1 text-xs font-semibold tabular-nums hover:border-foreground/40 focus:outline-none focus:border-accent-ink focus:ring-2 focus:ring-accent-light transition-colors disabled:opacity-50"
       />
       {value.unit && value.dataType !== "DURATION" && (
         <span className="text-[10px] text-subtle">{value.unit}</span>

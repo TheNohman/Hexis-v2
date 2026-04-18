@@ -19,6 +19,8 @@ type Props = {
   cycleDays: number;
   startDate: Date | null;
   slots: ProgramSlotDetail[];
+  /** Slot count in the NEXT cycle — used to warn before cloning into a non-empty cycle. */
+  nextCycleSlotCount: number;
   currentSlotId: string | null;
   expandedSlotId: string | null;
   onSlotClickTemplate: (slotId: string) => void;
@@ -40,6 +42,7 @@ export function CycleSection({
   cycleDays,
   startDate,
   slots,
+  nextCycleSlotCount,
   currentSlotId,
   expandedSlotId,
   onSlotClickTemplate,
@@ -97,13 +100,23 @@ export function CycleSection({
             {canClone && (
               <button
                 type="button"
-                onClick={() => onCloneCycle(cycle)}
+                onClick={() => {
+                  if (
+                    nextCycleSlotCount > 0 &&
+                    !window.confirm(
+                      `Le cycle suivant contient déjà ${nextCycleSlotCount} créneau${nextCycleSlotCount > 1 ? "x" : ""}. Les nouveaux créneaux s'ajouteront — continuer ?`,
+                    )
+                  )
+                    return;
+                  onCloneCycle(cycle);
+                }}
                 disabled={isPending}
                 aria-label="Dupliquer ce cycle vers le suivant"
                 title="Dupliquer ce cycle vers le suivant"
-                className="inline-flex items-center justify-center min-h-[28px] min-w-[28px] rounded-full text-muted hover:text-accent-ink hover:bg-accent-light transition-colors cursor-pointer disabled:opacity-50"
+                className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-widest text-muted hover:text-accent-ink hover:bg-accent-light transition-colors cursor-pointer disabled:opacity-50"
               >
                 <CopyPlus className="w-3.5 h-3.5" aria-hidden="true" />
+                <span>Dupliquer</span>
               </button>
             )}
           </div>
@@ -140,7 +153,7 @@ export function CycleSection({
             </div>
           ) : (
             slots.map((slot) => (
-              <div key={slot.id} className="space-y-2">
+              <div key={slot.id}>
                 <SlotCard
                   slot={slot}
                   cycleDays={cycleDays}
@@ -284,7 +297,7 @@ function DateGroupedDays({
             ) : (
               <div className="space-y-2">
                 {slotsForDay.map((slot) => (
-                  <div key={slot.id} className="space-y-2">
+                  <div key={slot.id}>
                     <SlotCard
                       slot={slot}
                       cycleDays={cycleDays}

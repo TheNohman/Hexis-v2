@@ -157,9 +157,11 @@ export function SlotCard({
 
   return (
     <div
-      className={`group/slot relative overflow-hidden rounded-2xl bg-surface shadow-card hover:shadow-hero transition-all ${
-        isCurrent ? "ring-2 ring-accent" : ""
-      } ${isExpanded ? "ring-1 ring-accent-ink/20" : "hover:-translate-y-0.5"}`}
+      className={`group/slot relative overflow-hidden bg-surface shadow-card transition-all ${
+        isExpanded
+          ? "rounded-t-2xl rounded-b-none border-b border-border/60"
+          : "rounded-2xl hover:shadow-hero hover:-translate-y-0.5"
+      } ${isCurrent ? "ring-2 ring-accent" : ""}`}
     >
       {/* Category band — vertical 4px stripe left side */}
       <span
