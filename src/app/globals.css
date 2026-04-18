@@ -8,21 +8,22 @@
   --surface-elevated: #FFFFFF;
   --surface-hover: #F7F7F7;
 
-  /* Ink — 4 levels, all WCAG AA compliant on #EEEEEE bg */
-  --foreground: #0A0A0A;     /* 15.8:1 — h1, hero values */
-  --ink-strong: #1F2937;     /* 11.9:1 — section titles */
-  --muted: #4B5563;          /* 7.3:1 — body secondary */
-  --subtle: #6B7280;         /* 4.6:1 — captions, placeholders (AA compliant) */
-  --border: #D4D4D8;         /* darker for AA on focused/hovered elements */
+  /* Ink — 4 levels, all WCAG AA compliant on #EEEEEE pearl-gray bg */
+  --foreground: #0A0A0A;     /* 17.1:1 — h1, hero values */
+  --ink-strong: #1F2937;     /* 12.7:1 — section titles */
+  --muted: #4B5563;          /* 6.5:1 — body secondary */
+  --subtle: #595E68;         /* 5.0:1 — captions, placeholders (AA on app bg) */
+  /* Borders are DECORATIVE — interactive state relies on --focus-ring */
+  --border: #D4D4D8;
   --border-hover: #A1A1AA;
 
-  /* Accent — coral. Warm, energetic, pairs with lavender as complement. */
-  /* Rule: text-on-coral must be BLACK (6.76:1). White fails AA (3.1:1). */
-  /* For text-on-white, use --accent-ink (AA-compliant darker coral). */
-  --accent: #FF5A3C;         /* fills (text-on-coral must be black — 6.76:1) */
-  --accent-hover: #E8441F;
-  --accent-light: #FFE0D6;   /* soft bg variant */
-  --accent-ink: #B5390F;     /* 6.5:1 on white — for links/text in coral family */
+  /* Accent — electric blue. Sharp, trustworthy, signals precision. */
+  /* Rule: text-on-blue must be BLACK (5.66:1). White fails AA (3.71:1). */
+  /* For text-on-white, use --accent-ink (AA-compliant darker blue). */
+  --accent: #3B82F6;         /* fills (text-on-blue must be black — 5.66:1) */
+  --accent-hover: #2563EB;
+  --accent-light: #DBEAFE;   /* soft bg variant */
+  --accent-ink: #1E40AF;     /* 7.5:1 on white — for links/text in blue family */
   --accent-foreground: #0A0A0A;
 
   /* Secondary palette. Rules: pastel = FILL only with dark text. */
@@ -42,12 +43,12 @@
   --done-light: var(--accent-light);
   --planned: #C8B6E8;
   --planned-light: #EFE8FA;
-  --danger: #DC2626;         /* 5.9:1 on white — AA for normal text */
+  --danger: #B91C1C;         /* 9.9:1 on white, 5.4:1 on app bg — AA everywhere */
   --danger-soft: #FEE2E2;    /* soft bg for warnings */
   --danger-light: #FEE2E2;   /* legacy alias */
 
   /* Focus ring — 3:1 contrast against adjacent bg (WCAG 1.4.11) */
-  --focus-ring: #B5390F;     /* accent-ink (coral dark) */
+  --focus-ring: #1E40AF;     /* accent-ink (blue dark) */
   --focus-ring-offset: #FFFFFF;
 
   /* Shadows — bumped so cards lift off #EEEEEE bg */
