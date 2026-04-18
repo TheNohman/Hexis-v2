@@ -1,5 +1,6 @@
 "use client";
 
+import { useId } from "react";
 import type { PrimarySport } from "@/generated/prisma/client";
 
 // Suggested objectives by sport — pre-filled chips the user can click.
@@ -45,34 +46,61 @@ export function StepObjective({
   value: string;
   onChange: (s: string) => void;
 }) {
+  const inputId = useId();
   const suggestions = sport ? OBJECTIVES_BY_SPORT[sport] : [];
   return (
-    <section className="space-y-4">
-      <header>
-        <h1 className="text-2xl font-display font-bold">Ton objectif principal ?</h1>
-        <p className="text-sm text-muted mt-1">
-          Écris le tien, ou clique sur une suggestion.
+    <section className="space-y-5">
+      <header className="space-y-2">
+        <h1 className="font-display font-extrabold tracking-tight text-[28px] sm:text-[32px]">
+          Ton objectif principal ?
+        </h1>
+        <p className="text-sm text-muted leading-relaxed">
+          &Eacute;cris le tien, ou clique sur une suggestion.
         </p>
       </header>
-      <input
-        type="text"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder="Ex: préparer mon premier triathlon en septembre"
-        className="w-full rounded-xl border border-border bg-surface px-4 py-3 text-sm focus:outline-none focus:border-accent transition-colors"
-      />
-      <div className="flex flex-wrap gap-2">
-        {suggestions.map((sugg) => (
-          <button
-            key={sugg}
-            type="button"
-            onClick={() => onChange(sugg)}
-            className="text-xs rounded-full border border-border px-3 py-1.5 hover:border-accent hover:text-accent transition-colors cursor-pointer"
-          >
-            {sugg}
-          </button>
-        ))}
+      <div className="space-y-2">
+        <label
+          htmlFor={inputId}
+          className="text-[10px] uppercase tracking-widest font-semibold text-accent-ink"
+        >
+          Mon objectif
+        </label>
+        <input
+          id={inputId}
+          type="text"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder="Ex : préparer mon premier triathlon en septembre"
+          className="w-full rounded-2xl border border-border bg-surface px-4 py-3.5 text-sm shadow-card focus:outline-none focus:border-accent transition-colors"
+        />
       </div>
+      {suggestions.length > 0 && (
+        <div className="space-y-2">
+          <p className="text-[10px] uppercase tracking-widest font-semibold text-subtle">
+            Suggestions
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {suggestions.map((sugg) => {
+              const active = value === sugg;
+              return (
+                <button
+                  key={sugg}
+                  type="button"
+                  onClick={() => onChange(sugg)}
+                  aria-pressed={active}
+                  className={`text-xs font-medium rounded-full px-3.5 py-2 transition-all cursor-pointer ${
+                    active
+                      ? "bg-accent text-accent-foreground"
+                      : "bg-surface border border-border text-foreground hover:border-border-hover hover:-translate-y-0.5"
+                  }`}
+                >
+                  {sugg}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </section>
   );
 }
