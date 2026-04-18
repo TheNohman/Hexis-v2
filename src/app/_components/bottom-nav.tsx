@@ -12,8 +12,8 @@ const NAV_ITEMS = [
 ] as const;
 
 function NavIcon({ name, active }: { name: string; active: boolean }) {
-  const color = active ? "var(--accent)" : "currentColor";
-  const sw = 1.8;
+  const color = active ? "var(--accent-ink)" : "currentColor";
+  const sw = active ? 2.2 : 1.8;
 
   switch (name) {
     case "home":
@@ -91,12 +91,19 @@ export function BottomNav() {
             <Link
               key={item.href}
               href={item.href}
-              className={`relative flex flex-col items-center justify-center gap-1 py-2.5 px-4 min-h-[60px] text-[11px] font-medium transition-colors ${
+              aria-current={isActive ? "page" : undefined}
+              className={`relative flex flex-col items-center justify-center gap-1 py-2.5 px-4 min-h-[60px] text-[11px] transition-colors ${
                 isActive
-                  ? "text-accent"
-                  : "text-subtle hover:text-muted"
+                  ? "font-semibold text-foreground"
+                  : "font-medium text-muted hover:text-foreground"
               }`}
             >
+              {isActive && (
+                <span
+                  aria-hidden="true"
+                  className="absolute top-0 left-1/2 -translate-x-1/2 h-0.5 w-8 rounded-full bg-accent"
+                />
+              )}
               <NavIcon name={item.icon} active={isActive} />
               <span>{item.label}</span>
             </Link>

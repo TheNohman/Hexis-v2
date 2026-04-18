@@ -46,18 +46,32 @@ export function NextWorkoutCard({ info }: Props) {
   return (
     <Card variant="accent" className="space-y-3">
       <div>
-        <p className="text-xs text-accent font-medium">{info.programName}</p>
-        <p className="text-sm text-muted mt-0.5">
-          {cycle}{slotLabel}
+        <p className="text-xs font-semibold uppercase tracking-wider text-foreground/70">
+          {info.programName}
+        </p>
+        <p className="text-sm text-foreground/80 mt-0.5">
+          {cycle}
+          {slotLabel}
           {slot.label && ` — ${slot.label}`}
         </p>
       </div>
-      <p className="text-base font-medium">{slot.templateName}</p>
+      <p className="text-lg font-display font-bold text-foreground">{slot.templateName}</p>
       <div className="flex items-center gap-2">
-        <button type="button" onClick={() => startTransition(() => startProgramWorkoutAction())} disabled={isPending} className="flex-1 rounded-lg bg-accent text-white py-3 text-sm font-semibold hover:bg-accent-hover transition-colors cursor-pointer disabled:opacity-50">
+        <button
+          type="button"
+          onClick={() => startTransition(() => startProgramWorkoutAction())}
+          disabled={isPending}
+          className="flex-1 rounded-xl bg-foreground text-background py-3 text-sm font-semibold hover:bg-ink-strong transition-colors cursor-pointer disabled:opacity-50"
+        >
           {isPending ? "Lancement…" : "Lancer la séance →"}
         </button>
-        <button type="button" onClick={() => startTransition(() => skipSlotAction())} disabled={isPending} className="rounded-lg border border-border px-3 py-3 text-xs text-muted hover:text-foreground transition-colors cursor-pointer disabled:opacity-50" title="Passer">
+        <button
+          type="button"
+          onClick={() => startTransition(() => skipSlotAction())}
+          disabled={isPending}
+          className="rounded-xl border border-foreground/20 bg-background/40 px-4 py-3 text-xs font-semibold text-foreground hover:bg-background/60 transition-colors cursor-pointer disabled:opacity-50"
+          title="Passer"
+        >
           Passer
         </button>
       </div>
