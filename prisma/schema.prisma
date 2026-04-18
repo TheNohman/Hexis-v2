@@ -421,6 +421,7 @@ model WorkoutTemplate {
   description String?        @db.Text // intention libre du modèle (alimente l'IA)
   tags        String[]       @default([]) // ex: ["push", "upper", "strength"]
   source      TemplateSource @default(MANUAL) // provenance — manuel, IA, clone
+  isFavorite  Boolean        @default(false)
 
   user         User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
   blocks       WorkoutTemplateBlock[]

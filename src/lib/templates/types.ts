@@ -13,6 +13,7 @@ export type TemplateListItem = {
   description: string | null;
   tags: string[];
   source: TemplateSource;
+  isFavorite: boolean;
   blockCount: number;
   entryCount: number;
   /** How many program slots reference this template — discoverability. */
@@ -29,6 +30,7 @@ export type TemplateDetail = {
   description: string | null;
   tags: string[];
   source: TemplateSource;
+  isFavorite: boolean;
   programUsageCount: number;
   estimatedDurationSecs: number;
   blocks: {

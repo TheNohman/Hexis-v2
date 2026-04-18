@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import Link from "next/link";
-import { MoreHorizontal, Sparkles } from "lucide-react";
+import { MoreHorizontal, Sparkles, Star, X as XIcon, Plus } from "lucide-react";
 import {
   DndContext,
   closestCenter,
@@ -27,7 +27,9 @@ import {
   renameTemplateAction,
   reorderTemplateBlocksAction,
   startSessionFromTemplateAction,
+  toggleTemplateFavoriteAction,
   updateTemplateDescriptionAction,
+  updateTemplateTagsAction,
 } from "@/app/templates/actions";
 import { TemplateBlockCard } from "./template-block-card";
 import dynamic from "next/dynamic";
@@ -77,7 +79,45 @@ export function TemplateEditor({ template, exercises }: Props) {
   const [showHiitDialog, setShowHiitDialog] = useState(false);
   const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [tagDraft, setTagDraft] = useState("");
+  const [isAddingTag, setIsAddingTag] = useState(false);
   const [isPending, startTransition] = useTransition();
+
+  const MAX_TAGS = 10;
+  const MAX_TAG_LEN = 32;
+
+  function handleToggleFavorite() {
+    startTransition(() => toggleTemplateFavoriteAction(template.id));
+  }
+
+  function handleAddTag() {
+    const raw = tagDraft.trim().slice(0, MAX_TAG_LEN);
+    if (!raw) {
+      setIsAddingTag(false);
+      setTagDraft("");
+      return;
+    }
+    const existingLower = template.tags.map((t) => t.toLowerCase());
+    if (existingLower.includes(raw.toLowerCase())) {
+      setTagDraft("");
+      setIsAddingTag(false);
+      return;
+    }
+    if (template.tags.length >= MAX_TAGS) {
+      setTagDraft("");
+      setIsAddingTag(false);
+      return;
+    }
+    const next = [...template.tags, raw];
+    setTagDraft("");
+    setIsAddingTag(false);
+    startTransition(() => updateTemplateTagsAction(template.id, next));
+  }
+
+  function handleRemoveTag(tag: string) {
+    const next = template.tags.filter((t) => t !== tag);
+    startTransition(() => updateTemplateTagsAction(template.id, next));
+  }
 
   const [optimisticBlocks, setOptimisticBlocks] = useState(template.blocks);
   // Sync optimistic state with server-provided `template.blocks` using the
@@ -305,6 +345,29 @@ export function TemplateEditor({ template, exercises }: Props) {
               {badge.label}
             </span>
 
+            <button
+              type="button"
+              onClick={handleToggleFavorite}
+              disabled={isPending}
+              aria-pressed={template.isFavorite}
+              aria-label={
+                template.isFavorite
+                  ? "Retirer des favoris"
+                  : "Ajouter aux favoris"
+              }
+              className="inline-flex items-center gap-1 rounded-full border border-border px-2.5 py-1 text-[11px] font-semibold text-muted hover:text-foreground hover:border-foreground/40 transition-colors cursor-pointer disabled:opacity-60"
+            >
+              <Star
+                className={`w-3.5 h-3.5 ${
+                  template.isFavorite
+                    ? "fill-[var(--butter-ink)] text-[var(--butter-ink)]"
+                    : ""
+                }`}
+                aria-hidden="true"
+              />
+              {template.isFavorite ? "Favori" : "Favori"}
+            </button>
+
             <p className="text-muted">
               <span className="font-semibold text-foreground">{entryCount}</span>
               {" exercice"}{entryCount > 1 ? "s" : ""}
@@ -323,19 +386,61 @@ export function TemplateEditor({ template, exercises }: Props) {
             </p>
           </div>
 
-          {/* Tags */}
-          {template.tags.length > 0 && (
-            <div className="flex items-center gap-1.5 flex-wrap">
-              {template.tags.map((tag) => (
-                <span
-                  key={tag}
-                  className="inline-flex items-center rounded-full bg-surface border border-border px-2 py-0.5 text-[11px] font-medium text-muted"
+          {/* Tags — inline editor */}
+          <div className="flex items-center gap-1.5 flex-wrap">
+            {template.tags.map((tag) => (
+              <span
+                key={tag}
+                className="group/tag inline-flex items-center gap-1 rounded-full bg-surface border border-border pl-2 pr-1 py-0.5 text-[11px] font-medium text-muted"
+              >
+                {tag}
+                <button
+                  type="button"
+                  onClick={() => handleRemoveTag(tag)}
+                  disabled={isPending}
+                  aria-label={`Retirer le tag ${tag}`}
+                  className="flex items-center justify-center w-4 h-4 rounded-full text-subtle hover:text-danger hover:bg-danger-soft transition-colors cursor-pointer disabled:opacity-60"
                 >
-                  {tag}
-                </span>
-              ))}
-            </div>
-          )}
+                  <XIcon className="w-3 h-3" aria-hidden="true" />
+                </button>
+              </span>
+            ))}
+            {isAddingTag ? (
+              <input
+                type="text"
+                value={tagDraft}
+                autoFocus
+                maxLength={MAX_TAG_LEN}
+                placeholder="nouveau tag"
+                aria-label="Nouveau tag"
+                onChange={(e) => setTagDraft(e.target.value)}
+                onBlur={handleAddTag}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    handleAddTag();
+                  }
+                  if (e.key === "Escape") {
+                    setIsAddingTag(false);
+                    setTagDraft("");
+                  }
+                }}
+                className="rounded-full bg-surface border border-accent-ink px-2 py-0.5 text-[11px] font-medium outline-none w-32"
+              />
+            ) : (
+              template.tags.length < MAX_TAGS && (
+                <button
+                  type="button"
+                  onClick={() => setIsAddingTag(true)}
+                  aria-label="Ajouter un tag"
+                  className="inline-flex items-center gap-1 rounded-full border border-dashed border-border px-2 py-0.5 text-[11px] font-medium text-subtle hover:text-foreground hover:border-foreground/40 transition-colors cursor-pointer"
+                >
+                  <Plus className="w-3 h-3" aria-hidden="true" />
+                  Ajouter un tag
+                </button>
+              )
+            )}
+          </div>
 
           {/* Program usage */}
           {template.programUsageCount > 0 && (

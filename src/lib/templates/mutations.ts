@@ -16,6 +16,41 @@ export async function createTemplate(userId: string, name?: string) {
   });
 }
 
+export async function toggleTemplateFavorite(
+  templateId: string,
+  userId: string,
+) {
+  const template = await prisma.workoutTemplate.findUnique({
+    where: { id: templateId },
+    select: { id: true, userId: true, isFavorite: true },
+  });
+  assertOwnership(template, userId);
+  return prisma.workoutTemplate.update({
+    where: { id: templateId },
+    data: { isFavorite: !template.isFavorite },
+  });
+}
+
+export async function bulkDeleteTemplates(
+  templateIds: string[],
+  userId: string,
+) {
+  if (templateIds.length === 0) return { count: 0 };
+  const templates = await prisma.workoutTemplate.findMany({
+    where: { id: { in: templateIds } },
+    select: { id: true, userId: true },
+  });
+  if (templates.length !== templateIds.length) {
+    throw new Error("Some templates not found");
+  }
+  for (const t of templates) {
+    if (t.userId !== userId) throw new Error("Forbidden");
+  }
+  return prisma.workoutTemplate.deleteMany({
+    where: { id: { in: templateIds }, userId },
+  });
+}
+
 export async function deleteTemplate(templateId: string, userId: string) {
   const template = await prisma.workoutTemplate.findUnique({
     where: { id: templateId },

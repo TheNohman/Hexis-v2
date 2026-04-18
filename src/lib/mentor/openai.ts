@@ -116,7 +116,11 @@ Règles :
 - Adapte au niveau de l'utilisateur (débutant si peu de séances, intermédiaire/avancé sinon)
 - Prends en compte le bien-être récent (fatigue, stress, sommeil)
 - Structure claire : échauffement → bloc principal → accessoires/finisher → retour au calme (selon pertinence)
-- Noms en français. Nombre de sets réaliste (2-5). Durée totale visée ~45-75min selon demande.`;
+- Respecte STRICTEMENT la durée cible demandée par l'utilisateur (compte ~1-2 min de repos entre séries STRENGTH, ~30-60s entre séries BODYWEIGHT). Adapte le nombre d'exercices en conséquence.
+- Respecte l'intensité demandée (Léger = charges/volume modérés, Modéré = standard, Intense = charges lourdes / volume élevé).
+- Si l'utilisateur restreint l'équipement, n'utilise QUE les exercices compatibles avec cet équipement.
+- Si des zones cibles sont imposées, focalise les blocs principaux sur ces zones (autorise échauffement / mobilité complémentaire).
+- Noms en français. Nombre de sets réaliste (2-5).`;
 
 // ─── Fill empty program slots ──────────────────────────────────────
 
@@ -206,9 +210,53 @@ export async function generateFillForProgram(
   return response.choices[0]?.message?.content ?? "";
 }
 
+export type TemplateGenerationParams = {
+  duration: number;
+  intensity: "LIGHT" | "MODERATE" | "INTENSE";
+  equipment: string[]; // empty array = all allowed
+  targetZones: string[]; // empty array = coach decides
+  freeform: string;
+};
+
+const INTENSITY_LABEL: Record<TemplateGenerationParams["intensity"], string> = {
+  LIGHT: "Léger (60-70% des charges max, RPE 5-6, faible volume)",
+  MODERATE: "Modéré (70-85% des charges max, RPE 7-8, volume standard)",
+  INTENSE: "Intense (85%+ des charges max, RPE 8-10, volume élevé)",
+};
+
+function buildTemplateUserMessage(params: TemplateGenerationParams): string {
+  const lines: string[] = [];
+  lines.push(
+    `Durée cible : ~${params.duration} minutes (inclut échauffement et temps de repos entre séries). Ajuste le nombre d'exercices et de séries pour coller à cette durée.`,
+  );
+  lines.push(`Intensité demandée : ${INTENSITY_LABEL[params.intensity]}.`);
+  if (params.equipment.length > 0) {
+    lines.push(
+      `Équipement disponible UNIQUEMENT : ${params.equipment.join(", ")}. N'utilise pas d'autre matériel.`,
+    );
+  } else {
+    lines.push(`Équipement : tout matériel autorisé.`);
+  }
+  if (params.targetZones.length > 0) {
+    lines.push(
+      `Zones à cibler en priorité : ${params.targetZones.join(", ")}. Focus la séance sur ces zones.`,
+    );
+  } else {
+    lines.push(`Zones ciblées : à toi de choisir selon l'équilibre du programme récent.`);
+  }
+  if (params.freeform.trim()) {
+    lines.push(`Précisions libres de l'utilisateur : ${params.freeform.trim()}`);
+  }
+  lines.push(
+    `Génère maintenant UN modèle de séance en JSON (format imposé dans le système).`,
+  );
+  return lines.join("\n");
+}
+
 export async function generateTemplate(
   context: MentorContext,
-  userGoals: string,
+  params: TemplateGenerationParams,
+  temperature: number = 0.7,
 ): Promise<string> {
   const contextSummary = JSON.stringify(context, null, 0);
 
@@ -220,9 +268,9 @@ export async function generateTemplate(
         role: "system",
         content: `Données de l'utilisateur :\n${contextSummary}`,
       },
-      { role: "user", content: userGoals },
+      { role: "user", content: buildTemplateUserMessage(params) },
     ],
-    temperature: 0.7,
+    temperature,
     max_tokens: 2500,
   });
 

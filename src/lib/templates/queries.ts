@@ -47,7 +47,7 @@ export async function listTemplates(
 ): Promise<TemplateListItem[]> {
   const templates = await prisma.workoutTemplate.findMany({
     where: { userId },
-    orderBy: { updatedAt: "desc" },
+    orderBy: [{ isFavorite: "desc" }, { updatedAt: "desc" }],
     include: {
       blocks: {
         include: {
@@ -71,6 +71,7 @@ export async function listTemplates(
     description: t.description,
     tags: t.tags,
     source: t.source,
+    isFavorite: t.isFavorite,
     blockCount: t.blocks.length,
     entryCount: t.blocks.reduce((sum, b) => sum + b.entries.length, 0),
     programUsageCount: t._count.programSlots,
@@ -163,6 +164,7 @@ export async function getTemplateById(
     description: template.description,
     tags: template.tags,
     source: template.source,
+    isFavorite: template.isFavorite,
     programUsageCount: template._count.programSlots,
     estimatedDurationSecs: estimateDurationSecs(
       blocks.map((b) => ({

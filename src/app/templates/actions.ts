@@ -8,6 +8,7 @@ import {
   addIntervalTemplateBlock,
   addTemplateBlock,
   addTemplateEntry,
+  bulkDeleteTemplates,
   createTemplate,
   createWorkoutFromTemplate,
   deleteTemplate,
@@ -18,6 +19,7 @@ import {
   renameTemplateBlock,
   reorderTemplateBlocks,
   reorderTemplateEntries,
+  toggleTemplateFavorite,
   updateTemplateDescription,
   updateTemplateEntryRest,
   updateTemplateEntryValues,
@@ -270,13 +272,79 @@ export async function generateAITemplateAction(goals: string): Promise<{
   }
 
   const context = await buildMentorContext(userId);
-  const raw = await generateTemplate(context, goals);
+  const raw = await generateTemplate(context, {
+    duration: 60,
+    intensity: "MODERATE",
+    equipment: [],
+    targetZones: [],
+    freeform: goals,
+  });
 
   if (!raw) {
     return { error: "L'IA n'a pas pu générer de modèle." };
   }
 
   return { preview: raw };
+}
+
+const templateVariantsParamsSchema = z.object({
+  duration: z.number().int().min(15).max(120),
+  intensity: z.enum(["LIGHT", "MODERATE", "INTENSE"]),
+  equipment: z.array(z.string().min(1).max(64)).max(20),
+  targetZones: z.array(z.string().min(1).max(64)).max(20),
+  freeform: z.string().max(2000),
+});
+
+export type GenerateTemplateVariantsParams = z.infer<
+  typeof templateVariantsParamsSchema
+>;
+
+/**
+ * Generate 3 template variants in parallel with slight temperature variation.
+ * Returns as many raw JSON strings as succeeded (≥1 required).
+ */
+export async function generateAITemplateVariantsAction(
+  params: GenerateTemplateVariantsParams,
+): Promise<{ previews: string[]; error?: string }> {
+  const parsed = assertValid(templateVariantsParamsSchema, params);
+  const userId = await getCurrentUserId();
+
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { mentorEnabled: true },
+  });
+  if (!user?.mentorEnabled) {
+    return { previews: [], error: "L'IA n'est pas activée sur ton compte." };
+  }
+
+  if (parsed.equipment.length === 0 && parsed.targetZones.length === 0 && !parsed.freeform.trim()) {
+    return {
+      previews: [],
+      error: "Ajoute au moins une zone, un équipement, ou des précisions libres.",
+    };
+  }
+
+  const context = await buildMentorContext(userId);
+
+  const temperatures = [0.6, 0.75, 0.9];
+  const settled = await Promise.allSettled(
+    temperatures.map((t) => generateTemplate(context, parsed, t)),
+  );
+
+  const previews = settled
+    .filter(
+      (r): r is PromiseFulfilledResult<string> =>
+        r.status === "fulfilled" && typeof r.value === "string" && r.value.length > 0,
+    )
+    .map((r) => r.value)
+    // Keep only those that parse successfully.
+    .filter((raw) => parseGeneratedTemplate(raw) !== null);
+
+  if (previews.length === 0) {
+    return { previews: [], error: "L'IA n'a pas pu générer de variante exploitable. Réessaie." };
+  }
+
+  return { previews };
 }
 
 /**
@@ -314,6 +382,23 @@ export async function confirmAITemplateAction(rawJson: string): Promise<{
   await trackEvent(userId, "template_created", { templateId, source: "ai" });
   revalidatePath("/templates");
   redirect(`/templates/${templateId}`);
+}
+
+export async function toggleTemplateFavoriteAction(templateId: string) {
+  assertValid(idSchema, templateId);
+  const userId = await getCurrentUserId();
+  await toggleTemplateFavorite(templateId, userId);
+  revalidatePath("/templates");
+  revalidatePath("/templates/" + templateId);
+  revalidatePath("/planning");
+}
+
+export async function bulkDeleteTemplatesAction(templateIds: string[]) {
+  assertValid(z.array(idSchema).min(1).max(50), templateIds);
+  const userId = await getCurrentUserId();
+  await bulkDeleteTemplates(templateIds, userId);
+  revalidatePath("/templates");
+  revalidatePath("/planning");
 }
 
 export async function updateTemplateTagsAction(templateId: string, tags: string[]) {
