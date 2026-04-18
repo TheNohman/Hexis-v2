@@ -495,13 +495,14 @@ model TemplateEntryKpiValue {
 
 /// Programme d'entraînement cyclique
 model Program {
-  id            String  @id @default(cuid())
+  id            String    @id @default(cuid())
   userId        String
   name          String
-  cycleCount    Int     @default(1) // nombre de cycles dans le programme
-  cycleDays     Int     @default(7) // nombre de jours par cycle (7 = semaine, 8+ = cycle custom)
-  isActive      Boolean @default(false)
+  cycleCount    Int       @default(1) // nombre de cycles dans le programme
+  cycleDays     Int       @default(7) // nombre de jours par cycle (7 = semaine, 8+ = cycle custom)
+  isActive      Boolean   @default(false)
   currentSlotId String? // pointeur vers le prochain créneau
+  startDate     DateTime? @db.Date // date à laquelle commence le cycle 1 jour 1 (optionnelle)
 
   user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   slots       ProgramSlot[]

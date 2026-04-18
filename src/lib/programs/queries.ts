@@ -20,6 +20,7 @@ export async function listPrograms(userId: string): Promise<ProgramListItem[]> {
     isActive: p.isActive,
     currentSlotId: p.currentSlotId,
     slotCount: p._count.slots,
+    startDate: p.startDate,
     createdAt: p.createdAt,
     updatedAt: p.updatedAt,
   }));
@@ -45,6 +46,7 @@ export async function getProgramById(programId: string, userId: string): Promise
     cycleDays: program.cycleDays,
     isActive: program.isActive,
     currentSlotId: program.currentSlotId,
+    startDate: program.startDate,
     slots: program.slots.map((s) => ({
       id: s.id,
       cycle: s.cycle,
@@ -101,5 +103,6 @@ export async function getActiveProgram(userId: string): Promise<ActiveProgramInf
       templateId: s.templateId,
       templateName: s.template?.name ?? null,
     })),
+    startDate: program.startDate,
   };
 }

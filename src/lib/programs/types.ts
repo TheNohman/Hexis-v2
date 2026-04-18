@@ -8,6 +8,7 @@ export type ProgramListItem = {
   isActive: boolean;
   currentSlotId: string | null;
   slotCount: number;
+  startDate: Date | null;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -29,6 +30,7 @@ export type ProgramDetail = {
   cycleDays: number;
   isActive: boolean;
   currentSlotId: string | null;
+  startDate: Date | null;
   slots: ProgramSlotDetail[];
   createdAt: Date;
   updatedAt: Date;
@@ -51,4 +53,6 @@ export type ActiveProgramInfo = {
   /** All program slots that have a template assigned — for the "choose another
    * session" picker on the dashboard. */
   allSlots: ProgramSlotDetail[];
+  /** Anchor date for cycle 1 day 1 (null = legacy, dates disabled). */
+  startDate: Date | null;
 };

@@ -7,7 +7,14 @@ import {
   skipSlotAction,
 } from "@/app/programs/actions";
 import type { ActiveProgramInfo, ProgramSlotDetail } from "@/lib/programs/types";
-import { formatSlotTime, cycleLabel } from "@/lib/programs/utils";
+import {
+  formatSlotTime,
+  cycleLabel,
+  computeSlotDate,
+  formatSlotDate,
+  formatSlotDateShort,
+  isToday,
+} from "@/lib/programs/utils";
 import { Card } from "@/app/_components/card";
 
 type Props = { info: ActiveProgramInfo };
@@ -27,8 +34,17 @@ export function NextWorkoutCard({ info }: Props) {
     );
   }
 
-  const slotLabel = formatSlotTime(slot.day, slot.startTime);
+  const scheduledDate = computeSlotDate(
+    info.startDate,
+    info.cycleDays ?? 7,
+    slot.cycle,
+    slot.day,
+  );
+  const slotLabel = scheduledDate
+    ? `${formatSlotDate(scheduledDate)}${slot.startTime ? ` · ${slot.startTime}` : ""}`
+    : formatSlotTime(slot.day, slot.startTime);
   const cycle = info.cycleCount > 1 ? `${cycleLabel(slot.cycle)} — ` : "";
+  const todayMarker = scheduledDate && isToday(scheduledDate);
 
   // Slots that the user could pick INSTEAD of the scheduled one.
   const otherSlots = info.allSlots.filter((s) => s.id !== slot.id && s.templateId);
@@ -62,9 +78,16 @@ export function NextWorkoutCard({ info }: Props) {
     <>
       <Card variant="accent" className="space-y-3">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wider text-foreground/70">
-            {info.programName}
-          </p>
+          <div className="flex items-center gap-2 flex-wrap">
+            <p className="text-xs font-semibold uppercase tracking-wider text-foreground/70">
+              {info.programName}
+            </p>
+            {todayMarker && (
+              <span className="inline-flex items-center rounded-full bg-signal px-2 py-0.5 text-[9px] font-bold uppercase tracking-widest text-foreground">
+                Aujourd&apos;hui
+              </span>
+            )}
+          </div>
           <p className="text-sm text-foreground/80 mt-0.5">
             {cycle}
             {slotLabel}
@@ -108,6 +131,8 @@ export function NextWorkoutCard({ info }: Props) {
           slots={info.allSlots}
           currentSlotId={slot.id}
           cycleCount={info.cycleCount}
+          cycleDays={info.cycleDays}
+          startDate={info.startDate}
           onClose={() => setPickerOpen(false)}
         />
       )}
@@ -119,11 +144,15 @@ function SlotPickerDialog({
   slots,
   currentSlotId,
   cycleCount,
+  cycleDays,
+  startDate,
   onClose,
 }: {
   slots: ProgramSlotDetail[];
   currentSlotId: string;
   cycleCount: number;
+  cycleDays: number;
+  startDate: Date | null;
   onClose: () => void;
 }) {
   const [isPending, startTransition] = useTransition();
@@ -153,6 +182,12 @@ function SlotPickerDialog({
         <ul className="flex-1 overflow-y-auto p-3 space-y-2">
           {slots.map((s) => {
             const isCurrent = s.id === currentSlotId;
+            const date = computeSlotDate(startDate, cycleDays, s.cycle, s.day);
+            const today = date && isToday(date);
+            const timeStr = s.startTime ? ` · ${s.startTime}` : "";
+            const meta = date
+              ? `${formatSlotDateShort(date)}${timeStr}`
+              : `${cycleCount > 1 ? `${cycleLabel(s.cycle)} — ` : ""}${formatSlotTime(s.day, s.startTime)}`;
             return (
               <li key={s.id}>
                 <button
@@ -168,15 +203,19 @@ function SlotPickerDialog({
                       <span className="font-display font-bold text-[15px] truncate">
                         {s.templateName ?? "(sans template)"}
                       </span>
-                      {isCurrent && (
+                      {today && (
+                        <span className="inline-flex items-center rounded-full bg-signal px-2 py-0.5 text-[9px] font-bold uppercase tracking-widest text-foreground">
+                          Aujourd&apos;hui
+                        </span>
+                      )}
+                      {isCurrent && !today && (
                         <span className="inline-flex items-center rounded-full bg-accent px-2 py-0.5 text-[9px] font-bold uppercase tracking-widest text-accent-foreground">
                           Prévue
                         </span>
                       )}
                     </div>
                     <p className="text-[11px] text-muted mt-0.5">
-                      {cycleCount > 1 ? `${cycleLabel(s.cycle)} — ` : ""}
-                      {formatSlotTime(s.day, s.startTime)}
+                      {meta}
                       {s.label && ` — ${s.label}`}
                     </p>
                   </div>

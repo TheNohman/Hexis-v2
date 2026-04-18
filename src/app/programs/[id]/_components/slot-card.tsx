@@ -7,6 +7,9 @@ import type { ProgramSlotDetail } from "@/lib/programs/types";
 type Props = {
   slot: ProgramSlotDetail;
   cycleDays: number;
+  /** When set, the slot is rendered inside a day-grouped cycle — day selector
+   *  is hidden (day is fixed by the group), date is implied by the parent. */
+  scheduledDate: Date | null;
   isCurrent: boolean;
   onClickTemplate: () => void;
   onDelete: () => void;
@@ -47,6 +50,7 @@ const CATEGORY_LABEL: Record<Category, string> = {
 export function SlotCard({
   slot,
   cycleDays,
+  scheduledDate,
   isCurrent,
   onClickTemplate,
   onDelete,
@@ -78,19 +82,21 @@ export function SlotCard({
           </span>
         </div>
 
-        {/* Day select */}
-        <label className="shrink-0">
-          <span className="sr-only">Jour</span>
-          <select
-            value={slot.day}
-            onChange={(e) => onUpdateDay(parseInt(e.target.value, 10))}
-            className="w-[64px] rounded-lg border border-border bg-background px-2 py-1.5 text-xs font-semibold text-center focus:outline-none focus:border-accent transition-colors"
-          >
-            {Array.from({ length: cycleDays }, (_, i) => (
-              <option key={i} value={i}>J{i + 1}</option>
-            ))}
-          </select>
-        </label>
+        {/* Day select — hidden in date-grouped mode (day implied by group). */}
+        {!scheduledDate && (
+          <label className="shrink-0">
+            <span className="sr-only">Jour</span>
+            <select
+              value={slot.day}
+              onChange={(e) => onUpdateDay(parseInt(e.target.value, 10))}
+              className="w-[64px] rounded-lg border border-border bg-background px-2 py-1.5 text-xs font-semibold text-center focus:outline-none focus:border-accent-ink transition-colors"
+            >
+              {Array.from({ length: cycleDays }, (_, i) => (
+                <option key={i} value={i}>J{i + 1}</option>
+              ))}
+            </select>
+          </label>
+        )}
 
         {/* Time */}
         <label className="shrink-0">

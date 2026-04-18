@@ -17,6 +17,7 @@ import {
   createWorkoutFromProgramSlot,
   createWorkoutFromSpecificSlot,
   skipCurrentSlot,
+  updateStartDate,
 } from "@/lib/programs/mutations";
 import { buildMentorContext } from "@/lib/mentor/context";
 import { generateProgram } from "@/lib/mentor/openai";
@@ -70,6 +71,19 @@ export async function updateCycleDaysAction(programId: string, cycleDays: number
   const userId = await getCurrentUserId();
   await updateCycleDays(programId, userId, cycleDays);
   revalidatePath(`/programs/${programId}`);
+}
+
+export async function updateStartDateAction(programId: string, iso: string | null) {
+  assertValid(idSchema, programId);
+  // Accept null OR an ISO date string like "2026-04-20". Parse to Date.
+  const schema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable();
+  const parsed = assertValid(schema, iso);
+  const date = parsed ? new Date(`${parsed}T00:00:00.000Z`) : null;
+  const userId = await getCurrentUserId();
+  await updateStartDate(programId, userId, date);
+  revalidatePath(`/programs/${programId}`);
+  revalidatePath("/planning");
+  revalidatePath("/dashboard");
 }
 
 export async function toggleProgramActiveAction(programId: string) {

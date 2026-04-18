@@ -66,6 +66,23 @@ export async function updateCycleDays(programId: string, userId: string, cycleDa
   });
 }
 
+/**
+ * Set (or clear) the program's start date — the calendar anchor for cycle 1 day 1.
+ * Passing null clears it and returns the program to the legacy day-of-week mode.
+ */
+export async function updateStartDate(
+  programId: string,
+  userId: string,
+  startDate: Date | null,
+) {
+  const program = await prisma.program.findUnique({ where: { id: programId } });
+  if (!program || program.userId !== userId) throw new Error("Forbidden");
+  return prisma.program.update({
+    where: { id: programId },
+    data: { startDate },
+  });
+}
+
 export async function toggleProgramActive(programId: string, userId: string) {
   const program = await prisma.program.findUnique({ where: { id: programId } });
   if (!program || program.userId !== userId) throw new Error("Forbidden");

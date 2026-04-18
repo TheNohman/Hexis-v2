@@ -10,6 +10,7 @@ import {
   addSlotAction,
   updateSlotAction,
   deleteSlotAction,
+  updateStartDateAction,
 } from "@/app/programs/actions";
 import type { ProgramDetail } from "@/lib/programs/types";
 import { Card } from "@/app/_components/card";
@@ -77,6 +78,32 @@ export function ProgramEditor({ program, templates }: Props) {
           />
         </label>
 
+        {/* Start date — optional. When set, real calendar dates appear throughout. */}
+        <label className="flex flex-col gap-1.5">
+          <span className="text-[10px] uppercase tracking-widest font-semibold text-muted">
+            Date de début du programme
+          </span>
+          <input
+            type="date"
+            defaultValue={
+              program.startDate
+                ? new Date(program.startDate).toISOString().slice(0, 10)
+                : ""
+            }
+            onChange={(e) =>
+              startTransition(() =>
+                updateStartDateAction(program.id, e.target.value || null),
+              )
+            }
+            className="rounded-xl border border-border bg-background px-3 py-2.5 text-sm tabular-nums focus:outline-none focus:border-accent-ink transition-colors"
+          />
+          <span className="text-[11px] text-subtle">
+            {program.startDate
+              ? "Les dates réelles s'affichent sur les créneaux et le dashboard."
+              : "Optionnel — sans date, le programme reste jour-de-semaine générique."}
+          </span>
+        </label>
+
         <div className="grid grid-cols-3 gap-3">
           <label className="flex flex-col gap-1.5">
             <span className="text-[10px] uppercase tracking-widest font-semibold text-muted">
@@ -135,10 +162,14 @@ export function ProgramEditor({ program, templates }: Props) {
           key={cycle}
           cycle={cycle}
           cycleDays={program.cycleDays}
+          startDate={program.startDate}
           slots={slots}
           currentSlotId={program.isActive ? program.currentSlotId : null}
           onSlotClickTemplate={(slotId) => setEditingSlotId(slotId)}
           onAddSlot={() => handleAddSlot(cycle)}
+          onAddSlotAtDay={(cycle, day) =>
+            startTransition(() => addSlotAction(program.id, cycle, { day }))
+          }
           onDeleteSlot={handleDeleteSlot}
           onUpdateSlot={handleUpdateSlot}
           isPending={isPending}
