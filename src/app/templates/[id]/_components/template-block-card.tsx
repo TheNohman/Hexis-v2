@@ -53,11 +53,12 @@ export function TemplateBlockCard({ templateId, block, exercises }: Props) {
         <div className="flex items-center gap-2 min-w-0 flex-1">
           <button
             type="button"
+            aria-label="Déplacer le bloc"
             className="cursor-grab touch-none text-subtle hover:text-muted shrink-0 p-3 -ml-3 transition-colors"
             {...attributes}
             {...listeners}
           >
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor" aria-hidden="true">
               <circle cx="4" cy="3" r="1.2" />
               <circle cx="10" cy="3" r="1.2" />
               <circle cx="4" cy="7" r="1.2" />
@@ -71,6 +72,7 @@ export function TemplateBlockCard({ templateId, block, exercises }: Props) {
               type="text"
               defaultValue={block.name}
               autoFocus
+              aria-label="Nom du bloc"
               onBlur={(e) => {
                 const next = e.target.value.trim();
                 if (next && next !== block.name) {
@@ -84,13 +86,13 @@ export function TemplateBlockCard({ templateId, block, exercises }: Props) {
                 if (e.key === "Enter") (e.target as HTMLInputElement).blur();
                 if (e.key === "Escape") setIsEditingName(false);
               }}
-              className="text-sm font-bold bg-transparent outline-none border-b-2 border-accent/50 px-1 min-w-0 flex-1 uppercase tracking-wide"
+              className="text-sm font-bold bg-transparent outline-none border-b-2 border-accent px-1 min-w-0 flex-1 uppercase tracking-widest"
             />
           ) : (
             <button
               type="button"
               onClick={() => setIsEditingName(true)}
-              className="text-xs font-bold cursor-pointer hover:text-accent transition-colors uppercase tracking-widest"
+              className="text-[10px] uppercase tracking-widest font-semibold text-ink-strong cursor-pointer hover:text-accent-ink transition-colors"
             >
               {block.name}
             </button>
@@ -100,7 +102,7 @@ export function TemplateBlockCard({ templateId, block, exercises }: Props) {
           type="button"
           disabled={isPending}
           onClick={() => setConfirmDeleteOpen(true)}
-          className="text-xs text-subtle hover:text-danger cursor-pointer disabled:opacity-50 p-2 -mr-2 transition-colors"
+          className="text-xs text-subtle hover:text-danger cursor-pointer disabled:opacity-50 p-2 -mr-2 transition-colors font-medium"
         >
           Supprimer
         </button>
@@ -125,7 +127,7 @@ export function TemplateBlockCard({ templateId, block, exercises }: Props) {
       <div className="space-y-3">
         {groups.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-border px-4 py-6 text-center text-xs text-subtle">
-            Aucun exercice &mdash; ajoute ton premier exercice
+            Aucun exercice — ajoute ton premier exercice
           </div>
         ) : (
           groups.map((group) => (
@@ -142,7 +144,7 @@ export function TemplateBlockCard({ templateId, block, exercises }: Props) {
       <button
         type="button"
         onClick={() => setPickerOpen(true)}
-        className="w-full rounded-2xl border border-dashed border-border px-4 py-4 text-sm text-subtle hover:text-accent hover:border-accent/30 cursor-pointer transition-colors"
+        className="w-full rounded-2xl border border-dashed border-border px-4 py-4 text-sm font-medium text-muted hover:text-foreground hover:border-foreground/40 cursor-pointer transition-colors"
       >
         + Ajouter un exercice
       </button>

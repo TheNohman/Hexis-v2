@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { generateAIProgramAction, confirmAIProgramAction } from "@/app/programs/actions";
 import { type GeneratedProgram, parseGeneratedProgram } from "@/lib/mentor/parser";
+import { Card } from "@/app/_components/card";
 
 const PRESETS = [
   { label: "PPL (Push/Pull/Legs)", prompt: "Crée-moi un programme Push/Pull/Legs sur 4 semaines, 6 jours par semaine." },
@@ -57,8 +58,8 @@ export function AICreateForm() {
         <>
           <div className="space-y-3">
             <p className="text-sm text-muted">
-              D&eacute;cris tes objectifs ou choisis un preset. L&rsquo;IA cr&eacute;era un programme
-              complet avec les exercices, s&eacute;ries et charges adapt&eacute;s &agrave; ton niveau.
+              Décris tes objectifs ou choisis un preset. L&rsquo;IA créera un programme
+              complet avec les exercices, séries et charges adaptés à ton niveau.
             </p>
 
             <div className="grid grid-cols-2 gap-2">
@@ -71,7 +72,7 @@ export function AICreateForm() {
                     setGoals(p.prompt);
                     handleGenerate(p.prompt);
                   }}
-                  className="rounded-xl border border-border bg-surface hover:bg-surface-hover transition-colors p-3 text-left text-sm disabled:opacity-50 cursor-pointer"
+                  className="rounded-2xl bg-surface shadow-card p-4 text-left text-sm font-medium hover:shadow-hero hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                 >
                   {p.label}
                 </button>
@@ -80,20 +81,23 @@ export function AICreateForm() {
           </div>
 
           <div className="space-y-3">
-            <textarea
-              value={goals}
-              onChange={(e) => setGoals(e.target.value)}
-              placeholder="Ex: Je veux un programme pour prendre de la masse, 4 jours par semaine, je suis intermédiaire..."
-              rows={3}
-              className="w-full rounded-xl border border-border bg-surface px-4 py-3 text-sm focus:outline-none focus:border-accent transition-colors resize-none"
-            />
+            <label className="block">
+              <span className="sr-only">Objectifs</span>
+              <textarea
+                value={goals}
+                onChange={(e) => setGoals(e.target.value)}
+                placeholder="Ex: Je veux un programme pour prendre de la masse, 4 jours par semaine, je suis intermédiaire..."
+                rows={3}
+                className="w-full rounded-2xl border border-border bg-surface px-4 py-3 text-sm focus:outline-none focus:border-accent transition-colors resize-none"
+              />
+            </label>
             <button
               type="button"
               disabled={isPending || !goals.trim()}
               onClick={() => handleGenerate(goals)}
-              className="w-full rounded-xl bg-accent text-white py-3.5 font-semibold hover:bg-accent-hover transition-colors cursor-pointer disabled:opacity-50"
+              className="w-full rounded-xl bg-foreground text-background py-3.5 font-semibold hover:opacity-90 transition-opacity cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shadow-card"
             >
-              {isPending ? "Génération en cours..." : "Générer le programme"}
+              {isPending ? "Génération en cours…" : "Générer le programme"}
             </button>
           </div>
         </>
@@ -101,56 +105,71 @@ export function AICreateForm() {
 
       {/* Loading */}
       {isPending && !preview && (
-        <div className="rounded-xl border border-border bg-surface p-8 text-center">
-          <div className="inline-block w-6 h-6 border-2 border-accent border-t-transparent rounded-full animate-spin" />
-          <p className="text-sm text-muted mt-3">L&rsquo;IA analyse tes donn&eacute;es et cr&eacute;e ton programme...</p>
-        </div>
+        <Card rounded="2xl" padding="xl" className="text-center">
+          <div
+            className="inline-block w-6 h-6 border-2 border-accent border-t-transparent rounded-full animate-spin"
+            aria-hidden="true"
+          />
+          <p className="text-sm text-muted mt-3">
+            L&rsquo;IA analyse tes données et crée ton programme…
+          </p>
+        </Card>
       )}
 
       {/* Error */}
       {error && (
-        <div className="rounded-xl border border-danger/30 bg-danger/5 p-4">
-          <p className="text-sm text-danger">{error}</p>
+        <Card variant="danger" rounded="2xl" padding="md" as="div" role="alert">
+          <p className="text-sm text-danger font-medium">{error}</p>
           <button
             type="button"
             onClick={() => { setError(null); setPreview(null); setRawResponse(null); }}
-            className="text-xs text-accent mt-2 cursor-pointer hover:underline"
+            className="text-xs font-semibold text-accent-ink mt-2 cursor-pointer hover:underline"
           >
-            R&eacute;essayer
+            Réessayer
           </button>
-        </div>
+        </Card>
       )}
 
       {/* Step 2: Preview */}
       {preview && (
         <div className="space-y-4">
-          <div className="rounded-xl border border-accent/30 bg-accent/5 p-4">
-            <h2 className="text-lg font-semibold">{preview.name}</h2>
-            <p className="text-xs text-muted mt-1">
-              {preview.cycleCount} cycle{preview.cycleCount > 1 ? "s" : ""} de {preview.cycleDays} jours
-              &bull; {preview.slots.length} cr&eacute;neau{preview.slots.length > 1 ? "x" : ""}
+          <section className="rounded-3xl bg-foreground text-background p-5 shadow-hero">
+            <p className="text-[10px] uppercase tracking-widest font-semibold text-accent">
+              Aperçu du programme
             </p>
-          </div>
+            <h2 className="font-display font-extrabold text-xl tracking-tight mt-1">
+              {preview.name}
+            </h2>
+            <p className="text-xs text-background/70 mt-1 tabular-nums">
+              {preview.cycleCount} cycle{preview.cycleCount > 1 ? "s" : ""} de {preview.cycleDays} jours
+              {" · "}
+              {preview.slots.length} créneau{preview.slots.length > 1 ? "x" : ""}
+            </p>
+          </section>
 
           {preview.slots.map((slot, i) => (
-            <div key={i} className="rounded-xl border border-border bg-surface p-4 space-y-2">
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-semibold bg-surface-hover rounded-lg px-2 py-1">
+            <Card key={i} rounded="2xl" padding="lg" className="space-y-2">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="inline-flex items-center rounded-full bg-accent px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest text-accent-foreground tabular-nums">
                   {preview.cycleCount > 1 ? `C${slot.cycle + 1} ` : ""}J{slot.day + 1}
                 </span>
                 {slot.label && (
-                  <span className="text-xs text-accent font-medium">{slot.label}</span>
+                  <span className="text-[10px] uppercase tracking-widest font-semibold text-accent-ink">
+                    {slot.label}
+                  </span>
                 )}
               </div>
-              <p className="text-sm font-medium">{slot.template.name}</p>
+              <p className="text-sm font-display font-bold">{slot.template.name}</p>
               {slot.template.blocks.map((block, bi) => (
                 <div key={bi} className="pl-3 border-l-2 border-border space-y-1">
-                  <p className="text-[10px] text-muted uppercase tracking-wider">{block.name}</p>
+                  <p className="text-[10px] uppercase tracking-widest font-semibold text-muted">
+                    {block.name}
+                  </p>
                   {block.exercises.map((ex, ei) => (
                     <p key={ei} className="text-xs text-subtle">
                       {ex.name}
-                      <span className="text-muted ml-1.5">
-                        {ex.sets}x{ex.reps ?? "?"}
+                      <span className="text-muted ml-1.5 tabular-nums">
+                        {ex.sets}×{ex.reps ?? "?"}
                         {ex.weight_kg != null && ` @ ${ex.weight_kg}kg`}
                         {ex.duration_secs != null && ` ${Math.round(ex.duration_secs / 60)}min`}
                       </span>
@@ -158,7 +177,7 @@ export function AICreateForm() {
                   ))}
                 </div>
               ))}
-            </div>
+            </Card>
           ))}
 
           <div className="flex gap-2">
@@ -166,15 +185,15 @@ export function AICreateForm() {
               type="button"
               disabled={isPending}
               onClick={handleConfirm}
-              className="flex-1 rounded-xl bg-accent text-white py-3.5 font-semibold hover:bg-accent-hover transition-colors cursor-pointer disabled:opacity-50"
+              className="flex-1 rounded-xl bg-foreground text-background py-3.5 font-semibold hover:opacity-90 transition-opacity cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shadow-card"
             >
-              {isPending ? "Création..." : "Créer ce programme"}
+              {isPending ? "Création…" : "Créer ce programme"}
             </button>
             <button
               type="button"
               disabled={isPending}
               onClick={() => { setPreview(null); setRawResponse(null); }}
-              className="rounded-xl border border-border px-4 py-3.5 text-sm text-muted hover:text-foreground transition-colors cursor-pointer disabled:opacity-50"
+              className="rounded-xl border border-border bg-surface px-4 py-3.5 text-sm font-medium text-muted hover:text-foreground transition-colors cursor-pointer disabled:opacity-50"
             >
               Refaire
             </button>

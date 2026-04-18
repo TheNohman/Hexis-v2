@@ -46,22 +46,22 @@ export function TemplateIntervalBlockCard({ templateId, block, exercises }: Prop
   const formatLabel = labelForFormat(block.intervalFormat);
 
   return (
-    <article className="rounded-2xl border border-accent/30 bg-accent/5 overflow-hidden">
-      <header className="px-4 py-3 border-b border-accent/20 flex items-center justify-between">
+    <article className="rounded-2xl bg-surface shadow-card overflow-hidden">
+      <header className="px-4 py-3 border-b border-border flex items-center justify-between bg-[var(--butter-soft)]">
         <div className="flex items-center gap-2 min-w-0">
-          <span className="text-base">🔥</span>
+          <span className="text-base" aria-hidden="true">🔥</span>
           <div className="min-w-0">
-            <p className="text-xs uppercase tracking-wider text-accent font-semibold">
+            <p className="text-[10px] uppercase tracking-widest text-[var(--butter-ink)] font-semibold">
               {formatLabel}
             </p>
-            <h3 className="font-semibold truncate">{block.name}</h3>
+            <h3 className="font-display font-bold truncate">{block.name}</h3>
           </div>
         </div>
         <button
           type="button"
           onClick={() => setConfirmDeleteOpen(true)}
           disabled={isPending}
-          className="text-xs text-danger hover:underline cursor-pointer disabled:opacity-50"
+          className="text-xs font-medium text-danger hover:underline cursor-pointer disabled:opacity-50"
         >
           Supprimer
         </button>
@@ -85,8 +85,8 @@ export function TemplateIntervalBlockCard({ templateId, block, exercises }: Prop
           <Stat label="Total" value={formatDuration(totalSecs)} dense />
         </div>
 
-        <div className="pt-2 border-t border-accent/10">
-          <p className="text-[11px] uppercase tracking-wider text-muted mb-1.5">
+        <div className="pt-2 border-t border-border/60">
+          <p className="text-[10px] uppercase tracking-widest text-muted font-semibold mb-1.5">
             {block.playbackOrder === "CUSTOM" ? "Séquence" : "Playlist"} ({playlist.length})
             {block.playbackOrder === "SAME" && " — répétés"}
             {block.playbackOrder === "CYCLE" && playlist.length > 1 && " — en cycle"}
@@ -98,7 +98,7 @@ export function TemplateIntervalBlockCard({ templateId, block, exercises }: Prop
                 const ex = exerciseById.get(exId) ?? playlist.find((p) => p.id === exId);
                 return (
                   <li key={`seq-${i}`} className="flex items-center gap-2 text-sm">
-                    <span className="text-[10px] font-mono text-accent w-8">
+                    <span className="text-[10px] font-mono text-accent-ink w-8 tabular-nums">
                       R{String(i + 1).padStart(2, "0")}
                     </span>
                     <span className="truncate">{ex?.name ?? exId}</span>
@@ -110,7 +110,7 @@ export function TemplateIntervalBlockCard({ templateId, block, exercises }: Prop
             <ol className="space-y-1">
               {playlist.map((ex, i) => (
                 <li key={`${ex.id}-${i}`} className="flex items-center gap-2 text-sm">
-                  <span className="text-[10px] font-mono text-subtle w-4">
+                  <span className="text-[10px] font-mono text-subtle w-4 tabular-nums">
                     {String(i + 1).padStart(2, "0")}
                   </span>
                   <span className="truncate">{ex.name}</span>

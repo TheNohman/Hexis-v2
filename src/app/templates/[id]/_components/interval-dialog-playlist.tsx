@@ -20,14 +20,14 @@ export function PlaylistEditor({
 }) {
   return (
     <section className="space-y-2">
-      <h3 className="text-xs font-semibold text-muted uppercase tracking-wider flex items-center justify-between">
+      <h3 className="text-[10px] font-semibold text-muted uppercase tracking-widest flex items-center justify-between">
         <span>
           {playbackOrder === "SAME"
             ? `Exercice (${selectedExerciseIds.length})`
             : `Playlist (${selectedExerciseIds.length})`}
         </span>
         {playbackOrder === "CYCLE" && selectedExerciseIds.length > 1 && (
-          <span className="text-[10px] normal-case text-subtle">
+          <span className="text-[10px] normal-case tracking-normal text-subtle font-normal">
             Glisse pour réordonner
           </span>
         )}
@@ -41,19 +41,19 @@ export function PlaylistEditor({
           items={selectedExerciseIds}
           keyFor={(id) => id}
           onReorder={onReorder}
-          className="space-y-1 rounded-xl border border-border bg-surface p-2"
+          className="space-y-1 rounded-2xl border border-border bg-background p-2"
           renderItem={(id, i, handle) => (
-            <li className="flex items-center gap-2 rounded-lg bg-background border border-border/50 pl-1 pr-2 py-1.5">
+            <li className="flex items-center gap-2 rounded-lg bg-surface border border-border/60 pl-1 pr-2 py-1.5">
               <button
                 type="button"
                 {...handle.attributes}
                 {...handle.listeners}
-                aria-label="Déplacer"
+                aria-label="Déplacer l’exercice"
                 className="cursor-grab active:cursor-grabbing text-subtle hover:text-foreground px-2 py-1 touch-none"
               >
-                <GripVertical className="w-4 h-4" />
+                <GripVertical className="w-4 h-4" aria-hidden="true" />
               </button>
-              <span className="text-[10px] font-mono text-subtle w-5 text-center">
+              <span className="text-[10px] font-mono text-subtle w-5 text-center tabular-nums">
                 {String(i + 1).padStart(2, "0")}
               </span>
               <span className="flex-1 text-sm truncate">
@@ -62,7 +62,7 @@ export function PlaylistEditor({
               <button
                 type="button"
                 onClick={() => onRemove(id)}
-                className="text-xs text-danger hover:underline cursor-pointer"
+                className="text-xs font-medium text-danger hover:underline cursor-pointer"
               >
                 Retirer
               </button>

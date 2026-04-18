@@ -1,5 +1,7 @@
 "use client";
 
+import { X as XIcon } from "lucide-react";
+
 type TemplateOption = { id: string; name: string };
 
 type Props = {
@@ -11,23 +13,36 @@ type Props = {
 
 export function TemplatePickerDialog({ templates, currentTemplateId, onSelect, onClose }: Props) {
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
+    <div
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="template-picker-title"
+    >
       {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
+      <button
+        type="button"
+        aria-label="Fermer"
+        className="absolute inset-0 bg-black/50 backdrop-blur-sm cursor-default"
+        onClick={onClose}
+      />
 
       {/* Dialog */}
-      <div className="relative w-full max-w-md mx-4 mb-4 sm:mb-0 rounded-2xl border border-border bg-background shadow-xl overflow-hidden">
+      <div className="relative w-full max-w-md mx-0 sm:mx-4 mb-0 sm:mb-0 rounded-t-3xl sm:rounded-3xl bg-surface shadow-hero overflow-hidden">
         <div className="p-4 border-b border-border flex items-center justify-between">
-          <h3 className="text-sm font-semibold">Choisir un template</h3>
+          <h3
+            id="template-picker-title"
+            className="font-display font-bold text-base tracking-tight"
+          >
+            Choisir un template
+          </h3>
           <button
             type="button"
             onClick={onClose}
-            className="text-subtle hover:text-foreground cursor-pointer transition-colors"
+            aria-label="Fermer"
+            className="min-h-[40px] min-w-[40px] flex items-center justify-center rounded-full text-subtle hover:text-foreground hover:bg-surface-hover cursor-pointer transition-colors"
           >
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-              <line x1="3" y1="3" x2="13" y2="13" />
-              <line x1="13" y1="3" x2="3" y2="13" />
-            </svg>
+            <XIcon className="h-4 w-4" aria-hidden="true" />
           </button>
         </div>
 
@@ -37,7 +52,7 @@ export function TemplatePickerDialog({ templates, currentTemplateId, onSelect, o
             <button
               type="button"
               onClick={() => onSelect(null)}
-              className="w-full text-left rounded-lg px-3 py-3 text-sm text-danger hover:bg-surface-hover transition-colors cursor-pointer"
+              className="w-full text-left rounded-xl px-3 py-3 text-sm font-medium text-danger hover:bg-danger-soft transition-colors cursor-pointer"
             >
               Retirer le template
             </button>
@@ -45,26 +60,32 @@ export function TemplatePickerDialog({ templates, currentTemplateId, onSelect, o
 
           {templates.length === 0 ? (
             <p className="text-sm text-subtle text-center py-6">
-              Aucun template disponible. Cr&eacute;e-en un d&rsquo;abord.
+              Aucun template disponible. Crée-en un d&rsquo;abord.
             </p>
           ) : (
-            templates.map((t) => (
-              <button
-                key={t.id}
-                type="button"
-                onClick={() => onSelect(t.id)}
-                className={`w-full text-left rounded-lg px-3 py-3 text-sm transition-colors cursor-pointer ${
-                  t.id === currentTemplateId
-                    ? "bg-accent/10 text-accent font-medium"
-                    : "hover:bg-surface-hover"
-                }`}
-              >
-                {t.name}
-                {t.id === currentTemplateId && (
-                  <span className="ml-2 text-xs text-accent">(actuel)</span>
-                )}
-              </button>
-            ))
+            templates.map((t) => {
+              const isActive = t.id === currentTemplateId;
+              return (
+                <button
+                  key={t.id}
+                  type="button"
+                  onClick={() => onSelect(t.id)}
+                  aria-pressed={isActive}
+                  className={`w-full text-left rounded-xl px-3 py-3 text-sm transition-colors cursor-pointer ${
+                    isActive
+                      ? "bg-accent text-accent-foreground font-semibold"
+                      : "hover:bg-surface-hover"
+                  }`}
+                >
+                  {t.name}
+                  {isActive && (
+                    <span className="ml-2 text-[10px] uppercase tracking-widest font-bold">
+                      Actuel
+                    </span>
+                  )}
+                </button>
+              );
+            })
           )}
         </div>
       </div>
