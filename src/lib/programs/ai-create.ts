@@ -37,12 +37,18 @@ export async function materializeAIProgram(
     const tpl = slot.template;
 
     // Create template with blocks and entries
+    const populatedBlocks = tpl.blocks.filter((block) =>
+      block.exercises.some((ex) =>
+        allExercises.some((e) => e.name.toLowerCase() === ex.name.toLowerCase()),
+      ),
+    );
     const template = await prisma.workoutTemplate.create({
       data: {
         userId,
         name: tpl.name,
+        source: "AI",
         blocks: {
-          create: tpl.blocks.map((block, blockIdx) => ({
+          create: populatedBlocks.map((block, blockIdx) => ({
             name: block.name,
             displayOrder: blockIdx,
             entries: {
@@ -229,13 +235,20 @@ export async function materializeProgramFills(
       continue;
     }
 
-    // Create template with matched exercises
+    // Create template with matched exercises — skip blocks with 0 matches
+    // so the detail view isn't polluted with empty placeholder blocks.
+    const populatedBlocks = fill.template.blocks.filter((block) =>
+      block.exercises.some((ex) =>
+        exerciseByName.has(ex.name.toLowerCase()),
+      ),
+    );
     const template = await prisma.workoutTemplate.create({
       data: {
         userId,
         name: fill.template.name,
+        source: "AI",
         blocks: {
-          create: fill.template.blocks.map((block, blockIdx) => ({
+          create: populatedBlocks.map((block, blockIdx) => ({
             name: block.name,
             displayOrder: blockIdx,
             entries: {

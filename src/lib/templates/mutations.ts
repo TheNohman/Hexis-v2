@@ -41,6 +41,23 @@ export async function renameTemplate(
   });
 }
 
+export async function updateTemplateDescription(
+  templateId: string,
+  userId: string,
+  description: string | null,
+) {
+  const template = await prisma.workoutTemplate.findUnique({
+    where: { id: templateId },
+    select: { id: true, userId: true },
+  });
+  assertOwnership(template, userId);
+  const normalized = description?.trim() || null;
+  return prisma.workoutTemplate.update({
+    where: { id: templateId },
+    data: { description: normalized },
+  });
+}
+
 export async function addTemplateBlock(
   templateId: string,
   userId: string,

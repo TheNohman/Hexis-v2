@@ -415,10 +415,12 @@ model MeasurementTypeConfig {
 
 /// Template de séance réutilisable
 model WorkoutTemplate {
-  id     String   @id @default(cuid())
-  userId String
-  name   String
-  tags   String[] @default([]) // ex: ["push", "upper", "strength"]
+  id          String         @id @default(cuid())
+  userId      String
+  name        String
+  description String?        @db.Text // intention libre du modèle (alimente l'IA)
+  tags        String[]       @default([]) // ex: ["push", "upper", "strength"]
+  source      TemplateSource @default(MANUAL) // provenance — manuel, IA, clone
 
   user         User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
   blocks       WorkoutTemplateBlock[]
@@ -429,6 +431,12 @@ model WorkoutTemplate {
   updatedAt DateTime @updatedAt
 
   @@index([userId])
+}
+
+enum TemplateSource {
+  MANUAL
+  AI
+  CLONED
 }
 
 /// Bloc dans un template

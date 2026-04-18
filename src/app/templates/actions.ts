@@ -18,6 +18,7 @@ import {
   renameTemplateBlock,
   reorderTemplateBlocks,
   reorderTemplateEntries,
+  updateTemplateDescription,
   updateTemplateEntryRest,
   updateTemplateEntryValues,
 } from "@/lib/templates/mutations";
@@ -63,6 +64,18 @@ export async function renameTemplateAction(templateId: string, name: string) {
   const userId = await getCurrentUserId();
   await renameTemplate(templateId, userId, name);
   revalidatePath("/templates/" + templateId);
+}
+
+export async function updateTemplateDescriptionAction(
+  templateId: string,
+  description: string | null,
+) {
+  assertValid(idSchema, templateId);
+  assertValid(z.string().max(2000).nullable(), description);
+  const userId = await getCurrentUserId();
+  await updateTemplateDescription(templateId, userId, description);
+  revalidatePath("/templates/" + templateId);
+  revalidatePath("/templates");
 }
 
 export async function addTemplateBlockAction(templateId: string, name: string) {

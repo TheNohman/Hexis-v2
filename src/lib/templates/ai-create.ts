@@ -39,12 +39,21 @@ export async function materializeAITemplate(
     );
   }
 
+  // Filter out blocks where NO exercise matches the user library — avoids
+  // persisting empty placeholder blocks that litter the detail view.
+  const populatedBlocks = generated.blocks.filter((block) =>
+    block.exercises.some((ex) =>
+      exerciseByName.has(ex.name.toLowerCase()),
+    ),
+  );
+
   const template = await prisma.workoutTemplate.create({
     data: {
       userId,
       name: generated.name,
+      source: "AI",
       blocks: {
-        create: generated.blocks.map((block, blockIdx) => ({
+        create: populatedBlocks.map((block, blockIdx) => ({
           name: block.name,
           displayOrder: blockIdx,
           entries: {

@@ -1,10 +1,10 @@
 import Link from "next/link";
-import { ClipboardList, Sparkles } from "lucide-react";
+import { Sparkles } from "lucide-react";
 import { getCurrentUserId } from "@/lib/auth-helpers";
 import { listTemplates } from "@/lib/templates/queries";
-import { EmptyState } from "@/app/_components/empty-state";
 import { createTemplateAction } from "./actions";
 import { prisma } from "@/lib/prisma";
+import { TemplatesList } from "./_components/templates-list";
 
 export const dynamic = "force-dynamic";
 
@@ -34,7 +34,11 @@ export default async function TemplatesPage() {
           </Link>
         </header>
 
-        <div className={`grid gap-2 ${aiEnabled ? "grid-cols-1 sm:grid-cols-[1fr_auto]" : "grid-cols-1"}`}>
+        <div
+          className={`grid gap-2 ${
+            aiEnabled ? "grid-cols-1 sm:grid-cols-[1fr_auto]" : "grid-cols-1"
+          }`}
+        >
           <form action={createTemplateAction}>
             <button
               type="submit"
@@ -54,51 +58,8 @@ export default async function TemplatesPage() {
           )}
         </div>
 
-        <section className="space-y-2.5">
-          {templates.length === 0 ? (
-            <EmptyState
-              icon={ClipboardList}
-              title="Aucun modèle"
-              description="Un modèle est une séance réutilisable. Utilise le bouton ci-dessus pour en créer un."
-            />
-          ) : (
-            <ul className="space-y-2.5">
-              {templates.map((t) => (
-                <li key={t.id}>
-                  <Link
-                    href={`/templates/${t.id}`}
-                    className="block rounded-2xl bg-surface shadow-card p-4 hover:shadow-hero hover:-translate-y-0.5 transition-all"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="min-w-0 flex-1">
-                        <p className="font-display font-bold text-[15px] truncate">{t.name}</p>
-                        <p className="text-[11px] text-muted mt-0.5">
-                          Modifié le{" "}
-                          {new Intl.DateTimeFormat("fr-FR", {
-                            day: "numeric",
-                            month: "short",
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          }).format(t.updatedAt)}
-                        </p>
-                      </div>
-                      <div className="text-right shrink-0 ml-4">
-                        <p className="font-display font-black text-lg tabular-nums leading-none">
-                          {t.entryCount}
-                        </p>
-                        <p className="text-[10px] uppercase tracking-widest font-semibold text-muted mt-1">
-                          {t.blockCount} bloc{t.blockCount > 1 ? "s" : ""}
-                        </p>
-                      </div>
-                    </div>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
+        <TemplatesList templates={templates} />
       </div>
     </main>
   );
 }
-

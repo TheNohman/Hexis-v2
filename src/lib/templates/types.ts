@@ -4,13 +4,21 @@ import type {
   IntervalFormat,
   KpiDataType,
   PlaybackOrder,
+  TemplateSource,
 } from "@/generated/prisma/enums";
 
 export type TemplateListItem = {
   id: string;
   name: string;
+  description: string | null;
+  tags: string[];
+  source: TemplateSource;
   blockCount: number;
   entryCount: number;
+  /** How many program slots reference this template — discoverability. */
+  programUsageCount: number;
+  /** Roughly-estimated total duration in seconds (sum of rest + ~45s per strength set + durations). */
+  estimatedDurationSecs: number;
   updatedAt: Date;
 };
 
@@ -18,6 +26,11 @@ export type TemplateDetail = {
   id: string;
   userId: string;
   name: string;
+  description: string | null;
+  tags: string[];
+  source: TemplateSource;
+  programUsageCount: number;
+  estimatedDurationSecs: number;
   blocks: {
     id: string;
     name: string;
