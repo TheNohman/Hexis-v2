@@ -16,12 +16,13 @@
   --border: #D4D4D8;         /* darker for AA on focused/hovered elements */
   --border-hover: #A1A1AA;
 
-  /* Accent — lime. Rules: use as FILL only with black text. */
-  /* For text-on-white, use --accent-ink (the AA-compliant darker lime). */
-  --accent: #C4F542;         /* fills (text-on-lime must be black — 12:1) */
-  --accent-hover: #B8E933;
-  --accent-light: #E8F5D6;   /* soft bg variant */
-  --accent-ink: #4D6B0B;     /* 7.0:1 on white — for links/text in lime family */
+  /* Accent — coral. Warm, energetic, pairs with lavender as complement. */
+  /* Rule: text-on-coral must be BLACK (6.76:1). White fails AA (3.1:1). */
+  /* For text-on-white, use --accent-ink (AA-compliant darker coral). */
+  --accent: #FF5A3C;         /* fills (text-on-coral must be black — 6.76:1) */
+  --accent-hover: #E8441F;
+  --accent-light: #FFE0D6;   /* soft bg variant */
+  --accent-ink: #B5390F;     /* 6.5:1 on white — for links/text in coral family */
   --accent-foreground: #0A0A0A;
 
   /* Secondary palette. Rules: pastel = FILL only with dark text. */
@@ -46,7 +47,7 @@
   --danger-light: #FEE2E2;   /* legacy alias */
 
   /* Focus ring — 3:1 contrast against adjacent bg (WCAG 1.4.11) */
-  --focus-ring: #4D6B0B;     /* accent-ink (lime dark) */
+  --focus-ring: #B5390F;     /* accent-ink (coral dark) */
   --focus-ring-offset: #FFFFFF;
 
   /* Shadows — bumped so cards lift off #EEEEEE bg */
