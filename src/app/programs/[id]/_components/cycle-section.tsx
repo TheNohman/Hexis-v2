@@ -59,36 +59,36 @@ export function CycleSection({
       style={{ animationDelay: `${cycle * 60}ms` }}
       aria-labelledby={`cycle-${cycle}`}
     >
-      {/* Chapter-style header */}
-      <div className="relative flex items-start justify-between gap-4 pt-4">
-        <div className="flex items-baseline gap-4">
-          <span
-            aria-hidden="true"
-            className="font-display font-black text-5xl sm:text-6xl leading-none text-foreground tabular-nums"
-          >
-            {String(cycle + 1).padStart(2, "0")}
-          </span>
-          <div className="space-y-0.5">
+      {/* Chapter-style header — single row, number + inline meta */}
+      <div className="flex items-center gap-4 pt-4">
+        <span
+          aria-hidden="true"
+          className="font-display font-black text-5xl sm:text-6xl leading-none text-foreground tabular-nums shrink-0"
+        >
+          {String(cycle + 1).padStart(2, "0")}
+        </span>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-baseline gap-2 flex-wrap">
             <h2
               id={`cycle-${cycle}`}
               className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted"
             >
               {cycleLabel(cycle)}
             </h2>
-            {cycleRange ? (
-              <p className="text-sm font-display font-bold text-foreground">
-                {formatCycleRange(cycleRange.from, cycleRange.to)}
-              </p>
-            ) : (
-              <p className="text-sm text-muted">{cycleDays} jours</p>
-            )}
             {isCurrent && (
-              <span className="inline-flex items-center gap-1.5 mt-1 rounded-full bg-accent px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest text-accent-foreground">
-                <span className="w-1.5 h-1.5 rounded-full bg-accent-foreground animate-pulse" aria-hidden="true" />
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-accent px-2 py-0.5 text-[9px] font-bold uppercase tracking-widest text-accent-foreground">
+                <span className="w-1 h-1 rounded-full bg-accent-foreground animate-pulse" aria-hidden="true" />
                 En cours
               </span>
             )}
           </div>
+          {cycleRange ? (
+            <p className="text-sm font-display font-bold text-foreground mt-0.5">
+              {formatCycleRange(cycleRange.from, cycleRange.to)}
+            </p>
+          ) : (
+            <p className="text-sm text-muted mt-0.5">{cycleDays} jours</p>
+          )}
         </div>
       </div>
 
@@ -184,11 +184,11 @@ function DateGroupedDays({
         return (
           <div
             key={day}
-            className="space-y-2 animate-fade-in-up"
+            className="group/day space-y-2 animate-fade-in-up"
             style={{ animationDelay: `${day * 25}ms` }}
           >
             {/* Day header */}
-            <div className="flex items-center justify-between gap-2 px-1">
+            <div className="flex items-center justify-between gap-2 px-1 min-h-[22px]">
               <div className="flex items-center gap-2 min-w-0">
                 <span
                   className={`text-[11px] font-bold tabular-nums ${
@@ -208,12 +208,15 @@ function DateGroupedDays({
                   </span>
                 )}
               </div>
+              {/* "+ Séance" — always visible on empty days, hover-only when populated */}
               <button
                 type="button"
                 onClick={() => onAddSlotAtDay(cycle, day)}
                 disabled={isPending}
                 aria-label={`Ajouter une séance le ${formatSlotDateShort(date)}`}
-                className="shrink-0 inline-flex items-center gap-1 rounded-full bg-surface px-2.5 py-1 text-[10px] font-semibold text-muted hover:text-foreground hover:bg-accent-light hover:text-accent-ink shadow-sm cursor-pointer transition-all disabled:opacity-50"
+                className={`shrink-0 inline-flex items-center gap-1 rounded-full bg-surface px-2.5 py-1 text-[10px] font-semibold text-muted hover:text-accent-ink hover:bg-accent-light shadow-sm cursor-pointer transition-all disabled:opacity-50 ${
+                  hasSlots ? "opacity-0 group-hover/day:opacity-100 focus:opacity-100" : ""
+                }`}
               >
                 <span aria-hidden="true" className="text-sm leading-none">+</span>
                 <span>Séance</span>

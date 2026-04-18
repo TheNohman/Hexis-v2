@@ -10,6 +10,8 @@ import {
   Activity,
   Zap,
   Clock,
+  ArrowUp,
+  ArrowDown,
 } from "lucide-react";
 import type { ProgramSlotDetail } from "@/lib/programs/types";
 
@@ -28,7 +30,7 @@ type Props = {
   isPending: boolean;
 };
 
-type Category = "strength" | "cardio" | "hiit" | "mobility" | "endurance" | "default";
+type Category = "strength-upper" | "strength-lower" | "strength" | "cardio" | "hiit" | "mobility" | "endurance" | "default";
 
 function slotCategory(name: string | null | undefined): Category {
   if (!name) return "default";
@@ -37,8 +39,9 @@ function slotCategory(name: string | null | undefined): Category {
   if (/run|course|v[ée]lo|bike|cardio|swim|nat/.test(n)) return "cardio";
   if (/endur|long|sortie/.test(n)) return "endurance";
   if (/mobilit|yoga|stretch|souplesse/.test(n)) return "mobility";
-  if (/push|pull|leg|jambe|upper|lower|force|muscu|haut|bas|squat|bench/.test(n))
-    return "strength";
+  if (/upper|haut|push|pull|pec|\bbras\b|bench/.test(n)) return "strength-upper";
+  if (/lower|jambe|bas|leg|squat|quad|fess|deadlift|soulev/.test(n)) return "strength-lower";
+  if (/force|muscu/.test(n)) return "strength";
   return "default";
 }
 
@@ -60,6 +63,22 @@ const CATEGORY_STYLE: Record<
     Picto: React.ComponentType<{ className?: string; "aria-hidden"?: boolean | "true" | "false" }>;
   }
 > = {
+  "strength-upper": {
+    band: "bg-accent",
+    tileBg: "bg-accent-light",
+    tileInk: "text-accent-ink",
+    chip: "text-accent-ink",
+    label: "Upper",
+    Picto: ArrowUp,
+  },
+  "strength-lower": {
+    band: "bg-[var(--accent-ink)]",
+    tileBg: "bg-accent-light",
+    tileInk: "text-accent-ink",
+    chip: "text-accent-ink",
+    label: "Lower",
+    Picto: ArrowDown,
+  },
   strength: {
     band: "bg-accent",
     tileBg: "bg-accent-light",
