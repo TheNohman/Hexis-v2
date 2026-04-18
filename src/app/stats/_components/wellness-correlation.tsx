@@ -1,3 +1,5 @@
+import { Card } from "@/app/_components/card";
+
 type Point = {
   date: string;
   mood: number;
@@ -24,11 +26,11 @@ export function WellnessCorrelation({ points }: Props) {
   const active = points.filter((p) => p.volume > 0);
   if (active.length < 5) {
     return (
-      <section className="rounded-xl border border-border bg-surface p-4 text-center">
+      <Card as="section" className="text-center">
         <p className="text-sm text-subtle">
           Encore trop peu de jours d&rsquo;entra&icirc;nement pour mesurer une corrélation.
         </p>
-      </section>
+      </Card>
     );
   }
 

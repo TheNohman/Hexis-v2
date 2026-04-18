@@ -5,6 +5,7 @@ import { listRecentEvents, countEventsByName } from "@/lib/telemetry/queries";
 import { formatDuration } from "@/lib/format";
 import { WellnessCorrelation } from "./_components/wellness-correlation";
 import { RecentEvents } from "./_components/recent-events";
+import { Card } from "@/app/_components/card";
 
 export const dynamic = "force-dynamic";
 
@@ -51,21 +52,21 @@ export default async function StatsPage() {
               label: "Dur\u00e9e moy.",
             },
           ].map(({ value, label }) => (
-            <div key={label} className="rounded-xl border border-border bg-surface p-4 text-center">
+            <Card key={label} className="text-center">
               <p className="text-2xl font-display font-bold text-accent tabular-nums">{value}</p>
               <p className="text-xs text-muted mt-1">{label}</p>
-            </div>
+            </Card>
           ))}
         </section>
 
         {/* Total volume */}
         {stats.totalVolume > 0 && (
-          <section className="rounded-xl border border-border bg-surface p-4 text-center">
+          <Card as="section" className="text-center">
             <p className="text-3xl font-display font-bold text-accent tabular-nums">
               {Math.round(stats.totalVolume).toLocaleString("fr-FR")} kg
             </p>
             <p className="text-xs text-muted mt-1">Volume total soulev&eacute;</p>
-          </section>
+          </Card>
         )}
 
         {/* Personal Records */}
@@ -143,7 +144,7 @@ export default async function StatsPage() {
           <h2 className="text-xs font-semibold text-muted uppercase tracking-wider">
             S&eacute;ances par semaine
           </h2>
-          <div className="rounded-xl border border-border bg-surface p-4">
+          <Card>
             <div className="flex items-end gap-2 h-36">
               {stats.weeklyActivity.map((week) => {
                 const pct = (week.count / maxWeekCount) * 100;
@@ -170,7 +171,7 @@ export default async function StatsPage() {
                 );
               })}
             </div>
-          </div>
+          </Card>
         </section>
 
         {/* Weekly volume */}
@@ -179,7 +180,7 @@ export default async function StatsPage() {
             <h2 className="text-xs font-semibold text-muted uppercase tracking-wider">
               Volume par semaine (kg)
             </h2>
-            <div className="rounded-xl border border-border bg-surface p-4">
+            <Card>
               <div className="flex items-end gap-2 h-36">
                 {stats.weeklyVolume.map((week) => {
                   const pct = (week.volume / maxWeekVolume) * 100;
@@ -209,7 +210,7 @@ export default async function StatsPage() {
                   );
                 })}
               </div>
-            </div>
+            </Card>
           </section>
         )}
       </div>

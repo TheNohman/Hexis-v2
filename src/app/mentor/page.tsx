@@ -8,6 +8,7 @@ import {
 } from "@/lib/mentor/advice";
 import { RegenerateButton } from "./_components/regenerate-button";
 import { formatRelative } from "@/lib/format";
+import { Card } from "@/app/_components/card";
 
 export const dynamic = "force-dynamic";
 
@@ -146,9 +147,9 @@ export default async function MentorPage() {
           ) : (
             <ul className="space-y-2">
               {history.map((h) => (
-                <li
+                <Card
+                  as="li"
                   key={h.id}
-                  className="rounded-xl border border-border bg-surface p-4"
                 >
                   <div className="flex items-center justify-between gap-3 mb-1.5">
                     <span className="text-[11px] uppercase tracking-wider text-subtle">
@@ -162,7 +163,7 @@ export default async function MentorPage() {
                     </span>
                   </div>
                   <p className="text-sm leading-relaxed">{h.content}</p>
-                </li>
+                </Card>
               ))}
             </ul>
           )}
