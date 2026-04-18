@@ -150,7 +150,7 @@ export function SlotCard({
 
   return (
     <div
-      className={`group relative overflow-hidden rounded-2xl bg-surface shadow-card hover:shadow-hero hover:-translate-y-0.5 transition-all ${
+      className={`group/slot relative overflow-hidden rounded-2xl bg-surface shadow-card hover:shadow-hero hover:-translate-y-0.5 transition-all ${
         isCurrent ? "ring-2 ring-accent" : ""
       }`}
     >
@@ -267,17 +267,16 @@ export function SlotCard({
                 if (!slot.startTime) setEditingTime(false);
               }}
               aria-label="Heure de début"
-              className="w-[80px] rounded-lg border border-transparent bg-surface-hover px-2 py-1.5 text-[11px] text-center font-semibold text-foreground tabular-nums hover:border-border focus:outline-none focus:border-accent-ink transition-colors"
+              className="w-[72px] rounded-lg border border-transparent bg-surface-hover px-2 py-1 text-[11px] text-center font-semibold text-foreground tabular-nums hover:border-border focus:outline-none focus:border-accent-ink transition-colors"
             />
           ) : (
             <button
               type="button"
               onClick={() => setEditingTime(true)}
               aria-label="Ajouter une heure de début"
-              className="flex items-center gap-1 px-2 py-1.5 rounded-lg text-[11px] font-medium text-subtle hover:text-foreground hover:bg-surface-hover transition-colors cursor-pointer"
+              className="p-1.5 rounded-lg text-subtle hover:text-accent-ink hover:bg-surface-hover transition-colors cursor-pointer opacity-0 group-hover/slot:opacity-100 focus:opacity-100"
             >
-              <Clock className="w-3 h-3" aria-hidden="true" />
-              Heure
+              <Clock className="w-3.5 h-3.5" aria-hidden="true" />
             </button>
           )}
         </div>
@@ -302,7 +301,7 @@ export function SlotCard({
             onClick={onDelete}
             disabled={isPending}
             aria-label="Supprimer le créneau"
-            className="min-h-[32px] min-w-[32px] flex items-center justify-center text-subtle hover:text-danger cursor-pointer transition-colors disabled:opacity-50 rounded-lg"
+            className="min-h-[32px] min-w-[32px] flex items-center justify-center text-subtle hover:text-danger cursor-pointer transition-colors disabled:opacity-50 rounded-lg opacity-0 group-hover/slot:opacity-100 focus:opacity-100"
           >
             <XIcon className="h-3.5 w-3.5" aria-hidden="true" />
           </button>
