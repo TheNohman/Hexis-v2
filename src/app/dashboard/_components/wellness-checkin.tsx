@@ -14,10 +14,45 @@ type Props = {
   } | null;
 };
 
+// Short labels for a11y / aria-label on each button
 const MOOD_LABELS = ["", "Très mal", "Mal", "Normal", "Bien", "Très bien"];
 const SLEEP_LABELS = ["", "Très mal", "Mal", "Correct", "Bien", "Excellent"];
 const ENERGY_LABELS = ["", "Épuisé", "Fatigué", "Normal", "Énergique", "Plein d'énergie"];
 const STRESS_LABELS = ["", "Très stressé", "Stressé", "Normal", "Détendu", "Très détendu"];
+
+// Natural first-person phrases displayed below each row when a rating is selected.
+const MOOD_PHRASES = [
+  "",
+  "Je me sens vraiment mal",
+  "Je ne vais pas bien",
+  "Ça va, ni haut ni bas",
+  "Je me sens bien",
+  "Je suis au top",
+];
+const SLEEP_PHRASES = [
+  "",
+  "Nuit catastrophique",
+  "J'ai mal dormi",
+  "Nuit correcte",
+  "J'ai bien dormi",
+  "Nuit de rêve",
+];
+const ENERGY_PHRASES = [
+  "",
+  "Je suis épuisé",
+  "Je suis fatigué",
+  "Énergie normale",
+  "J'ai la forme",
+  "Je déborde d'énergie",
+];
+const STRESS_PHRASES = [
+  "",
+  "Je suis très stressé",
+  "Je suis tendu",
+  "Stress normal",
+  "Je me sens détendu",
+  "Complètement zen",
+];
 
 // Emojis picked for monotonic progression (worst → best) and distinctness.
 const MOOD_EMOJI = ["", "\ud83d\ude2b", "\ud83d\ude1f", "\ud83d\ude10", "\ud83d\ude0a", "\ud83d\ude04"];
@@ -39,19 +74,35 @@ function RatingRow({
   label,
   emojis,
   labels,
+  phrases,
   value,
   onChange,
 }: {
   label: string;
   emojis: string[];
   labels: string[];
+  phrases: string[];
   value: number;
   onChange: (v: number) => void;
 }) {
   return (
-    <div className="space-y-1.5">
-      <span className="text-xs text-muted">{label}</span>
-      <div className="flex gap-1.5">
+    <div className="space-y-2">
+      <div className="flex items-baseline justify-between gap-2">
+        <span className="text-[11px] font-semibold uppercase tracking-wider text-muted">
+          {label}
+        </span>
+        <span
+          className="text-sm font-display font-semibold text-accent-ink truncate"
+          aria-live="polite"
+        >
+          « {phrases[value]} »
+        </span>
+      </div>
+      <div
+        className="flex gap-1.5"
+        role="radiogroup"
+        aria-label={label}
+      >
         {[1, 2, 3, 4, 5].map((n) => {
           const isActive = n === value;
           return (
@@ -59,22 +110,16 @@ function RatingRow({
               key={n}
               type="button"
               onClick={() => onChange(n)}
-              aria-label={`${label} : ${labels[n]}`}
-              aria-pressed={isActive}
-              className={`flex-1 rounded-lg py-1.5 px-1 flex flex-col items-center gap-0.5 cursor-pointer transition-all ${
+              aria-label={`${label} : ${labels[n]} — ${phrases[n]}`}
+              role="radio"
+              aria-checked={isActive}
+              className={`flex-1 min-h-[52px] rounded-xl flex items-center justify-center cursor-pointer transition-all text-2xl ${
                 isActive
-                  ? "bg-accent-light border-2 border-accent-ink scale-105"
-                  : "bg-surface border border-border hover:border-accent-ink/50"
+                  ? "bg-accent-light ring-2 ring-accent-ink scale-110"
+                  : "bg-surface border border-border hover:border-accent-ink/50 hover:scale-105"
               }`}
             >
-              <span className="text-base leading-none">{emojis[n]}</span>
-              <span
-                className={`text-[9px] leading-tight text-center ${
-                  isActive ? "text-accent-ink font-semibold" : "text-subtle"
-                }`}
-              >
-                {labels[n]}
-              </span>
+              <span aria-hidden="true">{emojis[n]}</span>
             </button>
           );
         })}
@@ -203,10 +248,38 @@ export function WellnessCheckin({ existingLog }: Props) {
         </button>
       </div>
 
-      <RatingRow label="Humeur" emojis={MOOD_EMOJI} labels={MOOD_LABELS} value={mood} onChange={setMood} />
-      <RatingRow label="Sommeil" emojis={SLEEP_EMOJI} labels={SLEEP_LABELS} value={sleep} onChange={setSleep} />
-      <RatingRow label="&Eacute;nergie" emojis={ENERGY_EMOJI} labels={ENERGY_LABELS} value={energy} onChange={setEnergy} />
-      <RatingRow label="Stress" emojis={STRESS_EMOJI} labels={STRESS_LABELS} value={stress} onChange={setStress} />
+      <RatingRow
+        label="Humeur"
+        emojis={MOOD_EMOJI}
+        labels={MOOD_LABELS}
+        phrases={MOOD_PHRASES}
+        value={mood}
+        onChange={setMood}
+      />
+      <RatingRow
+        label="Sommeil"
+        emojis={SLEEP_EMOJI}
+        labels={SLEEP_LABELS}
+        phrases={SLEEP_PHRASES}
+        value={sleep}
+        onChange={setSleep}
+      />
+      <RatingRow
+        label="Énergie"
+        emojis={ENERGY_EMOJI}
+        labels={ENERGY_LABELS}
+        phrases={ENERGY_PHRASES}
+        value={energy}
+        onChange={setEnergy}
+      />
+      <RatingRow
+        label="Stress"
+        emojis={STRESS_EMOJI}
+        labels={STRESS_LABELS}
+        phrases={STRESS_PHRASES}
+        value={stress}
+        onChange={setStress}
+      />
 
       <textarea
         value={notes}
