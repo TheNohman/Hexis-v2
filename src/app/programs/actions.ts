@@ -101,7 +101,8 @@ export async function addSlotAction(
   data: { templateId?: string | null; day?: number; startTime?: string | null; label?: string | null },
 ) {
   assertValid(idSchema, programId);
-  assertValid(z.number().int().min(1).max(52), cycle);
+  // cycle is 0-indexed (cycle 0 = first cycle), max 11 since cycleCount ≤ 12.
+  assertValid(z.number().int().min(0).max(11), cycle);
   const parsed = assertValid(programSlotDataSchema, data);
   const userId = await getCurrentUserId();
   await addSlot(programId, userId, cycle, parsed);

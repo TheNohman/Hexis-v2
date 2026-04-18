@@ -29,6 +29,8 @@ export const isoDateSchema = z.string().refine(
 );
 
 export const weekdaySchema = z.number().int().min(0).max(6);
+/** Day-within-cycle index (0..cycleDays-1). cycleDays max is 30, so day ≤ 29. */
+export const cycleDaySchema = z.number().int().min(0).max(29);
 export const timeOfDaySchema = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "invalid time");
 
 export const exerciseTypeEnum = z.enum(["STRENGTH", "BODYWEIGHT", "CARDIO", "MOBILITY", "REST"]);
@@ -112,7 +114,7 @@ export const profileUpdateSchema = z.object({
 
 export const programSlotDataSchema = z.object({
   templateId: idSchema.nullable().optional(),
-  day: weekdaySchema.optional(),
+  day: cycleDaySchema.optional(),
   startTime: timeOfDaySchema.nullable().optional(),
   label: z.string().max(200).nullable().optional(),
 });
