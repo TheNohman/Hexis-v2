@@ -143,10 +143,10 @@ export function TemplateEditor({ template, exercises }: Props) {
             </button>
           )}
           <Link
-            href="/templates"
+            href="/planning?tab=templates"
             className="text-xs text-muted hover:text-foreground whitespace-nowrap px-3 py-2 rounded-lg hover:bg-surface transition-colors"
           >
-            <span aria-hidden="true">←</span> Modèles
+            <span aria-hidden="true">←</span> Planification
           </Link>
         </header>
 

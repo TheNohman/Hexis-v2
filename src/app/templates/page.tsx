@@ -27,10 +27,10 @@ export default async function TemplatesPage() {
             Modèles
           </h1>
           <Link
-            href="/dashboard"
+            href="/planning?tab=templates"
             className="text-xs text-muted hover:text-foreground transition-colors py-1"
           >
-            <span aria-hidden="true">←</span> Retour
+            <span aria-hidden="true">←</span> Retour à la planification
           </Link>
         </header>
 

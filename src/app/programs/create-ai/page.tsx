@@ -8,13 +8,16 @@ export const dynamic = "force-dynamic";
 
 export default async function CreateAIProgramPage() {
   const userId = await getCurrentUserId();
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { mentorEnabled: true },
-  });
+  const [user, templateCount] = await Promise.all([
+    prisma.user.findUnique({
+      where: { id: userId },
+      select: { mentorEnabled: true },
+    }),
+    prisma.workoutTemplate.count({ where: { userId } }),
+  ]);
 
   if (!user?.mentorEnabled) {
-    redirect("/planning");
+    redirect("/planning?tab=programs");
   }
 
   return (
@@ -26,14 +29,25 @@ export default async function CreateAIProgramPage() {
               Mentor IA
             </p>
             <h1 className="font-display font-extrabold tracking-tight text-[28px] sm:text-[32px]">
-              Créer avec l&rsquo;IA
+              Générer un programme
             </h1>
+            <p className="text-xs text-muted mt-1">
+              L&rsquo;IA compose un plan hebdomadaire et crée les modèles de
+              séance correspondants.
+              {templateCount > 0 ? (
+                <>
+                  {" "}Tes {templateCount} modèle{templateCount > 1 ? "s" : ""}{" "}
+                  existant{templateCount > 1 ? "s seront réutilisés" : " sera réutilisé"}{" "}
+                  si pertinent.
+                </>
+              ) : null}
+            </p>
           </div>
           <Link
-            href="/planning"
+            href="/planning?tab=programs"
             className="text-xs text-muted hover:text-foreground transition-colors py-1"
           >
-            <span aria-hidden="true">←</span> Retour
+            <span aria-hidden="true">←</span> Retour à la planification
           </Link>
         </header>
 

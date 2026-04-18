@@ -14,7 +14,7 @@ export default async function CreateAITemplatePage() {
   });
 
   if (!user?.mentorEnabled) {
-    redirect("/templates");
+    redirect("/planning?tab=templates");
   }
 
   // Fetch user's exercise library to show what the AI will have access to.
@@ -41,10 +41,10 @@ export default async function CreateAITemplatePage() {
             </p>
           </div>
           <Link
-            href="/templates"
+            href="/planning?tab=templates"
             className="text-xs text-muted hover:text-foreground transition-colors py-1"
           >
-            <span aria-hidden="true">←</span> Retour
+            <span aria-hidden="true">←</span> Retour à la planification
           </Link>
         </header>
 
