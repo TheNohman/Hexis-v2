@@ -17,14 +17,17 @@ function OrderButton({
     <button
       type="button"
       onClick={onClick}
-      className={`text-left rounded-xl border p-3 cursor-pointer transition-all ${
+      aria-pressed={active}
+      className={`text-left rounded-xl p-3 cursor-pointer transition-all ${
         active
-          ? "border-accent bg-accent/10 ring-2 ring-accent/30"
-          : "border-border bg-surface hover:border-accent/40"
+          ? "bg-accent text-accent-foreground shadow-card"
+          : "bg-surface shadow-card hover:shadow-hero hover:-translate-y-0.5"
       }`}
     >
-      <p className="text-sm font-semibold">{title}</p>
-      <p className="text-[10px] text-muted mt-0.5">{subtitle}</p>
+      <p className="text-sm font-display font-bold">{title}</p>
+      <p className={`text-[10px] mt-0.5 ${active ? "text-accent-foreground/80" : "text-muted"}`}>
+        {subtitle}
+      </p>
     </button>
   );
 }
@@ -41,7 +44,7 @@ export function PlaybackOrderPicker({
 }) {
   return (
     <section className="space-y-2">
-      <h3 className="text-xs font-semibold text-muted uppercase tracking-wider">
+      <h3 className="text-[10px] font-semibold text-muted uppercase tracking-widest">
         Répartition des exercices
       </h3>
       <div className="grid grid-cols-3 gap-2">

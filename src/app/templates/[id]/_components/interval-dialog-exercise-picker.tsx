@@ -22,17 +22,20 @@ export function ExercisePool({
 
   return (
     <section className="space-y-2">
-      <h3 className="text-xs font-semibold text-muted uppercase tracking-wider">
+      <h3 className="text-[10px] font-semibold text-muted uppercase tracking-widest">
         Ajouter un exercice
       </h3>
-      <input
-        type="search"
-        value={query}
-        onChange={(e) => onQueryChange(e.target.value)}
-        placeholder="Rechercher…"
-        className="w-full rounded-xl border border-border bg-surface px-4 py-2.5 text-sm outline-none focus:border-accent transition-colors"
-      />
-      <ul className="max-h-48 overflow-y-auto space-y-1 rounded-xl border border-border bg-surface p-2">
+      <label className="block">
+        <span className="sr-only">Rechercher un exercice</span>
+        <input
+          type="search"
+          value={query}
+          onChange={(e) => onQueryChange(e.target.value)}
+          placeholder="Rechercher…"
+          className="w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm outline-none focus:border-accent transition-colors"
+        />
+      </label>
+      <ul className="max-h-48 overflow-y-auto space-y-1 rounded-2xl border border-border bg-background p-2">
         {filtered.length === 0 && (
           <li className="text-xs text-subtle text-center py-4">
             Aucun exercice trouvé.
@@ -45,17 +48,20 @@ export function ExercisePool({
               <button
                 type="button"
                 onClick={() => onToggle(ex.id)}
+                aria-pressed={active}
                 className={`w-full text-left rounded-lg px-3 py-2 flex items-center justify-between cursor-pointer transition-colors ${
                   active
-                    ? "bg-accent/15 text-foreground"
+                    ? "bg-accent-light text-accent-ink font-semibold"
                     : "hover:bg-surface-hover"
                 }`}
               >
                 <span className="text-sm">{ex.name}</span>
                 {active ? (
-                  <span className="text-xs text-accent">✓ ajouté</span>
+                  <span className="text-xs font-semibold" aria-label="Ajouté">
+                    <span aria-hidden="true">✓</span> ajouté
+                  </span>
                 ) : (
-                  <span className="text-xs text-subtle">+</span>
+                  <span className="text-xs text-subtle" aria-hidden="true">+</span>
                 )}
               </button>
             </li>

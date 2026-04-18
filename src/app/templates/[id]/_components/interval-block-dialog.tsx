@@ -162,21 +162,29 @@ export function IntervalBlockDialog({
   return (
     <div
       className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm p-0 sm:p-4"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="hiit-dialog-title"
       onClick={onClose}
     >
       <div
-        className="bg-background border border-border rounded-t-2xl sm:rounded-2xl w-full sm:max-w-lg max-h-[90vh] overflow-y-auto"
+        className="bg-surface rounded-t-3xl sm:rounded-3xl w-full sm:max-w-lg max-h-[90vh] overflow-y-auto shadow-hero"
         onClick={(e) => e.stopPropagation()}
       >
-        <header className="sticky top-0 bg-background border-b border-border px-5 py-4 flex items-center justify-between">
+        <header className="sticky top-0 bg-surface border-b border-border px-5 py-4 flex items-center justify-between z-10">
           <div>
-            <h2 className="text-lg font-display font-bold">Nouveau bloc HIIT</h2>
-            <p className="text-xs text-muted mt-0.5">Total: {totalLabel}</p>
+            <p className="text-[10px] uppercase tracking-widest font-semibold text-[var(--butter-ink)]">
+              <span aria-hidden="true">🔥</span> HIIT
+            </p>
+            <h2 id="hiit-dialog-title" className="font-display font-bold text-lg tracking-tight">
+              Nouveau bloc HIIT
+            </h2>
+            <p className="text-xs text-muted mt-0.5 tabular-nums">Total&nbsp;: {totalLabel}</p>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="text-sm text-muted hover:text-foreground transition-colors cursor-pointer"
+            className="text-sm font-medium text-muted hover:text-foreground transition-colors cursor-pointer"
           >
             Annuler
           </button>
@@ -205,16 +213,19 @@ export function IntervalBlockDialog({
 
           {/* Name override */}
           <section className="space-y-2">
-            <h3 className="text-xs font-semibold text-muted uppercase tracking-wider">
+            <h3 className="text-[10px] font-semibold text-muted uppercase tracking-widest">
               Nom du bloc
             </h3>
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder={defaultNameForPreset(preset)}
-              className="w-full rounded-xl border border-border bg-surface px-4 py-2.5 text-sm outline-none focus:border-accent transition-colors"
-            />
+            <label className="block">
+              <span className="sr-only">Nom du bloc HIIT</span>
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder={defaultNameForPreset(preset)}
+                className="w-full rounded-xl border border-border bg-background px-4 py-2.5 text-sm outline-none focus:border-accent transition-colors"
+              />
+            </label>
           </section>
 
           {playbackOrder !== "CUSTOM" && (
@@ -249,12 +260,12 @@ export function IntervalBlockDialog({
           />
         </div>
 
-        <footer className="sticky bottom-0 bg-background border-t border-border px-5 py-3">
+        <footer className="sticky bottom-0 bg-surface border-t border-border px-5 py-3">
           <button
             type="button"
             onClick={submit}
             disabled={!canSubmit()}
-            className="w-full rounded-xl bg-accent text-white py-3 text-sm font-semibold hover:bg-accent-hover transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+            className="w-full rounded-xl bg-foreground text-background py-3.5 text-sm font-semibold hover:opacity-90 transition-opacity cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed shadow-card"
           >
             {isPending ? "Création…" : "Créer le bloc HIIT"}
           </button>

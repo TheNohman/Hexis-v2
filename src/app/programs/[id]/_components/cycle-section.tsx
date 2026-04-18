@@ -30,20 +30,23 @@ export function CycleSection({
   const isCurrent = slots.some((s) => s.id === currentSlotId);
 
   return (
-    <section className="space-y-2">
-      <h2 className={`text-xs font-semibold uppercase tracking-wider ${isCurrent ? "text-accent" : "text-muted"}`}>
-        {cycleLabel(cycle)}
+    <section className="space-y-2.5" aria-labelledby={`cycle-${cycle}`}>
+      <h2
+        id={`cycle-${cycle}`}
+        className="flex items-center gap-2 text-[10px] uppercase tracking-widest font-semibold text-muted"
+      >
+        <span>{cycleLabel(cycle)}</span>
         {isCurrent && (
-          <span className="ml-2 text-[10px] font-medium normal-case bg-accent/10 text-accent rounded-full px-2 py-0.5">
-            en cours
+          <span className="normal-case tracking-normal inline-flex items-center rounded-full bg-accent px-2 py-0.5 text-[10px] font-bold text-accent-foreground">
+            En cours
           </span>
         )}
       </h2>
 
-      <div className="space-y-1.5">
+      <div className="space-y-2">
         {slots.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-border p-4 text-center">
-            <p className="text-xs text-subtle">Aucun cr&eacute;neau</p>
+          <div className="rounded-2xl border border-dashed border-border p-5 text-center">
+            <p className="text-xs text-subtle">Aucun créneau</p>
           </div>
         ) : (
           slots.map((slot) => (
@@ -67,9 +70,9 @@ export function CycleSection({
         type="button"
         onClick={onAddSlot}
         disabled={isPending}
-        className="w-full rounded-lg border border-dashed border-border py-2.5 text-xs text-muted hover:text-foreground hover:border-accent transition-colors cursor-pointer disabled:opacity-50"
+        className="w-full rounded-xl border border-dashed border-border py-2.5 text-xs font-medium text-muted hover:text-foreground hover:border-foreground/40 transition-colors cursor-pointer disabled:opacity-50"
       >
-        + Ajouter un cr&eacute;neau
+        + Ajouter un créneau
       </button>
     </section>
   );

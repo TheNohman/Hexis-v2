@@ -12,6 +12,7 @@ import {
   deleteSlotAction,
 } from "@/app/programs/actions";
 import type { ProgramDetail } from "@/lib/programs/types";
+import { Card } from "@/app/_components/card";
 import { CycleSection } from "./cycle-section";
 import { TemplatePickerDialog } from "./template-picker-dialog";
 
@@ -62,25 +63,29 @@ export function ProgramEditor({ program, templates }: Props) {
   return (
     <div className="space-y-6">
       {/* Config */}
-      <div className="rounded-xl border border-border bg-surface p-4 space-y-4">
+      <Card rounded="2xl" padding="lg" className="space-y-4">
         <label className="flex flex-col gap-1.5">
-          <span className="text-xs text-muted">Nom du programme</span>
+          <span className="text-[10px] uppercase tracking-widest font-semibold text-muted">
+            Nom du programme
+          </span>
           <input
             type="text"
             defaultValue={program.name}
             onBlur={handleRename}
             onKeyDown={(e) => { if (e.key === "Enter") (e.target as HTMLInputElement).blur(); }}
-            className="rounded-lg border border-border bg-background px-3 py-2.5 text-sm font-medium focus:outline-none focus:border-accent transition-colors"
+            className="rounded-xl border border-border bg-background px-3 py-2.5 text-sm font-medium focus:outline-none focus:border-accent transition-colors"
           />
         </label>
 
         <div className="grid grid-cols-3 gap-3">
           <label className="flex flex-col gap-1.5">
-            <span className="text-xs text-muted">Cycles</span>
+            <span className="text-[10px] uppercase tracking-widest font-semibold text-muted">
+              Cycles
+            </span>
             <select
               value={program.cycleCount}
               onChange={(e) => startTransition(() => updateCycleCountAction(program.id, parseInt(e.target.value, 10)))}
-              className="rounded-lg border border-border bg-background px-3 py-2.5 text-sm focus:outline-none focus:border-accent transition-colors"
+              className="rounded-xl border border-border bg-background px-3 py-2.5 text-sm focus:outline-none focus:border-accent transition-colors"
             >
               {Array.from({ length: 12 }, (_, i) => i + 1).map((n) => (
                 <option key={n} value={n}>{n}</option>
@@ -89,11 +94,13 @@ export function ProgramEditor({ program, templates }: Props) {
           </label>
 
           <label className="flex flex-col gap-1.5">
-            <span className="text-xs text-muted">Jours / cycle</span>
+            <span className="text-[10px] uppercase tracking-widest font-semibold text-muted">
+              Jours / cycle
+            </span>
             <select
               value={program.cycleDays}
               onChange={(e) => startTransition(() => updateCycleDaysAction(program.id, parseInt(e.target.value, 10)))}
-              className="rounded-lg border border-border bg-background px-3 py-2.5 text-sm focus:outline-none focus:border-accent transition-colors"
+              className="rounded-xl border border-border bg-background px-3 py-2.5 text-sm focus:outline-none focus:border-accent transition-colors"
             >
               {Array.from({ length: 14 }, (_, i) => i + 1).map((n) => (
                 <option key={n} value={n}>{n} jour{n > 1 ? "s" : ""}</option>
@@ -102,14 +109,17 @@ export function ProgramEditor({ program, templates }: Props) {
           </label>
 
           <div className="flex flex-col gap-1.5">
-            <span className="text-xs text-muted">Statut</span>
+            <span className="text-[10px] uppercase tracking-widest font-semibold text-muted">
+              Statut
+            </span>
             <button
               type="button"
               onClick={() => startTransition(() => toggleProgramActiveAction(program.id))}
               disabled={isPending}
-              className={`rounded-lg px-3 py-2.5 text-sm font-medium transition-colors cursor-pointer ${
+              aria-pressed={program.isActive}
+              className={`rounded-xl px-3 py-2.5 text-sm font-semibold transition-colors cursor-pointer ${
                 program.isActive
-                  ? "bg-done-light text-done border border-done/30"
+                  ? "bg-accent text-accent-foreground hover:bg-accent-hover"
                   : "bg-background border border-border text-muted hover:text-foreground"
               }`}
             >
@@ -117,7 +127,7 @@ export function ProgramEditor({ program, templates }: Props) {
             </button>
           </div>
         </div>
-      </div>
+      </Card>
 
       {/* Cycles */}
       {cycles.map(({ cycle, slots }) => (
@@ -150,21 +160,34 @@ export function ProgramEditor({ program, templates }: Props) {
       {/* Delete */}
       <div className="pt-4 border-t border-border">
         {showDeleteConfirm ? (
-          <div className="rounded-xl border border-danger/30 bg-danger/5 p-4 space-y-3">
-            <p className="text-sm text-danger font-medium">
-              Supprimer ce programme ? Cette action est irr&eacute;versible.
+          <Card variant="danger" rounded="2xl" padding="lg" className="space-y-3">
+            <p className="text-sm text-danger font-semibold">
+              Supprimer ce programme ? Cette action est irréversible.
             </p>
             <div className="flex gap-2">
-              <button type="button" onClick={() => startTransition(() => deleteProgramAction(program.id))} disabled={isPending} className="flex-1 rounded-lg bg-danger text-white py-2.5 text-sm font-semibold hover:bg-danger/90 transition-colors cursor-pointer disabled:opacity-50">
+              <button
+                type="button"
+                onClick={() => startTransition(() => deleteProgramAction(program.id))}
+                disabled={isPending}
+                className="flex-1 rounded-xl bg-danger text-white py-2.5 text-sm font-semibold hover:opacity-90 transition-opacity cursor-pointer disabled:opacity-50"
+              >
                 Confirmer
               </button>
-              <button type="button" onClick={() => setShowDeleteConfirm(false)} className="flex-1 rounded-lg border border-border py-2.5 text-sm font-medium hover:bg-surface-hover transition-colors cursor-pointer">
+              <button
+                type="button"
+                onClick={() => setShowDeleteConfirm(false)}
+                className="flex-1 rounded-xl border border-border bg-surface py-2.5 text-sm font-medium hover:bg-surface-hover transition-colors cursor-pointer"
+              >
                 Annuler
               </button>
             </div>
-          </div>
+          </Card>
         ) : (
-          <button type="button" onClick={() => setShowDeleteConfirm(true)} className="w-full text-sm text-danger hover:text-danger/80 transition-colors cursor-pointer py-2">
+          <button
+            type="button"
+            onClick={() => setShowDeleteConfirm(true)}
+            className="w-full text-sm text-danger hover:opacity-80 transition-opacity cursor-pointer py-2 font-medium"
+          >
             Supprimer ce programme
           </button>
         )}

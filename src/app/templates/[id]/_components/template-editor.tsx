@@ -109,7 +109,7 @@ export function TemplateEditor({ template, exercises }: Props) {
   }
 
   return (
-    <main className="flex-1 flex flex-col px-4 py-6">
+    <main id="main-content" className="flex-1 flex flex-col px-4 py-6">
       <div className="max-w-2xl w-full mx-auto space-y-6">
         <header className="flex items-start justify-between gap-3">
           {isEditingName ? (
@@ -117,6 +117,7 @@ export function TemplateEditor({ template, exercises }: Props) {
               type="text"
               defaultValue={template.name}
               autoFocus
+              aria-label="Nom du modèle"
               onBlur={(e) => {
                 const next = e.target.value.trim();
                 if (next && next !== template.name) {
@@ -130,22 +131,22 @@ export function TemplateEditor({ template, exercises }: Props) {
                 if (e.key === "Enter") (e.target as HTMLInputElement).blur();
                 if (e.key === "Escape") setIsEditingName(false);
               }}
-              className="flex-1 text-2xl font-display font-bold bg-transparent outline-none border-b-2 border-accent/50"
+              className="flex-1 font-display font-extrabold tracking-tight text-[28px] sm:text-[32px] bg-transparent outline-none border-b-2 border-accent"
             />
           ) : (
             <button
               type="button"
               onClick={() => setIsEditingName(true)}
-              className="text-2xl font-display font-bold cursor-pointer text-left hover:text-accent transition-colors"
+              className="font-display font-extrabold tracking-tight text-[28px] sm:text-[32px] cursor-pointer text-left hover:text-accent-ink transition-colors"
             >
               {template.name}
             </button>
           )}
           <Link
             href="/templates"
-            className="text-xs text-subtle hover:text-foreground whitespace-nowrap px-3 py-2 rounded-lg hover:bg-surface transition-colors"
+            className="text-xs text-muted hover:text-foreground whitespace-nowrap px-3 py-2 rounded-lg hover:bg-surface transition-colors"
           >
-            &larr; Mod&egrave;les
+            <span aria-hidden="true">←</span> Modèles
           </Link>
         </header>
 
@@ -191,7 +192,8 @@ export function TemplateEditor({ template, exercises }: Props) {
             <div className="flex gap-2">
               <input
                 type="text"
-                placeholder='ex. "Haut du corps"'
+                placeholder='ex. « Haut du corps »'
+                aria-label="Nom du bloc"
                 value={newBlockName}
                 onChange={(e) => setNewBlockName(e.target.value)}
                 onKeyDown={(e) => {
@@ -202,13 +204,13 @@ export function TemplateEditor({ template, exercises }: Props) {
                   }
                 }}
                 autoFocus
-                className="flex-1 rounded-xl border border-border bg-surface px-4 py-3 text-sm outline-none focus:border-accent/50 transition-colors"
+                className="flex-1 rounded-xl border border-border bg-surface px-4 py-3 text-sm outline-none focus:border-accent transition-colors"
               />
               <button
                 type="button"
                 onClick={handleAddBlock}
                 disabled={isPending}
-                className="rounded-xl bg-accent text-background px-5 text-sm font-bold disabled:opacity-50 cursor-pointer hover:bg-accent-hover transition-colors"
+                className="rounded-xl bg-foreground text-background px-5 text-sm font-semibold disabled:opacity-50 cursor-pointer hover:opacity-90 transition-opacity"
               >
                 Ajouter
               </button>
@@ -218,16 +220,16 @@ export function TemplateEditor({ template, exercises }: Props) {
               <button
                 type="button"
                 onClick={() => setShowNewBlockInput(true)}
-                className="rounded-2xl border border-dashed border-border px-4 py-4 text-sm text-subtle hover:text-accent hover:border-accent/30 cursor-pointer transition-colors"
+                className="rounded-2xl border border-dashed border-border px-4 py-4 text-sm font-medium text-muted hover:text-foreground hover:border-foreground/40 cursor-pointer transition-colors"
               >
                 + Bloc muscu
               </button>
               <button
                 type="button"
                 onClick={() => setShowHiitDialog(true)}
-                className="rounded-2xl border border-dashed border-accent/30 bg-accent/5 px-4 py-4 text-sm text-accent hover:bg-accent/10 cursor-pointer transition-colors"
+                className="rounded-2xl bg-[var(--butter)] text-foreground px-4 py-4 text-sm font-semibold hover:brightness-95 cursor-pointer transition-all shadow-card"
               >
-                🔥 Bloc HIIT
+                <span aria-hidden="true">🔥</span> Bloc HIIT
               </button>
             </div>
           )}
@@ -238,25 +240,25 @@ export function TemplateEditor({ template, exercises }: Props) {
             type="button"
             onClick={handleStartSession}
             disabled={isPending || optimisticBlocks.length === 0}
-            className="w-full rounded-2xl bg-done text-white py-4 font-bold tracking-wide hover:bg-done/90 transition-colors cursor-pointer disabled:opacity-50 uppercase"
+            className="w-full rounded-xl bg-accent text-accent-foreground py-4 font-semibold tracking-wide hover:bg-accent-hover transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed shadow-card"
           >
-            D&eacute;marrer une s&eacute;ance
+            Démarrer une séance
           </button>
           <button
             type="button"
             onClick={handleClone}
             disabled={isPending}
-            className="w-full rounded-2xl border border-border text-muted py-3 text-sm font-medium hover:bg-surface transition-colors cursor-pointer disabled:opacity-50"
+            className="w-full rounded-xl border border-border bg-surface text-muted py-3 text-sm font-medium hover:text-foreground hover:bg-surface-hover transition-colors cursor-pointer disabled:opacity-50"
           >
-            Dupliquer ce mod&egrave;le
+            Dupliquer ce modèle
           </button>
           <button
             type="button"
             onClick={() => setConfirmDeleteOpen(true)}
             disabled={isPending}
-            className="w-full rounded-2xl border border-danger/30 text-danger py-3 text-sm font-bold hover:bg-danger-light transition-colors cursor-pointer disabled:opacity-50"
+            className="w-full rounded-xl border border-danger/30 bg-danger-soft/40 text-danger py-3 text-sm font-semibold hover:bg-danger-soft transition-colors cursor-pointer disabled:opacity-50"
           >
-            Supprimer ce mod&egrave;le
+            Supprimer ce modèle
           </button>
         </div>
       </div>

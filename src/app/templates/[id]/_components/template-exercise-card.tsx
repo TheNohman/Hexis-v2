@@ -44,19 +44,21 @@ export function TemplateExerciseCard({ templateId, group }: Props) {
   }
 
   return (
-    <div className="rounded-2xl border border-border bg-surface overflow-hidden">
+    <div className="rounded-2xl bg-surface shadow-card overflow-hidden">
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-border">
-        <span className="text-sm font-bold truncate">
+        <span className="text-sm font-display font-bold truncate">
           {group.exerciseName}
         </span>
         <div className="relative">
           <button
             type="button"
             onClick={() => setMenuOpen((o) => !o)}
-            className="min-h-[44px] min-w-[44px] flex items-center justify-center text-subtle hover:text-foreground cursor-pointer transition-colors"
+            aria-label="Menu de l’exercice"
+            aria-expanded={menuOpen}
+            className="min-h-[44px] min-w-[44px] flex items-center justify-center text-subtle hover:text-foreground cursor-pointer transition-colors rounded-lg"
           >
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
               <circle cx="8" cy="3" r="1.5" />
               <circle cx="8" cy="8" r="1.5" />
               <circle cx="8" cy="13" r="1.5" />
@@ -68,14 +70,18 @@ export function TemplateExerciseCard({ templateId, group }: Props) {
                 className="fixed inset-0 z-40"
                 onClick={() => setMenuOpen(false)}
               />
-              <div className="absolute right-0 top-full z-50 bg-background border border-border rounded-xl shadow-2xl py-1 min-w-[160px]">
+              <div
+                role="menu"
+                className="absolute right-0 top-full mt-1 z-50 bg-surface border border-border rounded-xl shadow-hero py-1 min-w-[160px]"
+              >
                 <button
                   type="button"
+                  role="menuitem"
                   onClick={handleDeleteAll}
                   disabled={isPending}
-                  className="w-full text-left px-4 py-3 text-sm text-danger hover:bg-danger-light cursor-pointer disabled:opacity-50 transition-colors"
+                  className="w-full text-left px-4 py-3 text-sm font-medium text-danger hover:bg-danger-soft cursor-pointer disabled:opacity-50 transition-colors"
                 >
-                  Supprimer l&apos;exercice
+                  Supprimer l&rsquo;exercice
                 </button>
               </div>
             </>
@@ -84,9 +90,9 @@ export function TemplateExerciseCard({ templateId, group }: Props) {
       </div>
 
       {/* Sets table */}
-      <div className="divide-y divide-surface-border/50">
+      <div className="divide-y divide-border/60">
         {/* Column header */}
-        <div className="grid grid-cols-[2rem_1fr_2.5rem_2.5rem] items-center px-4 py-2 text-[10px] uppercase tracking-widest text-subtle font-medium">
+        <div className="grid grid-cols-[2rem_1fr_2.5rem_2.5rem] items-center px-4 py-2 text-[10px] uppercase tracking-widest text-subtle font-semibold">
           <span>#</span>
           <span>Valeurs</span>
           <span />
@@ -117,9 +123,9 @@ export function TemplateExerciseCard({ templateId, group }: Props) {
         type="button"
         onClick={handleDuplicateLast}
         disabled={isPending}
-        className="w-full px-4 py-3 text-sm text-subtle hover:text-accent border-t border-border cursor-pointer transition-colors disabled:opacity-50 font-medium"
+        className="w-full px-4 py-3 text-sm text-muted hover:text-foreground border-t border-border cursor-pointer transition-colors disabled:opacity-50 font-medium"
       >
-        + S&eacute;rie
+        + Série
       </button>
 
       {/* Rest indicator */}
@@ -127,37 +133,40 @@ export function TemplateExerciseCard({ templateId, group }: Props) {
         <button
           type="button"
           onClick={() => setEditingRest(true)}
-          className="w-full px-4 py-2 text-xs text-subtle hover:text-muted border-t border-border/50 cursor-pointer transition-colors"
+          className="w-full px-4 py-2 text-xs text-subtle hover:text-muted border-t border-border/60 cursor-pointer transition-colors tabular-nums"
         >
           Repos : {formatDuration(group.restDurationSecs)}
         </button>
       )}
       {(editingRest || group.restDurationSecs == null) && (
-        <div className="px-4 py-2.5 border-t border-border/50 flex items-center gap-2">
-          <input
-            type="number"
-            min={0}
-            step={1}
-            inputMode="numeric"
-            placeholder="Repos (sec)"
-            defaultValue={group.restDurationSecs ?? ""}
-            autoFocus={editingRest}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") (e.target as HTMLInputElement).blur();
-              if (e.key === "Escape") setEditingRest(false);
-            }}
-            onBlur={(e) => {
-              const val = parseInt(e.target.value, 10);
-              const secs = Number.isNaN(val) || val <= 0 ? null : val;
-              const last = group.sets[group.sets.length - 1];
-              startTransition(async () => {
-                await updateTemplateEntryRestAction(templateId, last.id, secs);
-                setEditingRest(false);
-              });
-            }}
-            className="w-24 rounded-lg bg-surface border border-transparent px-2.5 py-1.5 text-xs focus:outline-none focus:border-accent/40 transition-colors"
-          />
-          <span className="text-xs text-subtle">sec repos</span>
+        <div className="px-4 py-2.5 border-t border-border/60 flex items-center gap-2">
+          <label className="flex items-center gap-2">
+            <span className="sr-only">Repos (secondes)</span>
+            <input
+              type="number"
+              min={0}
+              step={1}
+              inputMode="numeric"
+              placeholder="Repos (sec)"
+              defaultValue={group.restDurationSecs ?? ""}
+              autoFocus={editingRest}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+                if (e.key === "Escape") setEditingRest(false);
+              }}
+              onBlur={(e) => {
+                const val = parseInt(e.target.value, 10);
+                const secs = Number.isNaN(val) || val <= 0 ? null : val;
+                const last = group.sets[group.sets.length - 1];
+                startTransition(async () => {
+                  await updateTemplateEntryRestAction(templateId, last.id, secs);
+                  setEditingRest(false);
+                });
+              }}
+              className="w-24 rounded-lg bg-background border border-border px-2.5 py-1.5 text-xs focus:outline-none focus:border-accent transition-colors tabular-nums"
+            />
+            <span className="text-xs text-subtle">sec repos</span>
+          </label>
         </div>
       )}
 
@@ -207,17 +216,17 @@ function TemplateSetRow({
       <span className="text-xs text-subtle tabular-nums font-bold">
         {setNumber}
       </span>
-      <span className="text-sm truncate">
-        {values || <span className="text-subtle">&mdash;</span>}
+      <span className="text-sm truncate tabular-nums">
+        {values || <span className="text-subtle">—</span>}
       </span>
       <button
         type="button"
         disabled={isPending}
         onClick={() => startTransition(() => onDuplicate())}
-        className="min-h-[44px] min-w-[44px] flex items-center justify-center text-subtle hover:text-accent cursor-pointer disabled:opacity-50 transition-colors"
-        title="Dupliquer"
+        aria-label="Dupliquer la série"
+        className="min-h-[44px] min-w-[44px] flex items-center justify-center text-subtle hover:text-foreground cursor-pointer disabled:opacity-50 transition-colors rounded-lg"
       >
-        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
           <rect x="5" y="5" width="8" height="8" rx="1.5" />
           <path d="M9 5V2.5A1.5 1.5 0 007.5 1H2.5A1.5 1.5 0 001 2.5v5A1.5 1.5 0 002.5 9H5" />
         </svg>
@@ -226,10 +235,10 @@ function TemplateSetRow({
         type="button"
         disabled={isPending}
         onClick={() => startTransition(() => onDelete())}
-        className="min-h-[44px] min-w-[44px] flex items-center justify-center text-subtle hover:text-danger cursor-pointer disabled:opacity-50 transition-colors"
-        title="Supprimer"
+        aria-label="Supprimer la série"
+        className="min-h-[44px] min-w-[44px] flex items-center justify-center text-subtle hover:text-danger cursor-pointer disabled:opacity-50 transition-colors rounded-lg"
       >
-        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" aria-hidden="true">
           <line x1="1" y1="1" x2="11" y2="11" />
           <line x1="11" y1="1" x2="1" y2="11" />
         </svg>

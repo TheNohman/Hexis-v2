@@ -83,7 +83,7 @@ export function PresetPicker({
 }) {
   return (
     <section className="space-y-2">
-      <h3 className="text-xs font-semibold text-muted uppercase tracking-wider">
+      <h3 className="text-[10px] font-semibold text-muted uppercase tracking-widest">
         Format
       </h3>
       <div className="grid grid-cols-2 gap-2">
@@ -94,17 +94,20 @@ export function PresetPicker({
               key={p.id}
               type="button"
               onClick={() => onChange(p)}
-              className={`text-left rounded-xl border p-3 cursor-pointer transition-all ${
+              aria-pressed={active}
+              className={`text-left rounded-2xl p-3 cursor-pointer transition-all ${
                 active
-                  ? "border-accent bg-accent/10 ring-2 ring-accent/30"
-                  : "border-border bg-surface hover:border-accent/40"
+                  ? "bg-accent text-accent-foreground shadow-card"
+                  : "bg-surface shadow-card hover:shadow-hero hover:-translate-y-0.5"
               }`}
             >
               <div className="flex items-center gap-2">
-                <span className="text-xl">{p.emoji}</span>
-                <p className="text-sm font-semibold">{p.label}</p>
+                <span className="text-xl" aria-hidden="true">{p.emoji}</span>
+                <p className="text-sm font-display font-bold">{p.label}</p>
               </div>
-              <p className="text-[11px] text-muted mt-1">{p.description}</p>
+              <p className={`text-[11px] mt-1 ${active ? "text-accent-foreground/80" : "text-muted"}`}>
+                {p.description}
+              </p>
             </button>
           );
         })}
