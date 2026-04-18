@@ -59,16 +59,19 @@ export function CycleSection({
       style={{ animationDelay: `${cycle * 60}ms` }}
       aria-labelledby={`cycle-${cycle}`}
     >
-      {/* Chapter-style header — single row, number + inline meta */}
-      <div className="flex items-center gap-4 pt-4">
+      {/* Chapter header — tighter number, label inline with pill, range bold */}
+      <div className="flex items-center gap-3.5 pt-2">
         <span
           aria-hidden="true"
-          className="font-display font-black text-5xl sm:text-6xl leading-none text-foreground tabular-nums shrink-0"
+          className="font-display font-black text-[40px] sm:text-[44px] leading-none text-foreground/10 tabular-nums shrink-0"
+          style={{
+            WebkitTextStroke: "1.5px var(--foreground)",
+          }}
         >
           {String(cycle + 1).padStart(2, "0")}
         </span>
         <div className="flex-1 min-w-0">
-          <div className="flex items-baseline gap-2 flex-wrap">
+          <div className="flex items-center gap-2 flex-wrap">
             <h2
               id={`cycle-${cycle}`}
               className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted"
@@ -83,7 +86,7 @@ export function CycleSection({
             )}
           </div>
           {cycleRange ? (
-            <p className="text-sm font-display font-bold text-foreground mt-0.5">
+            <p className="text-[15px] font-display font-bold text-foreground leading-tight mt-0.5">
               {formatCycleRange(cycleRange.from, cycleRange.to)}
             </p>
           ) : (
@@ -91,9 +94,6 @@ export function CycleSection({
           )}
         </div>
       </div>
-
-      {/* Thin divider under header */}
-      <div aria-hidden="true" className="h-px bg-gradient-to-r from-foreground/20 via-border to-transparent" />
 
       {startDate ? (
         <DateGroupedDays
@@ -172,7 +172,7 @@ function DateGroupedDays({
   isPending: boolean;
 }) {
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       {Array.from({ length: cycleDays }, (_, day) => {
         const slotsForDay = (slotsByDay.get(day) ?? []).sort((a, b) =>
           (a.startTime ?? "99").localeCompare(b.startTime ?? "99"),
@@ -191,13 +191,15 @@ function DateGroupedDays({
             <div className="flex items-center justify-between gap-2 px-1 min-h-[22px]">
               <div className="flex items-center gap-2 min-w-0">
                 <span
-                  className={`text-[11px] font-bold tabular-nums ${
-                    today ? "text-foreground" : "text-muted"
+                  className={`text-[12px] font-bold tabular-nums uppercase tracking-wider ${
+                    today ? "text-foreground" : "text-ink-strong"
                   }`}
                 >
                   {formatSlotDateShort(date)}
                 </span>
-                <span className="text-[10px] text-subtle/70">· {dayLabel(day)}</span>
+                <span className="text-[10px] text-subtle/70 tabular-nums">
+                  J{day + 1}
+                </span>
                 {today && (
                   <span className="relative inline-flex items-center gap-1 rounded-full bg-signal px-2 py-0.5 text-[9px] font-bold uppercase tracking-widest text-foreground">
                     <span
@@ -229,10 +231,14 @@ function DateGroupedDays({
                 type="button"
                 onClick={() => onAddSlotAtDay(cycle, day)}
                 disabled={isPending}
+                aria-label={`Ajouter une séance le ${formatSlotDateShort(date)}`}
                 className="w-full rounded-xl border border-dashed border-border/80 py-2.5 flex items-center justify-center gap-2 text-[11px] font-medium text-subtle hover:text-accent-ink hover:border-accent-ink/40 hover:bg-accent-light/40 cursor-pointer transition-all disabled:opacity-50"
               >
-                <span className="w-1 h-1 rounded-full bg-current" aria-hidden="true" />
-                <span>Repos — disponible pour une séance</span>
+                <span aria-hidden="true" className="text-[10px] font-bold tracking-wider uppercase">
+                  Repos
+                </span>
+                <span aria-hidden="true" className="text-subtle/60">·</span>
+                <span aria-hidden="true">+ Ajouter</span>
               </button>
             ) : (
               <div className="space-y-2">

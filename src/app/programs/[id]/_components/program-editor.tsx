@@ -208,17 +208,20 @@ export function ProgramEditor({ program, templates }: Props) {
           </p>
         </div>
 
-        {/* Next session callout — only when we have a cursor + a date */}
+        {/* Next session callout — hero black card, right-arrow affordance */}
         {nextDate && currentSlot && (
-          <div className="inline-flex items-start gap-3 rounded-2xl bg-surface shadow-card px-4 py-3">
-            <div className="text-[10px] uppercase tracking-[0.2em] font-bold text-accent-ink shrink-0 pt-0.5">
-              Prochaine
+          <div className="inline-flex w-full sm:w-auto items-center gap-4 rounded-2xl bg-foreground text-background px-5 py-3.5 shadow-hero">
+            <div className="shrink-0 w-10 h-10 rounded-xl bg-accent flex items-center justify-center">
+              <span aria-hidden="true" className="text-foreground text-lg">→</span>
             </div>
-            <div className="min-w-0">
-              <p className="font-display font-bold text-sm leading-tight">
+            <div className="min-w-0 flex-1">
+              <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-accent">
+                Prochaine séance
+              </p>
+              <p className="font-display font-bold text-base leading-tight mt-0.5">
                 {currentSlot.templateName ?? "Séance sans template"}
               </p>
-              <p className="text-[11px] text-muted mt-0.5">
+              <p className="text-[11px] text-background/70 mt-0.5">
                 {formatSlotDate(nextDate)}
                 {currentSlot.startTime && ` · ${currentSlot.startTime}`}
                 {program.cycleCount > 1 && ` · ${cycleLabel(currentSlot.cycle)}`}
