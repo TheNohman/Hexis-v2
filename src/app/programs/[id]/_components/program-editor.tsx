@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { MoreHorizontal, Settings2, ChevronDown } from "lucide-react";
+import { MoreHorizontal, Settings2, ChevronDown, Sparkles } from "lucide-react";
 import {
   renameProgramAction,
   updateCycleCountAction,
@@ -12,6 +12,8 @@ import {
   updateSlotAction,
   deleteSlotAction,
   updateStartDateAction,
+  updateProgramDescriptionAction,
+  fillProgramCyclesAction,
 } from "@/app/programs/actions";
 import type { ProgramDetail } from "@/lib/programs/types";
 import {
@@ -20,19 +22,27 @@ import {
   cycleLabel,
 } from "@/lib/programs/utils";
 import { Card } from "@/app/_components/card";
+import { useToast } from "@/app/_components/toast";
 import { CycleSection } from "./cycle-section";
 import { TemplatePickerDialog } from "./template-picker-dialog";
 
 type TemplateOption = { id: string; name: string };
-type Props = { program: ProgramDetail; templates: TemplateOption[] };
+type Props = {
+  program: ProgramDetail;
+  templates: TemplateOption[];
+  mentorEnabled: boolean;
+};
 
-export function ProgramEditor({ program, templates }: Props) {
+export function ProgramEditor({ program, templates, mentorEnabled }: Props) {
+  const toast = useToast();
   const [isPending, startTransition] = useTransition();
   const [editingSlotId, setEditingSlotId] = useState<string | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [editingName, setEditingName] = useState(false);
+  const [editingDesc, setEditingDesc] = useState(false);
+  const [filling, setFilling] = useState(false);
 
   function handleRename(e: React.FocusEvent<HTMLInputElement>) {
     const name = e.target.value.trim();
@@ -65,6 +75,38 @@ export function ProgramEditor({ program, templates }: Props) {
     startTransition(() => updateSlotAction(slotId, data));
   }
 
+  function handleDescriptionBlur(e: React.FocusEvent<HTMLTextAreaElement>) {
+    const val = e.target.value.trim() || null;
+    setEditingDesc(false);
+    if (val !== (program.description ?? null)) {
+      startTransition(() => updateProgramDescriptionAction(program.id, val));
+    }
+  }
+
+  async function handleFillCycles() {
+    setFilling(true);
+    try {
+      const result = await fillProgramCyclesAction(program.id);
+      if (result.error) {
+        toast.show(result.error, { kind: "error" });
+      } else if (result.result) {
+        const { created, skipped } = result.result;
+        if (created === 0) {
+          toast.show("Aucune séance générée. Vérifie ta bibliothèque d'exercices.", {
+            kind: "error",
+          });
+        } else {
+          toast.show(
+            `${created} séance${created > 1 ? "s" : ""} générée${created > 1 ? "s" : ""}${skipped > 0 ? `, ${skipped} ignorée${skipped > 1 ? "s" : ""}` : ""}.`,
+            { kind: "success" },
+          );
+        }
+      }
+    } finally {
+      setFilling(false);
+    }
+  }
+
   // Build cycles
   const cycles: { cycle: number; slots: ProgramDetail["slots"] }[] = [];
   for (let c = 0; c < program.cycleCount; c++) {
@@ -81,6 +123,15 @@ export function ProgramEditor({ program, templates }: Props) {
       ? computeSlotDate(program.startDate, program.cycleDays, currentSlot.cycle, currentSlot.day)
       : null;
   const slotCount = program.slots.filter((s) => s.templateId).length;
+  const emptySlotCount = program.slots.filter((s) => !s.templateId).length;
+  const canFillWithAI = mentorEnabled && emptySlotCount > 0;
+  const fillTooltip = !mentorEnabled
+    ? "Active le Mentor IA dans ton profil"
+    : emptySlotCount === 0
+      ? "Tous les créneaux ont déjà un modèle"
+      : !program.description
+        ? "Ajoute une description pour guider l'IA"
+        : "";
 
   return (
     <div className="space-y-8">
@@ -114,6 +165,42 @@ export function ProgramEditor({ program, templates }: Props) {
                 {program.name}
               </button>
             )}
+
+            {/* Description — inline editable, feeds the AI */}
+            <div className="mt-2.5">
+              {editingDesc ? (
+                <textarea
+                  autoFocus
+                  defaultValue={program.description ?? ""}
+                  onBlur={handleDescriptionBlur}
+                  onKeyDown={(e) => {
+                    if (e.key === "Escape") setEditingDesc(false);
+                    if (e.key === "Enter" && (e.metaKey || e.ctrlKey))
+                      (e.target as HTMLTextAreaElement).blur();
+                  }}
+                  placeholder="Décris ton objectif, ton niveau, tes contraintes, ta fréquence… (alimente l'IA)"
+                  rows={3}
+                  className="w-full bg-surface rounded-xl border border-border px-3 py-2 text-sm text-muted leading-relaxed focus:outline-none focus:border-accent-ink transition-colors resize-none"
+                  aria-label="Description du programme"
+                />
+              ) : program.description ? (
+                <button
+                  type="button"
+                  onClick={() => setEditingDesc(true)}
+                  className="text-left text-sm text-muted leading-relaxed hover:text-foreground transition-colors cursor-text"
+                >
+                  {program.description}
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setEditingDesc(true)}
+                  className="text-left text-sm text-subtle italic hover:text-muted transition-colors cursor-text"
+                >
+                  + Ajouter une description (objectif, niveau, contraintes…)
+                </button>
+              )}
+            </div>
           </div>
 
           {/* Kebab menu for destructive + misc actions */}
@@ -205,8 +292,31 @@ export function ProgramEditor({ program, templates }: Props) {
                 {" séance"}{slotCount > 1 ? "s" : ""}
               </>
             )}
+            {emptySlotCount > 0 && (
+              <>
+                {" · "}
+                <span className="font-semibold text-signal-ink">{emptySlotCount}</span>
+                {" à remplir"}
+              </>
+            )}
           </p>
         </div>
+
+        {/* AI Fill CTA — primary action when there are empty slots + description */}
+        {mentorEnabled && emptySlotCount > 0 && (
+          <button
+            type="button"
+            onClick={handleFillCycles}
+            disabled={filling || isPending || !canFillWithAI || !program.description}
+            title={fillTooltip}
+            className="inline-flex items-center gap-2 rounded-xl bg-accent text-accent-foreground px-4 py-2.5 text-sm font-bold shadow-card hover:bg-accent-hover transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <Sparkles className="w-4 h-4" aria-hidden="true" />
+            {filling
+              ? "Génération…"
+              : `Remplir ${emptySlotCount} créneau${emptySlotCount > 1 ? "x" : ""} avec l'IA`}
+          </button>
+        )}
 
         {/* Next session callout — hero black card, right-arrow affordance */}
         {nextDate && currentSlot && (

@@ -18,7 +18,14 @@ import {
   createWorkoutFromSpecificSlot,
   skipCurrentSlot,
   updateStartDate,
+  updateProgramDescription,
 } from "@/lib/programs/mutations";
+import {
+  materializeProgramFills,
+  type FillResult,
+} from "@/lib/programs/ai-create";
+import { generateFillForProgram } from "@/lib/mentor/openai";
+import { parseGeneratedFills } from "@/lib/mentor/parser";
 import { buildMentorContext } from "@/lib/mentor/context";
 import { generateProgram } from "@/lib/mentor/openai";
 import { parseGeneratedProgram } from "@/lib/mentor/parser";
@@ -55,6 +62,93 @@ export async function renameProgramAction(programId: string, name: string) {
   await renameProgram(programId, userId, name);
   revalidatePath(`/programs/${programId}`);
   revalidatePath("/planning");
+}
+
+export async function updateProgramDescriptionAction(
+  programId: string,
+  description: string | null,
+) {
+  assertValid(idSchema, programId);
+  assertValid(z.string().max(2000).nullable(), description);
+  const userId = await getCurrentUserId();
+  await updateProgramDescription(programId, userId, description);
+  revalidatePath(`/programs/${programId}`);
+}
+
+/**
+ * Fill empty slots of a program via AI — uses the program description, the
+ * already-assigned slots as context, the user's exercise library, and the
+ * user's sport/bien-être context.
+ */
+export async function fillProgramCyclesAction(programId: string): Promise<{
+  error?: string;
+  result?: FillResult;
+}> {
+  assertValid(idSchema, programId);
+  const userId = await getCurrentUserId();
+
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { mentorEnabled: true },
+  });
+  if (!user?.mentorEnabled) {
+    return { error: "L'IA n'est pas activée sur ton compte." };
+  }
+
+  const program = await prisma.program.findUnique({
+    where: { id: programId },
+    include: {
+      slots: {
+        include: { template: { select: { name: true } } },
+      },
+    },
+  });
+  if (!program || program.userId !== userId) {
+    return { error: "Programme introuvable." };
+  }
+
+  const emptySlots = program.slots
+    .filter((s) => !s.templateId)
+    .map((s) => ({ cycle: s.cycle, day: s.day }));
+
+  if (emptySlots.length === 0) {
+    return {
+      error:
+        "Aucun slot vide à remplir. Tous les créneaux ont déjà un modèle assigné.",
+    };
+  }
+
+  const existingSlots = program.slots
+    .filter((s) => s.templateId)
+    .map((s) => ({
+      cycle: s.cycle,
+      day: s.day,
+      label: s.label,
+      templateName: s.template?.name ?? null,
+    }));
+
+  const context = await buildMentorContext(userId);
+  const raw = await generateFillForProgram(context, program.description, {
+    name: program.name,
+    cycleCount: program.cycleCount,
+    cycleDays: program.cycleDays,
+    existingSlots,
+    emptySlots,
+  });
+
+  if (!raw) {
+    return { error: "L'IA n'a pas pu générer de complément." };
+  }
+
+  const fills = parseGeneratedFills(raw);
+  if (!fills || fills.length === 0) {
+    return { error: "L'IA a répondu mais le format est invalide." };
+  }
+
+  const result = await materializeProgramFills(userId, programId, fills);
+  revalidatePath(`/programs/${programId}`);
+  revalidatePath("/dashboard");
+  return { result };
 }
 
 export async function updateCycleCountAction(programId: string, cycleCount: number) {

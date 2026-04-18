@@ -26,6 +26,7 @@ export type ProgramSlotDetail = {
 export type ProgramDetail = {
   id: string;
   name: string;
+  description: string | null;
   cycleCount: number;
   cycleDays: number;
   isActive: boolean;

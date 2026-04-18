@@ -31,6 +31,20 @@ export async function renameProgram(programId: string, userId: string, name: str
   return prisma.program.update({ where: { id: programId }, data: { name } });
 }
 
+export async function updateProgramDescription(
+  programId: string,
+  userId: string,
+  description: string | null,
+) {
+  const program = await prisma.program.findUnique({ where: { id: programId } });
+  if (!program || program.userId !== userId) throw new Error("Forbidden");
+  const normalized = description?.trim() || null;
+  return prisma.program.update({
+    where: { id: programId },
+    data: { description: normalized },
+  });
+}
+
 export async function updateCycleCount(programId: string, userId: string, cycleCount: number) {
   const program = await prisma.program.findUnique({ where: { id: programId } });
   if (!program || program.userId !== userId) throw new Error("Forbidden");

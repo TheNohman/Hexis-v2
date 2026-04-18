@@ -2,6 +2,7 @@ import Link from "next/link";
 import { getCurrentUserId } from "@/lib/auth-helpers";
 import { getProgramById } from "@/lib/programs/queries";
 import { listTemplates } from "@/lib/templates/queries";
+import { prisma } from "@/lib/prisma";
 import { ProgramEditor } from "./_components/program-editor";
 
 export const dynamic = "force-dynamic";
@@ -11,10 +12,15 @@ type Props = { params: Promise<{ id: string }> };
 export default async function ProgramPage(props: Props) {
   const params = await props.params;
   const userId = await getCurrentUserId();
-  const [program, templates] = await Promise.all([
+  const [program, templates, user] = await Promise.all([
     getProgramById(params.id, userId),
     listTemplates(userId),
+    prisma.user.findUnique({
+      where: { id: userId },
+      select: { mentorEnabled: true },
+    }),
   ]);
+  const mentorEnabled = Boolean(user?.mentorEnabled);
 
   const templateOptions = templates.map((t) => ({ id: t.id, name: t.name }));
 
@@ -31,7 +37,11 @@ export default async function ProgramPage(props: Props) {
           </Link>
         </div>
 
-        <ProgramEditor program={program} templates={templateOptions} />
+        <ProgramEditor
+          program={program}
+          templates={templateOptions}
+          mentorEnabled={mentorEnabled}
+        />
       </div>
     </main>
   );

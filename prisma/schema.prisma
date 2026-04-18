@@ -498,6 +498,7 @@ model Program {
   id            String    @id @default(cuid())
   userId        String
   name          String
+  description   String?   @db.Text // intention libre du programme (alimente l'IA)
   cycleCount    Int       @default(1) // nombre de cycles dans le programme
   cycleDays     Int       @default(7) // nombre de jours par cycle (7 = semaine, 8+ = cycle custom)
   isActive      Boolean   @default(false)

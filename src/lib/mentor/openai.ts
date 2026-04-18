@@ -118,6 +118,94 @@ Règles :
 - Structure claire : échauffement → bloc principal → accessoires/finisher → retour au calme (selon pertinence)
 - Noms en français. Nombre de sets réaliste (2-5). Durée totale visée ~45-75min selon demande.`;
 
+// ─── Fill empty program slots ──────────────────────────────────────
+
+const FILL_SYSTEM_PROMPT = `Tu es un coach sportif expert. L'utilisateur a un programme partiellement défini (description + certains slots déjà assignés à des modèles). Tu dois compléter les SLOTS VIDES (slots sans templateId) en générant pour chacun un modèle de séance.
+
+Tu DOIS répondre UNIQUEMENT avec un bloc JSON au format :
+
+\`\`\`json
+{
+  "fills": [
+    {
+      "cycle": 0,
+      "day": 4,
+      "label": "Full body",
+      "template": {
+        "name": "Full body - Mobilité + Cardio",
+        "blocks": [
+          {
+            "name": "Échauffement",
+            "exercises": [
+              { "name": "Mobilité épaules", "type": "MOBILITY", "sets": 1, "duration_secs": 300 }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}
+\`\`\`
+
+Règles strictes :
+- Ne remplis QUE les slots fournis dans la liste emptySlots du contexte. Ne crée pas de nouveaux créneaux, ne modifie pas les slots existants.
+- Chaque fill doit avoir cycle + day qui matchent EXACTEMENT un emptySlot.
+- Privilégie STRICTEMENT les exercices existants dans la bibliothèque de l'utilisateur. Si un exercice n'existe pas dans la liste, ne le suggère PAS.
+- Utilise la description du programme pour guider le choix (ex. "prise de masse" → sets lourds STRENGTH, "endurance" → cardio long, etc.).
+- Équilibre la semaine : évite de mettre 2 séances "jambes" consécutives si possible.
+- Adapte au niveau de l'utilisateur et à son bien-être récent.
+- type: "STRENGTH" / "BODYWEIGHT" / "CARDIO" / "MOBILITY".
+- STRENGTH : inclure weight_kg + reps. BODYWEIGHT : reps. CARDIO : duration_secs + optionnel distance_km. MOBILITY : duration_secs.
+- Noms en français.`;
+
+export async function generateFillForProgram(
+  context: MentorContext,
+  programDescription: string | null,
+  programMeta: {
+    name: string;
+    cycleCount: number;
+    cycleDays: number;
+    existingSlots: Array<{
+      cycle: number;
+      day: number;
+      label: string | null;
+      templateName: string | null;
+    }>;
+    emptySlots: Array<{ cycle: number; day: number }>;
+  },
+): Promise<string> {
+  const contextSummary = JSON.stringify(context, null, 0);
+  const programJson = JSON.stringify(
+    {
+      name: programMeta.name,
+      description: programDescription ?? "(pas de description)",
+      cycleCount: programMeta.cycleCount,
+      cycleDays: programMeta.cycleDays,
+      existingSlots: programMeta.existingSlots,
+      emptySlots: programMeta.emptySlots,
+    },
+    null,
+    0,
+  );
+
+  const response = await getOpenAI().chat.completions.create({
+    model: "gpt-4o-mini",
+    messages: [
+      { role: "system", content: FILL_SYSTEM_PROMPT },
+      { role: "system", content: `Données utilisateur :\n${contextSummary}` },
+      { role: "system", content: `Programme à compléter :\n${programJson}` },
+      {
+        role: "user",
+        content: `Complète les ${programMeta.emptySlots.length} slots vides en respectant la description et l'équilibre de la semaine.`,
+      },
+    ],
+    temperature: 0.6,
+    max_tokens: 4000,
+  });
+
+  return response.choices[0]?.message?.content ?? "";
+}
+
 export async function generateTemplate(
   context: MentorContext,
   userGoals: string,

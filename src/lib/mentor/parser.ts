@@ -39,6 +39,47 @@ export type GeneratedTemplate = {
   blocks: GeneratedBlock[];
 };
 
+/**
+ * Fill-program response: list of slots to populate with newly-generated templates.
+ */
+export type GeneratedFill = {
+  cycle: number;
+  day: number;
+  label: string | null;
+  template: GeneratedTemplate;
+};
+
+export function parseGeneratedFills(content: string): GeneratedFill[] | null {
+  const jsonMatch = content.match(/```json\s*([\s\S]*?)```/);
+  const jsonStr = jsonMatch ? jsonMatch[1].trim() : content.trim();
+  try {
+    const parsed = JSON.parse(jsonStr);
+    if (!parsed.fills || !Array.isArray(parsed.fills)) return null;
+    const rawFills = parsed.fills as unknown[];
+    const mapped: GeneratedFill[] = rawFills
+      .filter(
+        (f): f is Record<string, unknown> =>
+          typeof f === "object" && f !== null,
+      )
+      .map((f) => ({
+        cycle: typeof f.cycle === "number" ? f.cycle : 0,
+        day: typeof f.day === "number" ? f.day : 0,
+        label:
+          typeof f.label === "string" && f.label.trim() ? f.label.trim() : null,
+        template: f.template as GeneratedTemplate,
+      }))
+      .filter(
+        (f) =>
+          f.template &&
+          typeof f.template.name === "string" &&
+          Array.isArray(f.template.blocks),
+      );
+    return mapped;
+  } catch {
+    return null;
+  }
+}
+
 export function parseGeneratedTemplate(content: string): GeneratedTemplate | null {
   const jsonMatch = content.match(/```json\s*([\s\S]*?)```/);
   const jsonStr = jsonMatch ? jsonMatch[1].trim() : content.trim();

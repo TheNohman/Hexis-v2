@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import type { GeneratedProgram } from "@/lib/mentor/parser";
+import type { GeneratedProgram, GeneratedFill } from "@/lib/mentor/parser";
 
 /**
  * Materialize an AI-generated program into the database.
@@ -136,4 +136,181 @@ export async function materializeAIProgram(
   }
 
   return program.id;
+}
+
+// ─── Fill empty slots of an existing program ────────────────────────
+
+export type FillResult = {
+  created: number;
+  skipped: number;
+  reasons: string[];
+};
+
+/**
+ * Consume AI "fills" and populate empty program slots with freshly-created
+ * WorkoutTemplates. Skips fills that don't match any existing empty slot,
+ * and skips those whose exercises don't match the user library at all.
+ */
+export async function materializeProgramFills(
+  userId: string,
+  programId: string,
+  fills: GeneratedFill[],
+): Promise<FillResult> {
+  const program = await prisma.program.findUnique({
+    where: { id: programId },
+    include: { slots: true },
+  });
+  if (!program || program.userId !== userId) throw new Error("Forbidden");
+
+  const [allExercises, allKpis] = await Promise.all([
+    prisma.exercise.findMany({
+      where: { OR: [{ userId }, { isSystem: true }] },
+    }),
+    prisma.kpiDefinition.findMany(),
+  ]);
+  const kpiBySlug = new Map(allKpis.map((k) => [k.slug, k]));
+  const exerciseByName = new Map(
+    allExercises.map((e) => [e.name.toLowerCase(), e]),
+  );
+
+  // Index empty slots by (cycle, day) — first match wins per pair to keep
+  // things deterministic. Multiple empty slots on the same day are possible;
+  // we only fill the first. The user can re-run the action to fill the rest.
+  const emptyByKey = new Map<string, string>(); // "cycle:day" -> slotId
+  for (const s of program.slots) {
+    if (s.templateId) continue;
+    const key = `${s.cycle}:${s.day}`;
+    if (!emptyByKey.has(key)) emptyByKey.set(key, s.id);
+  }
+
+  let created = 0;
+  let skipped = 0;
+  const reasons: string[] = [];
+
+  for (const fill of fills) {
+    const key = `${fill.cycle}:${fill.day}`;
+    const slotId = emptyByKey.get(key);
+    if (!slotId) {
+      skipped++;
+      reasons.push(`Slot cycle ${fill.cycle + 1} jour ${fill.day + 1} non vide`);
+      continue;
+    }
+
+    // Count matched exercises in the generated template
+    let matched = 0;
+    for (const block of fill.template.blocks) {
+      for (const ex of block.exercises) {
+        if (exerciseByName.has(ex.name.toLowerCase())) matched++;
+      }
+    }
+    if (matched === 0) {
+      skipped++;
+      reasons.push(
+        `Slot cycle ${fill.cycle + 1} jour ${fill.day + 1} : aucun exercice connu`,
+      );
+      continue;
+    }
+
+    // Create template with matched exercises
+    const template = await prisma.workoutTemplate.create({
+      data: {
+        userId,
+        name: fill.template.name,
+        blocks: {
+          create: fill.template.blocks.map((block, blockIdx) => ({
+            name: block.name,
+            displayOrder: blockIdx,
+            entries: {
+              create: block.exercises.flatMap((ex, exIdx) => {
+                const exercise = exerciseByName.get(ex.name.toLowerCase());
+                if (!exercise) return [];
+
+                const values: {
+                  kpiDefinitionId: string;
+                  valueNumeric: number | null;
+                  valueText: string | null;
+                }[] = [];
+
+                if (ex.type === "STRENGTH") {
+                  const w = kpiBySlug.get("weight_kg");
+                  const r = kpiBySlug.get("reps");
+                  if (w && ex.weight_kg != null)
+                    values.push({
+                      kpiDefinitionId: w.id,
+                      valueNumeric: ex.weight_kg,
+                      valueText: null,
+                    });
+                  if (r && ex.reps != null)
+                    values.push({
+                      kpiDefinitionId: r.id,
+                      valueNumeric: ex.reps,
+                      valueText: null,
+                    });
+                } else if (ex.type === "BODYWEIGHT") {
+                  const r = kpiBySlug.get("reps");
+                  if (r && ex.reps != null)
+                    values.push({
+                      kpiDefinitionId: r.id,
+                      valueNumeric: ex.reps,
+                      valueText: null,
+                    });
+                } else if (ex.type === "CARDIO") {
+                  const d = kpiBySlug.get("duration_secs");
+                  const dk = kpiBySlug.get("distance_km");
+                  if (d && ex.duration_secs != null)
+                    values.push({
+                      kpiDefinitionId: d.id,
+                      valueNumeric: ex.duration_secs,
+                      valueText: null,
+                    });
+                  if (dk && ex.distance_km != null)
+                    values.push({
+                      kpiDefinitionId: dk.id,
+                      valueNumeric: ex.distance_km,
+                      valueText: null,
+                    });
+                } else if (ex.type === "MOBILITY") {
+                  const d = kpiBySlug.get("duration_secs");
+                  if (d && ex.duration_secs != null)
+                    values.push({
+                      kpiDefinitionId: d.id,
+                      valueNumeric: ex.duration_secs,
+                      valueText: null,
+                    });
+                }
+
+                const sets = Math.max(1, Math.min(10, ex.sets ?? 3));
+                return Array.from({ length: sets }, (_, setIdx) => ({
+                  exerciseId: exercise.id,
+                  displayOrder: exIdx * 100 + setIdx,
+                  values: {
+                    create: values.map((v) => ({
+                      kpiDefinitionId: v.kpiDefinitionId,
+                      valueNumeric: v.valueNumeric,
+                      valueText: v.valueText,
+                    })),
+                  },
+                }));
+              }),
+            },
+          })),
+        },
+      },
+    });
+
+    await prisma.programSlot.update({
+      where: { id: slotId },
+      data: {
+        templateId: template.id,
+        label: fill.label ?? undefined,
+      },
+    });
+
+    // Consume the slot so a later fill on the same (cycle,day) doesn't
+    // re-fill what we just wrote.
+    emptyByKey.delete(key);
+    created++;
+  }
+
+  return { created, skipped, reasons };
 }
