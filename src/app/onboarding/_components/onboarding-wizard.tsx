@@ -12,6 +12,13 @@ import { StepConfirm } from "./steps/step-confirm";
 
 type StepId = "sport" | "level" | "objective" | "availability" | "confirm";
 const STEPS: StepId[] = ["sport", "level", "objective", "availability", "confirm"];
+const STEP_LABELS: Record<StepId, string> = {
+  sport: "Sport",
+  level: "Niveau",
+  objective: "Objectif",
+  availability: "Rythme",
+  confirm: "Validation",
+};
 
 export function OnboardingWizard() {
   const [isPending, startTransition] = useTransition();
@@ -26,7 +33,7 @@ export function OnboardingWizard() {
   const [mentorEnabled, setMentorEnabled] = useState<boolean>(true);
 
   const stepIndex = STEPS.indexOf(step);
-  const progress = ((stepIndex + 1) / STEPS.length) * 100;
+  const totalSteps = STEPS.length;
 
   const canContinue = useMemo(() => {
     switch (step) {
@@ -75,27 +82,60 @@ export function OnboardingWizard() {
   }
 
   return (
-    <main className="flex-1 flex flex-col items-center px-4 py-8">
-      <div className="max-w-xl w-full space-y-6">
-        {/* Progress */}
-        <div className="space-y-2">
-          <div className="flex items-center justify-between text-xs text-muted">
-            <span>Étape {stepIndex + 1} / {STEPS.length}</span>
-            <button
-              type="button"
-              onClick={back}
-              disabled={stepIndex === 0}
-              className="text-accent disabled:opacity-30 disabled:cursor-not-allowed hover:underline cursor-pointer inline-flex items-center gap-1"
-            >
-              <ChevronLeft className="h-3 w-3" aria-hidden="true" />
-              Retour
-            </button>
+    <main
+      id="main-content"
+      className="flex-1 flex flex-col items-center px-4 py-8"
+    >
+      <div className="max-w-xl w-full space-y-7">
+        {/* Step indicator: big numbers + segmented bars */}
+        <div
+          className="space-y-3"
+          role="group"
+          aria-label={`Étape ${stepIndex + 1} sur ${totalSteps} : ${STEP_LABELS[step]}`}
+        >
+          <div className="flex items-end justify-between gap-4">
+            <div className="flex items-baseline gap-2">
+              <span
+                className="font-display font-black text-[44px] leading-none text-foreground tabular-nums"
+                aria-hidden="true"
+              >
+                {String(stepIndex + 1).padStart(2, "0")}
+              </span>
+              <span
+                className="font-display font-semibold text-subtle text-lg tabular-nums"
+                aria-hidden="true"
+              >
+                / {String(totalSteps).padStart(2, "0")}
+              </span>
+            </div>
+            <div className="text-right">
+              <p className="text-[10px] uppercase tracking-widest font-semibold text-accent-ink">
+                {STEP_LABELS[step]}
+              </p>
+              <button
+                type="button"
+                onClick={back}
+                disabled={stepIndex === 0}
+                className="mt-1 text-xs text-accent-ink disabled:opacity-30 disabled:cursor-not-allowed hover:underline cursor-pointer inline-flex items-center gap-1"
+              >
+                <ChevronLeft className="h-3 w-3" aria-hidden="true" />
+                Retour
+              </button>
+            </div>
           </div>
-          <div className="w-full h-1.5 bg-border rounded-full overflow-hidden">
-            <div
-              className="h-full bg-accent rounded-full transition-all duration-300"
-              style={{ width: `${progress}%` }}
-            />
+          <div
+            className="grid gap-1.5"
+            style={{ gridTemplateColumns: `repeat(${totalSteps}, minmax(0, 1fr))` }}
+            aria-hidden="true"
+          >
+            {STEPS.map((s, i) => (
+              <div
+                key={s}
+                className={`h-1.5 rounded-full transition-colors ${
+                  i <= stepIndex ? "bg-accent" : "bg-border"
+                }`}
+              />
+            ))}
           </div>
         </div>
 
@@ -137,7 +177,7 @@ export function OnboardingWizard() {
               type="button"
               onClick={submit}
               disabled={isPending}
-              className="w-full rounded-2xl bg-accent text-white py-4 font-bold text-sm uppercase tracking-wide hover:bg-accent-hover transition-colors cursor-pointer disabled:opacity-50"
+              className="w-full rounded-full bg-foreground text-background py-4 font-bold text-sm uppercase tracking-widest hover:opacity-90 transition-opacity cursor-pointer disabled:opacity-50 shadow-hero"
             >
               {isPending ? "Finalisation…" : "Commencer !"}
             </button>
@@ -146,7 +186,7 @@ export function OnboardingWizard() {
               type="button"
               onClick={next}
               disabled={!canContinue}
-              className="w-full rounded-2xl bg-accent text-white py-4 font-semibold hover:bg-accent-hover transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2"
+              className="w-full rounded-full bg-foreground text-background py-4 font-semibold hover:opacity-90 transition-opacity cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2 shadow-card"
             >
               Continuer
               <ChevronRight className="h-4 w-4" aria-hidden="true" />

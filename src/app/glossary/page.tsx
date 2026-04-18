@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Card } from "@/app/_components/card";
 
 export const dynamic = "force-static";
 
@@ -115,55 +116,82 @@ const ENTRIES: Entry[] = [
   },
 ];
 
-const TAG_LABELS: Record<Entry["tag"], string> = {
-  force: "Musculation / Force",
-  cardio: "Endurance / Cardio",
-  hiit: "HIIT / CrossFit",
-  general: "Général",
+const TAG_META: Record<Entry["tag"], { label: string; chip: string }> = {
+  force: { label: "Musculation / Force", chip: "bg-accent text-accent-foreground" },
+  cardio: { label: "Endurance / Cardio", chip: "bg-peach text-peach-ink" },
+  hiit: { label: "HIIT / CrossFit", chip: "bg-butter text-butter-ink" },
+  general: { label: "Général", chip: "bg-lavender text-lavender-ink" },
 };
 
 export default function GlossaryPage() {
-  const groups = (Object.keys(TAG_LABELS) as Entry["tag"][]).map((tag) => ({
+  const groups = (Object.keys(TAG_META) as Entry["tag"][]).map((tag) => ({
     tag,
-    label: TAG_LABELS[tag],
+    label: TAG_META[tag].label,
+    chip: TAG_META[tag].chip,
     entries: ENTRIES.filter((e) => e.tag === tag),
   }));
 
   return (
-    <main className="flex-1 flex flex-col items-center px-4 py-8">
-      <div className="max-w-2xl w-full space-y-6">
+    <main
+      id="main-content"
+      className="flex-1 flex flex-col items-center px-4 py-8"
+    >
+      <div className="max-w-3xl w-full space-y-8">
         <header className="flex items-start justify-between gap-3">
-          <div>
-            <h1 className="text-2xl font-display font-bold tracking-tight">Glossaire</h1>
-            <p className="text-sm text-muted mt-1">
+          <div className="space-y-2">
+            <span className="inline-block text-[10px] uppercase tracking-widest font-semibold rounded-full bg-accent text-accent-foreground px-3 py-1">
+              R&eacute;f&eacute;rence
+            </span>
+            <h1 className="font-display font-extrabold tracking-tight text-[28px] sm:text-[32px]">
+              Glossaire
+            </h1>
+            <p className="text-sm text-muted max-w-md">
               Tout le jargon qui gravite autour de l&rsquo;entra&icirc;nement, expliqu&eacute; simplement.
             </p>
           </div>
           <Link
             href="/dashboard"
-            className="text-xs text-muted hover:text-foreground transition-colors py-1 whitespace-nowrap"
+            className="text-xs text-accent-ink hover:underline underline-offset-2 py-1 whitespace-nowrap shrink-0"
           >
             &larr; Retour
           </Link>
         </header>
 
         {groups.map((g) => (
-          <section key={g.tag} className="space-y-2">
-            <h2 className="text-xs font-semibold text-muted uppercase tracking-wider">{g.label}</h2>
-            <ul className="space-y-2">
+          <section key={g.tag} className="space-y-3">
+            <div className="flex items-center gap-2">
+              <span
+                className={`inline-block text-[10px] uppercase tracking-widest font-semibold rounded-full px-3 py-1 ${g.chip}`}
+              >
+                {g.label}
+              </span>
+              <span className="text-xs text-subtle tabular-nums">
+                {g.entries.length} terme{g.entries.length > 1 ? "s" : ""}
+              </span>
+            </div>
+            <dl className="grid gap-3 sm:grid-cols-2">
               {g.entries.map((e) => (
-                <li
+                <Card
                   key={e.term}
-                  className="rounded-xl border border-border bg-surface p-4"
+                  as="div"
+                  rounded="2xl"
+                  padding="md"
+                  className="flex flex-col gap-2"
                 >
-                  <div className="flex items-baseline gap-3">
-                    <h3 className="font-semibold text-base">{e.term}</h3>
-                    <span className="text-xs text-subtle">&mdash; {e.short}</span>
+                  <div className="flex items-baseline gap-2 flex-wrap">
+                    <dt className="font-display font-bold text-base text-foreground">
+                      {e.term}
+                    </dt>
+                    <span className="text-xs text-accent-ink font-medium">
+                      {e.short}
+                    </span>
                   </div>
-                  <p className="text-sm text-muted mt-1.5 leading-relaxed">{e.long}</p>
-                </li>
+                  <dd className="text-sm text-muted leading-relaxed">
+                    {e.long}
+                  </dd>
+                </Card>
               ))}
-            </ul>
+            </dl>
           </section>
         ))}
       </div>
