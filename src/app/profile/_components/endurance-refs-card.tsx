@@ -11,11 +11,11 @@ export function EnduranceRefsCard({
   return (
     <>
       {heartZones && (
-        <div className="rounded-xl border border-border bg-surface p-4 space-y-2">
-          <h3 className="text-xs font-semibold text-muted uppercase tracking-wider">
+        <div className="rounded-2xl bg-surface shadow-card p-4 space-y-2">
+          <h3 className="text-[10px] font-semibold text-muted uppercase tracking-widest">
             Zones fréquence cardiaque
             {heartZones.usedKarvonen && (
-              <span className="ml-2 text-[10px] text-accent normal-case">Karvonen</span>
+              <span className="ml-2 text-[10px] text-accent-ink normal-case">Karvonen</span>
             )}
           </h3>
           <ul className="space-y-1.5">
@@ -28,7 +28,7 @@ export function EnduranceRefsCard({
                   <p className="text-sm font-medium">{z.label}</p>
                   <p className="text-[11px] text-muted">{z.description}</p>
                 </div>
-                <span className="text-sm font-mono text-accent whitespace-nowrap tabular-nums">
+                <span className="text-sm font-mono text-accent-ink whitespace-nowrap tabular-nums">
                   {z.lowBpm}–{z.highBpm} bpm
                 </span>
               </li>
@@ -38,8 +38,8 @@ export function EnduranceRefsCard({
       )}
 
       {paceZones && (
-        <div className="rounded-xl border border-border bg-surface p-4 space-y-2">
-          <h3 className="text-xs font-semibold text-muted uppercase tracking-wider">
+        <div className="rounded-2xl bg-surface shadow-card p-4 space-y-2">
+          <h3 className="text-[10px] font-semibold text-muted uppercase tracking-widest">
             Allures cibles (course)
           </h3>
           <ul className="space-y-1.5">
@@ -54,7 +54,7 @@ export function EnduranceRefsCard({
                   </p>
                   <p className="text-[11px] text-muted">{z.description}</p>
                 </div>
-                <span className="text-sm font-mono text-accent whitespace-nowrap tabular-nums">
+                <span className="text-sm font-mono text-accent-ink whitespace-nowrap tabular-nums">
                   {formatPace(z.highPaceSecPerKm)} – {formatPace(z.lowPaceSecPerKm)}
                 </span>
               </li>

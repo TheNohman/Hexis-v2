@@ -38,9 +38,9 @@ export function ActivityHubCard({ stats }: { stats: Stats }) {
         </svg>
       }
     >
-      <p className="text-xl font-display font-bold tabular-nums">
-        {count}{" "}
-        <span className="text-sm font-sans font-normal text-muted">
+      <p className="font-display font-black text-3xl tabular-nums leading-none">
+        {count}
+        <span className="ml-2 text-sm font-sans font-normal text-muted">
           séance{count !== 1 ? "s" : ""}
         </span>
       </p>

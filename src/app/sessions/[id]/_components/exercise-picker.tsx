@@ -119,16 +119,21 @@ export function ExercisePicker({ open, onClose, exercises, multiSet, addLabel, o
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm">
-      <div className="w-full sm:max-w-lg bg-background border-t sm:border sm:rounded-2xl border-border max-h-[90vh] flex flex-col shadow-2xl">
+    <div
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm"
+      role="dialog"
+      aria-modal="true"
+      aria-label={selected ? `Configurer ${selected.name}` : "Choisir un exercice"}
+    >
+      <div className="w-full sm:max-w-lg bg-surface border-t sm:border sm:rounded-2xl border-border max-h-[90vh] flex flex-col shadow-hero">
         <header className="flex items-center justify-between p-5 border-b border-border">
-          <h2 className="text-base font-display font-bold">
+          <h2 className="font-display font-bold text-lg tracking-tight">
             {selected ? selected.name : "Choisir un exercice"}
           </h2>
           <button
             type="button"
             onClick={selected ? handleBack : handleClose}
-            className="text-sm text-subtle hover:text-foreground cursor-pointer px-3 py-1.5 rounded-lg hover:bg-surface transition-colors"
+            className="text-sm text-muted hover:text-foreground cursor-pointer px-3 py-1.5 rounded-lg hover:bg-surface-hover transition-colors"
           >
             {selected ? "← Retour" : "Annuler"}
           </button>
@@ -141,14 +146,15 @@ export function ExercisePicker({ open, onClose, exercises, multiSet, addLabel, o
                 type="search"
                 placeholder="Rechercher un exercice…"
                 value={query}
+                aria-label="Rechercher un exercice"
                 onChange={(e) => setQuery(e.target.value)}
                 autoFocus
-                className="w-full rounded-xl bg-surface border border-transparent px-4 py-3 text-sm focus:outline-none focus:border-accent/40 transition-colors"
+                className="w-full rounded-xl bg-background border border-border px-4 py-3 text-sm focus:outline-none focus:border-accent transition-colors"
               />
             </div>
             <ul className="flex-1 overflow-y-auto px-2 pb-4">
               {filtered.length === 0 ? (
-                <li className="px-4 py-8 text-center text-sm text-subtle">
+                <li className="px-4 py-8 text-center text-sm text-muted">
                   Aucun exercice
                 </li>
               ) : (
@@ -157,11 +163,11 @@ export function ExercisePicker({ open, onClose, exercises, multiSet, addLabel, o
                     <button
                       type="button"
                       onClick={() => handleSelectExercise(ex)}
-                      className="w-full text-left px-4 py-3 rounded-xl hover:bg-surface transition-colors cursor-pointer"
+                      className="w-full text-left px-4 py-3 rounded-xl hover:bg-surface-hover transition-colors cursor-pointer"
                     >
                       <div className="flex items-center justify-between">
                         <span className="font-semibold">{ex.name}</span>
-                        <span className="text-[10px] uppercase tracking-widest text-subtle font-medium">
+                        <span className="text-[10px] uppercase tracking-widest text-muted font-semibold">
                           {formatExerciseType(ex.type)}
                         </span>
                       </div>
@@ -188,23 +194,25 @@ export function ExercisePicker({ open, onClose, exercises, multiSet, addLabel, o
               ))}
             </div>
             {multiSet && (
-              <div className="flex items-center justify-between rounded-2xl bg-surface p-4">
-                <span className="text-sm text-muted font-medium">Nombre de s&eacute;ries</span>
+              <div className="flex items-center justify-between rounded-2xl bg-background p-4 border border-border">
+                <span className="text-sm text-muted font-medium">Nombre de séries</span>
                 <div className="flex items-center gap-3">
                   <button
                     type="button"
                     onClick={() => setSetCount((c) => Math.max(1, c - 1))}
-                    className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl border border-border text-lg font-bold cursor-pointer hover:bg-surface hover:text-accent transition-colors"
+                    aria-label="Diminuer le nombre de séries"
+                    className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl bg-surface border border-border text-lg font-bold cursor-pointer hover:border-accent transition-colors"
                   >
-                    &minus;
+                    −
                   </button>
-                  <span className="text-xl font-display font-black tabular-nums w-8 text-center text-accent">
+                  <span className="font-display font-black text-3xl tabular-nums w-10 text-center text-accent-ink">
                     {setCount}
                   </span>
                   <button
                     type="button"
                     onClick={() => setSetCount((c) => Math.min(10, c + 1))}
-                    className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl border border-border text-lg font-bold cursor-pointer hover:bg-surface hover:text-accent transition-colors"
+                    aria-label="Augmenter le nombre de séries"
+                    className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl bg-surface border border-border text-lg font-bold cursor-pointer hover:border-accent transition-colors"
                   >
                     +
                   </button>
@@ -212,13 +220,13 @@ export function ExercisePicker({ open, onClose, exercises, multiSet, addLabel, o
               </div>
             )}
             {error && (
-              <p className="text-sm text-danger font-medium">{error}</p>
+              <p className="text-sm text-danger font-medium" role="alert">{error}</p>
             )}
             <button
               type="button"
               onClick={handleSubmit}
               disabled={isPending}
-              className="w-full rounded-xl bg-accent text-background py-4 font-bold tracking-wide hover:bg-accent-hover transition-colors cursor-pointer disabled:opacity-50 uppercase"
+              className="w-full rounded-xl bg-accent text-accent-foreground py-4 font-bold tracking-widest hover:bg-accent-hover transition-colors cursor-pointer disabled:opacity-50 uppercase"
             >
               {isPending ? "Ajout…" : addLabel ?? "Ajouter à la séance"}
             </button>

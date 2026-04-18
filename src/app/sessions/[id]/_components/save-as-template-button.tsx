@@ -22,7 +22,7 @@ export function SaveAsTemplateButton({ workoutId, workoutName }: Props) {
       type="button"
       onClick={handleSave}
       disabled={isPending}
-      className="w-full rounded-xl border border-border text-muted py-3 text-sm font-medium hover:bg-surface hover:text-accent transition-colors cursor-pointer disabled:opacity-50"
+      className="w-full rounded-xl bg-surface border border-border text-foreground py-3 text-sm font-medium shadow-card hover:shadow-hero hover:-translate-y-0.5 transition-all cursor-pointer disabled:opacity-50"
     >
       {isPending ? "Création…" : "Sauvegarder comme template"}
     </button>

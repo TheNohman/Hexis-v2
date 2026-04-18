@@ -120,7 +120,7 @@ function MeasurementTypeSection({
   );
 
   return (
-    <div className="rounded-xl border border-border bg-surface overflow-hidden">
+    <div className="rounded-2xl bg-surface shadow-card overflow-hidden">
       {/* Header */}
       <button
         type="button"
@@ -130,7 +130,7 @@ function MeasurementTypeSection({
         <div className="flex items-center gap-3">
           <span className="text-sm font-medium">{config.label}</span>
           {latest && (
-            <span className="text-xs text-accent tabular-nums font-medium">
+            <span className="text-xs text-accent-ink tabular-nums font-medium">
               {latest.value.toFixed(1)} {config.unit}
             </span>
           )}
@@ -168,7 +168,7 @@ function MeasurementTypeSection({
                 onClick={() => setPeriod(p.key)}
                 className={`flex-1 text-xs font-medium py-1.5 rounded-md transition-colors cursor-pointer ${
                   period === p.key
-                    ? "bg-accent text-white"
+                    ? "bg-foreground text-background"
                     : "text-muted hover:text-foreground"
                 }`}
               >
@@ -208,7 +208,7 @@ function MeasurementTypeSection({
           <button
             type="button"
             onClick={onShowForm}
-            className="text-xs text-accent hover:text-accent-hover cursor-pointer transition-colors"
+            className="text-xs text-accent-ink hover:text-foreground cursor-pointer transition-colors"
           >
             {showForm ? "Annuler" : "+ Ajouter une mesure"}
           </button>
@@ -223,7 +223,7 @@ function MeasurementTypeSection({
                     name="date"
                     defaultValue={new Date().toISOString().slice(0, 10)}
                     required
-                    className="rounded-lg border border-border bg-background px-3 py-2.5 text-sm focus:outline-none focus:border-accent transition-colors"
+                    className="rounded-lg border border-border bg-background px-3 py-2.5 text-sm focus:outline-none focus:border-accent-ink transition-colors"
                   />
                 </label>
                 <label className="flex flex-col gap-1.5">
@@ -238,7 +238,7 @@ function MeasurementTypeSection({
                     required
                     autoFocus
                     placeholder={`ex: 85.0`}
-                    className="rounded-lg border border-border bg-background px-3 py-2.5 text-sm focus:outline-none focus:border-accent transition-colors tabular-nums"
+                    className="rounded-lg border border-border bg-background px-3 py-2.5 text-sm focus:outline-none focus:border-accent-ink transition-colors tabular-nums"
                   />
                 </label>
               </div>
@@ -246,12 +246,12 @@ function MeasurementTypeSection({
                 type="text"
                 name="notes"
                 placeholder="Notes (optionnel)"
-                className="w-full rounded-lg border border-border bg-background px-3 py-2.5 text-sm focus:outline-none focus:border-accent transition-colors"
+                className="w-full rounded-lg border border-border bg-background px-3 py-2.5 text-sm focus:outline-none focus:border-accent-ink transition-colors"
               />
               <button
                 type="submit"
                 disabled={isPending}
-                className="w-full rounded-lg bg-accent text-white py-2.5 text-sm font-semibold hover:bg-accent-hover transition-colors cursor-pointer disabled:opacity-50"
+                className="w-full rounded-lg bg-foreground text-background py-2.5 text-sm font-semibold hover:opacity-90 transition-colors cursor-pointer disabled:opacity-50"
               >
                 {isPending ? "Ajout…" : "Ajouter"}
               </button>
@@ -294,9 +294,10 @@ function MeasurementTypeSection({
                       type="button"
                       disabled={isPending}
                       onClick={() => onDelete(entry.id)}
+                      aria-label="Supprimer cette mesure"
                       className="text-xs text-subtle hover:text-danger cursor-pointer transition-colors disabled:opacity-50 shrink-0 ml-2"
                     >
-                      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+                      <svg aria-hidden="true" width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
                         <line x1="1" y1="1" x2="11" y2="11" />
                         <line x1="11" y1="1" x2="1" y2="11" />
                       </svg>
@@ -311,7 +312,7 @@ function MeasurementTypeSection({
             <button
               type="button"
               onClick={() => setShowAllHistory(!showAllHistory)}
-              className="w-full text-xs text-muted hover:text-accent cursor-pointer transition-colors py-1"
+              className="w-full text-xs text-muted hover:text-accent-ink cursor-pointer transition-colors py-1"
             >
               {showAllHistory ? "Réduire" : `Voir tout (${filtered.length})`}
             </button>

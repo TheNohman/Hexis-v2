@@ -27,8 +27,12 @@ export function SessionTimer({ startedAt }: Props) {
   const label = h > 0 ? `${h}:${pad(m)}:${pad(s)}` : `${pad(m)}:${pad(s)}`;
 
   return (
-    <div className="flex items-center gap-1.5 text-xs text-muted tabular-nums">
-      <span className="relative flex h-1.5 w-1.5">
+    <div
+      className="flex items-center gap-1.5 text-xs text-muted tabular-nums"
+      role="timer"
+      aria-label="Durée de la séance en cours"
+    >
+      <span className="relative flex h-1.5 w-1.5" aria-hidden="true">
         <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent opacity-70" />
         <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-accent" />
       </span>

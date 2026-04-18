@@ -27,7 +27,7 @@ export function RedoWorkoutButton({ sourceWorkoutId, hasStrengthExercises }: Pro
         type="button"
         onClick={() => submit(undefined)}
         disabled={isPending}
-        className="w-full rounded-xl border border-accent/40 bg-accent/5 text-accent py-2.5 text-sm font-semibold hover:bg-accent/10 transition-colors cursor-pointer disabled:opacity-50"
+        className="w-full rounded-xl bg-foreground text-background py-3 text-sm font-semibold shadow-card hover:shadow-hero hover:-translate-y-0.5 transition-all cursor-pointer disabled:opacity-50"
       >
         {isPending ? "Création…" : "Refaire cette séance"}
       </button>
@@ -36,22 +36,24 @@ export function RedoWorkoutButton({ sourceWorkoutId, hasStrengthExercises }: Pro
 
   if (askBump) {
     return (
-      <div className="rounded-xl border border-accent/40 bg-accent/5 p-3 space-y-2">
-        <p className="text-xs text-muted">Appliquer une progression sur les exercices de force ?</p>
+      <div className="rounded-2xl border border-accent/30 bg-accent-light p-4 space-y-3 shadow-card">
+        <p className="text-xs text-accent-ink font-medium">
+          Appliquer une progression sur les exercices de force ?
+        </p>
         <div className="grid grid-cols-3 gap-2">
           <button
             type="button"
             onClick={() => submit(undefined)}
             disabled={isPending}
-            className="rounded-lg border border-border bg-surface py-2 text-xs font-medium hover:border-accent cursor-pointer transition-colors disabled:opacity-50"
+            className="rounded-xl border border-border bg-surface py-2.5 text-xs font-semibold hover:shadow-card cursor-pointer transition-all disabled:opacity-50"
           >
-            M&ecirc;mes charges
+            Mêmes charges
           </button>
           <button
             type="button"
             onClick={() => submit(2.5)}
             disabled={isPending}
-            className="rounded-lg bg-accent text-white py-2 text-xs font-semibold hover:bg-accent-hover cursor-pointer transition-colors disabled:opacity-50"
+            className="rounded-xl bg-accent text-accent-foreground py-2.5 text-xs font-bold hover:bg-accent-hover cursor-pointer transition-colors disabled:opacity-50"
           >
             +2,5 kg
           </button>
@@ -59,7 +61,7 @@ export function RedoWorkoutButton({ sourceWorkoutId, hasStrengthExercises }: Pro
             type="button"
             onClick={() => submit(5)}
             disabled={isPending}
-            className="rounded-lg border border-accent/60 text-accent py-2 text-xs font-semibold hover:bg-accent/10 cursor-pointer transition-colors disabled:opacity-50"
+            className="rounded-xl bg-foreground text-background py-2.5 text-xs font-bold hover:-translate-y-0.5 hover:shadow-hero cursor-pointer transition-all disabled:opacity-50"
           >
             +5 kg
           </button>
@@ -73,9 +75,9 @@ export function RedoWorkoutButton({ sourceWorkoutId, hasStrengthExercises }: Pro
       type="button"
       onClick={() => setAskBump(true)}
       disabled={isPending}
-      className="w-full rounded-xl border border-accent/40 bg-accent/5 text-accent py-2.5 text-sm font-semibold hover:bg-accent/10 transition-colors cursor-pointer disabled:opacity-50"
+      className="w-full rounded-xl bg-foreground text-background py-3 text-sm font-semibold shadow-card hover:shadow-hero hover:-translate-y-0.5 transition-all cursor-pointer disabled:opacity-50"
     >
-      Refaire cette s&eacute;ance
+      Refaire cette séance
     </button>
   );
 }

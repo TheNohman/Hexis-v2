@@ -94,11 +94,11 @@ export default async function ProfilePage() {
   const prs = stats.personalRecords.slice(0, 4);
 
   return (
-    <main className="flex-1 flex flex-col items-center px-4 py-8">
+    <main id="main-content" className="flex-1 flex flex-col items-center px-4 py-8">
       <div className="max-w-2xl w-full space-y-4">
         <header className="flex items-start justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-display font-bold tracking-tight">
+            <h1 className="font-display font-extrabold text-[28px] sm:text-[32px] tracking-tight">
               Profil
             </h1>
             <p className="text-xs text-muted mt-1">

@@ -35,13 +35,13 @@ export function IntervalBlockSection({ workoutId, block }: Props) {
 
   return (
     <>
-      <section className="rounded-2xl border border-accent/30 bg-accent/5 overflow-hidden">
-        <header className="px-4 py-3 border-b border-accent/20 flex items-center gap-2">
-          <span>🔥</span>
-          <p className="text-xs uppercase tracking-wider font-semibold text-accent">
+      <section className="rounded-2xl bg-surface shadow-card overflow-hidden border border-accent/20">
+        <header className="px-4 py-3 border-b border-border bg-accent-light flex items-center gap-2">
+          <span aria-hidden="true">🔥</span>
+          <p className="text-[10px] uppercase tracking-widest font-semibold text-accent-ink">
             {labelForFormat(block.intervalFormat)}
           </p>
-          <span className="text-sm font-semibold truncate">— {block.name}</span>
+          <span className="text-sm font-semibold truncate text-foreground">— {block.name}</span>
         </header>
 
         <div className="p-4 space-y-3">
@@ -58,8 +58,8 @@ export function IntervalBlockSection({ workoutId, block }: Props) {
           </div>
 
           {playlist.length > 0 && (
-            <div className="border-t border-accent/10 pt-2">
-              <p className="text-[11px] uppercase tracking-wider text-muted mb-1">
+            <div className="border-t border-border pt-2">
+              <p className="text-[10px] uppercase tracking-widest text-muted mb-1 font-semibold">
                 Playlist ({playlist.length})
               </p>
               <p className="text-xs text-muted truncate">
@@ -72,11 +72,7 @@ export function IntervalBlockSection({ workoutId, block }: Props) {
             type="button"
             onClick={() => setRunning(true)}
             disabled={playlist.length === 0}
-            className={`w-full rounded-xl py-3.5 font-bold tracking-wide uppercase text-sm cursor-pointer transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${
-              done
-                ? "bg-done text-white hover:bg-done/90"
-                : "bg-accent text-white hover:bg-accent-hover"
-            }`}
+            className="w-full rounded-xl bg-accent text-accent-foreground py-3.5 font-bold tracking-wide uppercase text-sm cursor-pointer hover:bg-accent-hover transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {done ? "Relancer le circuit" : "Démarrer le circuit"}
           </button>

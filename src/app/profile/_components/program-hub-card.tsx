@@ -55,7 +55,7 @@ export function ProgramHubCard({ activeProgram }: { activeProgram: ActiveProgram
         </div>
         {currentSlot?.templateName && (
           <div className="text-right shrink-0 ml-4">
-            <p className="text-xs text-accent font-medium">Prochaine</p>
+            <p className="text-[10px] uppercase tracking-widest font-semibold text-accent-ink">Prochaine</p>
             <p className="text-sm font-medium mt-0.5">{currentSlot.templateName}</p>
           </div>
         )}

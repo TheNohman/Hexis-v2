@@ -19,15 +19,15 @@ export default async function MentorPage() {
   // Gated UI: mentor disabled in profile.
   if (!profile.mentorEnabled) {
     return (
-      <main className="flex-1 flex flex-col items-center px-4 py-8">
+      <main id="main-content" className="flex-1 flex flex-col items-center px-4 py-8">
         <div className="max-w-2xl w-full space-y-4">
           <header className="flex items-start justify-between gap-3">
             <div>
-              <h1 className="text-2xl font-display font-bold tracking-tight">
+              <h1 className="font-display font-extrabold text-[28px] sm:text-[32px] tracking-tight">
                 Mentor IA
               </h1>
               <p className="text-xs text-muted mt-1">
-                Ton coach virtuel, au courant de tes donn&eacute;es.
+                Ton coach virtuel, au courant de tes données.
               </p>
             </div>
             <Link
@@ -37,21 +37,20 @@ export default async function MentorPage() {
               &larr; Retour
             </Link>
           </header>
-          <div className="rounded-2xl border border-dashed border-border bg-surface p-8 text-center space-y-3">
+          <Card variant="dashed" rounded="3xl" padding="xl" className="text-center space-y-3">
             <p className="text-sm text-muted">
-              Le Mentor IA est d&eacute;sactiv&eacute;.
+              Le Mentor IA est désactivé.
             </p>
             <p className="text-xs text-subtle">
-              Active le Mentor IA dans ton profil pour recevoir des conseils
-              personnalis&eacute;s.
+              Active le Mentor IA dans ton profil pour recevoir des conseils personnalisés.
             </p>
             <Link
               href="/profile"
-              className="inline-block text-sm font-semibold text-accent hover:text-accent-hover"
+              className="inline-block text-sm font-semibold text-accent-ink hover:text-foreground"
             >
               Aller au profil &rarr;
             </Link>
-          </div>
+          </Card>
         </div>
       </main>
     );
@@ -69,15 +68,15 @@ export default async function MentorPage() {
     : null;
 
   return (
-    <main className="flex-1 flex flex-col items-center px-4 py-8">
+    <main id="main-content" className="flex-1 flex flex-col items-center px-4 py-8">
       <div className="max-w-2xl w-full space-y-5">
         <header className="flex items-start justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-display font-bold tracking-tight">
+            <h1 className="font-display font-extrabold text-[28px] sm:text-[32px] tracking-tight">
               Mentor IA
             </h1>
             <p className="text-xs text-muted mt-1">
-              Conseil personnalis&eacute; pour ta prochaine s&eacute;ance.
+              Conseil personnalisé pour ta prochaine séance.
             </p>
           </div>
           <Link
@@ -89,16 +88,16 @@ export default async function MentorPage() {
         </header>
 
         {/* ── Current advice ── */}
-        <section className="rounded-2xl border border-border bg-surface p-5 space-y-4">
+        <Card variant="hero" rounded="3xl" padding="xl" as="section" className="space-y-4">
           <div className="flex items-center justify-between gap-3">
-            <h2 className="text-xs font-semibold text-muted uppercase tracking-wider">
+            <h2 className="text-[10px] font-semibold uppercase tracking-widest text-background/70">
               Conseil du moment
             </h2>
             <span
-              className={`text-[11px] tabular-nums rounded-full px-2 py-0.5 ${
+              className={`text-[10px] uppercase tracking-widest font-semibold tabular-nums rounded-full px-2 py-1 ${
                 rateLimited
-                  ? "bg-danger/10 text-danger"
-                  : "bg-accent/10 text-accent"
+                  ? "bg-danger-soft text-danger"
+                  : "bg-accent text-accent-foreground"
               }`}
               title={
                 rate.resetAt
@@ -108,51 +107,46 @@ export default async function MentorPage() {
             >
               {rateLimited
                 ? "Limite atteinte"
-                : `Il reste ${rate.remaining} génération${rate.remaining > 1 ? "s" : ""} cette heure`}
+                : `${rate.remaining} / h`}
             </span>
           </div>
 
           {advice ? (
-            <p className="text-sm leading-relaxed">{advice}</p>
+            <p className="text-[15px] leading-relaxed whitespace-pre-line">{advice}</p>
           ) : (
-            <p className="text-sm text-subtle">
-              Aucun conseil disponible pour l&apos;instant. Lance une
-              g&eacute;n&eacute;ration ou enregistre ta premi&egrave;re
-              s&eacute;ance.
+            <p className="text-sm text-background/70">
+              Aucun conseil disponible pour l&apos;instant. Lance une génération ou enregistre ta première séance.
             </p>
           )}
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 pt-1">
             <RegenerateButton
               disabled={rateLimited}
               disabledReason={disabledReason}
             />
-            <p className="text-[11px] text-subtle">
-              Jusqu&apos;&agrave; {rate.max} g&eacute;n&eacute;rations / heure.
+            <p className="text-[11px] text-background/60">
+              Jusqu&apos;à {rate.max} générations / heure.
             </p>
           </div>
-        </section>
+        </Card>
 
         {/* ── History ── */}
         <section className="space-y-3">
-          <h2 className="text-xs font-semibold text-muted uppercase tracking-wider">
+          <h2 className="text-[10px] font-semibold text-muted uppercase tracking-widest">
             Historique
           </h2>
           {history.length === 0 ? (
-            <div className="rounded-xl border border-dashed border-border p-6 text-center">
+            <Card variant="dashed" rounded="2xl" padding="lg" className="text-center">
               <p className="text-xs text-subtle">
-                Aucun conseil archiv&eacute; pour le moment.
+                Aucun conseil archivé pour le moment.
               </p>
-            </div>
+            </Card>
           ) : (
             <ul className="space-y-2">
               {history.map((h) => (
-                <Card
-                  as="li"
-                  key={h.id}
-                >
+                <Card as="li" rounded="2xl" padding="md" key={h.id}>
                   <div className="flex items-center justify-between gap-3 mb-1.5">
-                    <span className="text-[11px] uppercase tracking-wider text-subtle">
+                    <span className="text-[10px] uppercase tracking-widest font-semibold text-subtle">
                       {formatRelative(h.createdAt)}
                     </span>
                     <span className="text-[11px] text-subtle tabular-nums">
@@ -162,7 +156,7 @@ export default async function MentorPage() {
                       }).format(h.createdAt)}
                     </span>
                   </div>
-                  <p className="text-sm leading-relaxed">{h.content}</p>
+                  <p className="text-sm leading-relaxed whitespace-pre-line">{h.content}</p>
                 </Card>
               ))}
             </ul>

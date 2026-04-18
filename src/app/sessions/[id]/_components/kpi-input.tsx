@@ -14,13 +14,13 @@ type Props = {
 };
 
 const inputClasses =
-  "rounded-lg bg-surface border border-border px-3 py-2.5 text-sm focus:outline-none focus:border-accent tabular-nums transition-colors";
+  "rounded-xl bg-background border border-border px-3 py-2.5 text-sm focus:outline-none focus:border-accent tabular-nums transition-colors";
 
 export function KpiInput({ kpi, valueNumeric, valueText, onChange, autoFocus }: Props) {
   if (kpi.dataType === "DURATION") {
     return (
       <label className="flex flex-col gap-1.5 min-w-0">
-        <span className="text-[10px] uppercase text-muted">
+        <span className="text-[10px] uppercase tracking-widest text-muted font-semibold">
           {kpi.name}
           {kpi.isRequired ? "" : " ·"}
         </span>
@@ -44,7 +44,7 @@ export function KpiInput({ kpi, valueNumeric, valueText, onChange, autoFocus }: 
   if (kpi.dataType === "TEXT") {
     return (
       <label className="flex flex-col gap-1.5 min-w-0">
-        <span className="text-[10px] uppercase text-muted">
+        <span className="text-[10px] uppercase tracking-widest text-muted font-semibold">
           {kpi.name}
           {kpi.isRequired ? "" : " ·"}
         </span>

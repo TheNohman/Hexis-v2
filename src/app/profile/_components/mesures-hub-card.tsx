@@ -32,7 +32,7 @@ export function MesuresHubCard({ rows }: { rows: MeasureRow[] }) {
         {rows.map((row) => (
           <div
             key={row.label}
-            className="flex items-center justify-between rounded-lg bg-background/50 px-3 py-2"
+            className="flex items-center justify-between rounded-xl bg-background px-3 py-2"
           >
             <span className="text-sm text-muted">{row.label}</span>
             <div className="flex items-center gap-2">

@@ -76,7 +76,7 @@ export function TypeManager({ configs, onClose }: Props) {
   }
 
   return (
-    <div className="rounded-xl border border-border bg-surface p-4 space-y-3">
+    <div className="rounded-2xl bg-surface shadow-card p-4 space-y-3">
       <div className="flex items-center justify-between">
         <p className="text-sm font-medium">Gérer les types</p>
         <button
@@ -106,20 +106,20 @@ export function TypeManager({ configs, onClose }: Props) {
                   type="text"
                   value={editLabel}
                   onChange={(e) => setEditLabel(e.target.value)}
-                  className="flex-1 rounded border border-border bg-surface px-2 py-1 text-sm focus:outline-none focus:border-accent"
+                  className="flex-1 rounded border border-border bg-surface px-2 py-1 text-sm focus:outline-none focus:border-accent-ink"
                   autoFocus
                 />
                 <input
                   type="text"
                   value={editUnit}
                   onChange={(e) => setEditUnit(e.target.value)}
-                  className="w-14 rounded border border-border bg-surface px-2 py-1 text-sm focus:outline-none focus:border-accent"
+                  className="w-14 rounded border border-border bg-surface px-2 py-1 text-sm focus:outline-none focus:border-accent-ink"
                 />
                 <button
                   type="button"
                   onClick={saveEdit}
                   disabled={isPending}
-                  className="text-xs text-accent hover:text-accent-hover cursor-pointer"
+                  className="text-xs text-accent-ink hover:text-foreground cursor-pointer"
                 >
                   OK
                 </button>
@@ -160,7 +160,7 @@ export function TypeManager({ configs, onClose }: Props) {
                 <button
                   type="button"
                   onClick={() => startEdit(config)}
-                  className="text-xs text-muted hover:text-accent cursor-pointer"
+                  className="text-xs text-muted hover:text-accent-ink cursor-pointer"
                   title="Modifier"
                 >
                   <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">

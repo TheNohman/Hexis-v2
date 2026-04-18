@@ -26,7 +26,7 @@ export function TypeConfigForm({ onClose }: Props) {
   return (
     <form
       onSubmit={handleSubmit}
-      className="rounded-xl border border-accent/30 bg-surface p-4 space-y-3"
+      className="rounded-2xl bg-surface shadow-card ring-1 ring-accent-ink/30 p-4 space-y-3"
     >
       <p className="text-sm font-medium">Nouveau type de mesure</p>
 
@@ -40,7 +40,7 @@ export function TypeConfigForm({ onClose }: Props) {
             placeholder="ex: Tour de cou"
             required
             autoFocus
-            className="rounded-lg border border-border bg-background px-3 py-2.5 text-sm focus:outline-none focus:border-accent transition-colors"
+            className="rounded-lg border border-border bg-background px-3 py-2.5 text-sm focus:outline-none focus:border-accent-ink transition-colors"
           />
         </label>
         <label className="flex flex-col gap-1.5">
@@ -48,7 +48,7 @@ export function TypeConfigForm({ onClose }: Props) {
           <select
             value={unit}
             onChange={(e) => setUnit(e.target.value)}
-            className="rounded-lg border border-border bg-background px-3 py-2.5 text-sm focus:outline-none focus:border-accent transition-colors"
+            className="rounded-lg border border-border bg-background px-3 py-2.5 text-sm focus:outline-none focus:border-accent-ink transition-colors"
           >
             {COMMON_UNITS.map((u) => (
               <option key={u} value={u}>
@@ -63,7 +63,7 @@ export function TypeConfigForm({ onClose }: Props) {
         <button
           type="submit"
           disabled={isPending || !label.trim()}
-          className="flex-1 rounded-lg bg-accent text-white py-2.5 text-sm font-semibold hover:bg-accent-hover transition-colors cursor-pointer disabled:opacity-50"
+          className="flex-1 rounded-lg bg-foreground text-background py-2.5 text-sm font-semibold hover:opacity-90 transition-colors cursor-pointer disabled:opacity-50"
         >
           {isPending ? "Ajout…" : "Ajouter le type"}
         </button>

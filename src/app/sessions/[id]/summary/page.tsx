@@ -94,28 +94,28 @@ export default async function SessionSummaryPage({
   }).format(workout.startedAt);
 
   return (
-    <main className="flex-1 flex flex-col items-center px-4 py-8">
-      <div className="max-w-2xl w-full space-y-5">
+    <main id="main-content" className="flex-1 flex flex-col items-center px-4 py-8">
+      <div className="max-w-2xl w-full space-y-6">
         <header className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <p className="text-[11px] uppercase tracking-wider text-accent font-semibold">
+            <p className="text-[10px] uppercase tracking-widest text-accent-ink font-semibold">
               Séance terminée
             </p>
-            <h1 className="text-2xl font-display font-bold tracking-tight truncate">
+            <h1 className="font-display font-extrabold text-[28px] sm:text-[32px] tracking-tight truncate mt-1">
               {workout.name}
             </h1>
-            <p className="text-xs text-muted mt-0.5">{dateLabel}</p>
+            <p className="text-xs text-muted mt-1">{dateLabel}</p>
           </div>
           <Link
             href="/dashboard"
-            className="text-xs text-muted hover:text-foreground whitespace-nowrap py-1"
+            className="text-xs text-muted hover:text-foreground whitespace-nowrap py-1 transition-colors"
           >
             Accueil →
           </Link>
         </header>
 
         {/* Hero stats */}
-        <section className="grid grid-cols-3 gap-3">
+        <section className="grid grid-cols-3 gap-3" aria-label="Récapitulatif">
           <Stat value={formatDuration(durationSecs)} label="Durée" variant="accent" />
           <Stat value={`${doneCount}/${plannedCount || "—"}`} label="Séries" />
           <Stat
@@ -130,24 +130,24 @@ export default async function SessionSummaryPage({
         </section>
 
         {intervalTotals.total > 0 && (
-          <section className="rounded-xl border border-accent/20 bg-accent/5 p-4 flex items-center justify-between">
+          <Card as="section" variant="accent" rounded="2xl" padding="md" className="flex items-center justify-between">
             <div>
-              <p className="text-[11px] uppercase tracking-wider text-accent font-semibold">
+              <p className="text-[10px] uppercase tracking-widest font-semibold">
                 Intervalles HIIT
               </p>
-              <p className="text-sm mt-0.5">
+              <p className="text-sm mt-1 font-medium">
                 {intervalTotals.done} / {intervalTotals.total} rounds complétés
               </p>
             </div>
-            <span className="text-2xl">🔥</span>
-          </section>
+            <span className="text-2xl" aria-hidden="true">🔥</span>
+          </Card>
         )}
 
         {newPRs.length > 0 && (
-          <section className="rounded-2xl border-2 border-done/50 bg-done/10 p-5 space-y-3">
+          <Card as="section" variant="hero" rounded="2xl" padding="lg" className="space-y-3">
             <div className="flex items-center gap-3">
-              <span className="text-2xl">🏆</span>
-              <h2 className="font-display font-bold text-done">
+              <span className="text-2xl" aria-hidden="true">🏆</span>
+              <h2 className="font-display font-bold text-lg tracking-tight">
                 {newPRs.length === 1
                   ? "Nouveau record !"
                   : `${newPRs.length} nouveaux records !`}
@@ -157,22 +157,22 @@ export default async function SessionSummaryPage({
               {newPRs.map((pr) => (
                 <li
                   key={pr.id}
-                  className="rounded-xl bg-surface border border-border p-3"
+                  className="rounded-xl bg-background/10 border border-background/20 p-3"
                 >
                   <p className="text-sm font-semibold">{pr.exercise.name}</p>
-                  <p className="text-xs text-muted tabular-nums mt-0.5">
+                  <p className="text-xs text-background/70 tabular-nums mt-0.5">
                     {pr.weightKg} kg × {pr.reps} rep{pr.reps > 1 ? "s" : ""}
                     {pr.reps > 1 && ` · ≈ ${pr.estimated1RM} kg 1RM`}
                   </p>
                 </li>
               ))}
             </ul>
-          </section>
+          </Card>
         )}
 
         {wellness && (
-          <Card as="section">
-            <p className="text-[11px] uppercase tracking-wider text-muted font-semibold mb-2">
+          <Card as="section" padding="md">
+            <p className="text-[10px] uppercase tracking-widest text-muted font-semibold mb-2">
               Bien-être du jour
             </p>
             <div className="grid grid-cols-4 gap-2 text-center">
@@ -185,8 +185,8 @@ export default async function SessionSummaryPage({
         )}
 
         {/* Blocks recap */}
-        <section className="space-y-2">
-          <h2 className="text-xs font-semibold text-muted uppercase tracking-wider">
+        <section className="space-y-2" aria-label="Détail des blocs">
+          <h2 className="text-[10px] font-semibold text-muted uppercase tracking-widest">
             Détail
           </h2>
           <ul className="space-y-2">
@@ -209,8 +209,8 @@ export default async function SessionSummaryPage({
                         : `${done}/${block.entries.length} entrée${block.entries.length > 1 ? "s" : ""}`}
                     </p>
                   </div>
-                  <span className="text-xs text-accent">
-                    {block.mode === "INTERVAL" ? "🔥 HIIT" : "💪 Muscu"}
+                  <span className="text-[10px] uppercase tracking-widest text-accent-ink font-semibold">
+                    {block.mode === "INTERVAL" ? "HIIT" : "Muscu"}
                   </span>
                 </Card>
               );
@@ -221,15 +221,15 @@ export default async function SessionSummaryPage({
         <section className="pt-2 grid grid-cols-1 sm:grid-cols-2 gap-3">
           <Link
             href={`/sessions/${id}`}
-            className="rounded-xl border border-border text-center py-3 text-sm font-medium hover:bg-surface-hover transition-colors"
+            className="rounded-xl bg-surface border border-border text-center py-3 text-sm font-medium hover:shadow-hero hover:-translate-y-0.5 transition-all shadow-card"
           >
             Voir la séance en détail
           </Link>
           <Link
             href="/dashboard"
-            className="rounded-xl bg-accent text-white text-center py-3 text-sm font-semibold hover:bg-accent-hover transition-colors"
+            className="rounded-xl bg-foreground text-background text-center py-3 text-sm font-semibold hover:shadow-hero hover:-translate-y-0.5 transition-all shadow-card"
           >
-            Retour à l&rsquo;accueil
+            Retour à l’accueil
           </Link>
         </section>
       </div>
@@ -253,9 +253,9 @@ function WellnessReadout({ label, level }: { label: string; level: number }) {
   const safe = Math.max(1, Math.min(5, Math.round(level)));
   return (
     <div>
-      <p className="text-lg leading-none">{bank[safe]}</p>
-      <p className="text-[10px] text-muted mt-1 uppercase tracking-wider">
-        {label}
+      <p className="text-lg leading-none" aria-hidden="true">{bank[safe]}</p>
+      <p className="text-[10px] text-muted mt-1 uppercase tracking-widest font-semibold">
+        {label} {safe}/5
       </p>
     </div>
   );

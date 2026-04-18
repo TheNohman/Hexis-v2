@@ -10,15 +10,15 @@ export default async function PoidsPage() {
   const entries = await listBodyWeightEntries(userId);
 
   return (
-    <main className="flex-1 flex flex-col items-center px-4 py-8">
+    <main id="main-content" className="flex-1 flex flex-col items-center px-4 py-8">
       <div className="max-w-2xl w-full space-y-6">
         <header className="flex items-start justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-display font-bold tracking-tight">
+            <h1 className="font-display font-extrabold text-[28px] sm:text-[32px] tracking-tight">
               Poids corporel
             </h1>
             <p className="text-xs text-muted mt-1">
-              {entries.length} entree{entries.length !== 1 ? "s" : ""}
+              {entries.length} entrée{entries.length !== 1 ? "s" : ""}
             </p>
           </div>
           <Link

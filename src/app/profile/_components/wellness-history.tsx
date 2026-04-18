@@ -20,8 +20,8 @@ export function WellnessHistorySection({ logs }: Props) {
 
   return (
     <section className="space-y-3">
-      <h2 className="text-xs font-semibold text-muted uppercase tracking-wider">
-        Bien-&ecirc;tre (30 derniers jours)
+      <h2 className="text-[10px] font-semibold text-muted uppercase tracking-widest">
+        Bien-être (30 derniers jours)
       </h2>
 
       {/* Averages */}
@@ -32,10 +32,10 @@ export function WellnessHistorySection({ logs }: Props) {
           { label: "Énergie", avg: avgEnergy, emojis: ENERGY_EMOJI },
           { label: "Stress", avg: avgStress, emojis: STRESS_EMOJI },
         ].map(({ label, avg, emojis }) => (
-          <div key={label} className="rounded-xl border border-border bg-surface p-3 text-center">
-            <p className="text-lg">{emojis[Math.round(avg)]}</p>
-            <p className="text-sm font-medium tabular-nums mt-0.5">{avg.toFixed(1)}</p>
-            <p className="text-[10px] text-muted">{label}</p>
+          <div key={label} className="rounded-2xl bg-surface shadow-card p-3 text-center">
+            <p className="text-lg" aria-hidden="true">{emojis[Math.round(avg)]}</p>
+            <p className="font-display font-black text-xl tabular-nums mt-0.5">{avg.toFixed(1)}</p>
+            <p className="text-[10px] uppercase tracking-widest font-semibold text-muted">{label}</p>
           </div>
         ))}
       </div>
@@ -52,15 +52,15 @@ export function WellnessHistorySection({ logs }: Props) {
           return (
             <li
               key={log.id}
-              className="rounded-lg border border-border bg-surface px-4 py-2.5"
+              className="rounded-2xl bg-surface shadow-card px-4 py-2.5"
             >
               <div className="flex items-center justify-between">
                 <span className="text-xs text-muted">{dateLabel}</span>
                 <div className="flex gap-2 text-sm">
-                  <span title="Humeur">{MOOD_EMOJI[log.mood]}</span>
-                  <span title="Sommeil">{SLEEP_EMOJI[log.sleep]}</span>
-                  <span title="Énergie">{ENERGY_EMOJI[log.energy]}</span>
-                  <span title="Stress">{STRESS_EMOJI[log.stress]}</span>
+                  <span title="Humeur" aria-label={`Humeur ${log.mood}/5`}>{MOOD_EMOJI[log.mood]}</span>
+                  <span title="Sommeil" aria-label={`Sommeil ${log.sleep}/5`}>{SLEEP_EMOJI[log.sleep]}</span>
+                  <span title="Énergie" aria-label={`Énergie ${log.energy}/5`}>{ENERGY_EMOJI[log.energy]}</span>
+                  <span title="Stress" aria-label={`Stress ${log.stress}/5`}>{STRESS_EMOJI[log.stress]}</span>
                 </div>
               </div>
               {log.notes && (

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Card } from "@/app/_components/card";
 
 type Props = {
   href?: string;
@@ -9,16 +10,19 @@ type Props = {
 };
 
 export function HubCard({ href, title, icon, children, className }: Props) {
-  const baseClass = `group rounded-xl border border-border bg-surface p-4 transition-colors ${className ?? ""}`;
-
   const inner = (
     <>
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-accent/10 text-accent flex items-center justify-center shrink-0">
+          <div
+            className="w-8 h-8 rounded-xl bg-accent text-accent-foreground flex items-center justify-center shrink-0"
+            aria-hidden="true"
+          >
             {icon}
           </div>
-          <p className="text-xs font-semibold text-muted uppercase tracking-wider">{title}</p>
+          <p className="text-[10px] font-semibold text-muted uppercase tracking-widest">
+            {title}
+          </p>
         </div>
         {href && (
           <svg
@@ -30,7 +34,8 @@ export function HubCard({ href, title, icon, children, className }: Props) {
             strokeWidth="1.5"
             strokeLinecap="round"
             strokeLinejoin="round"
-            className="text-muted group-hover:text-accent transition-colors shrink-0"
+            aria-hidden="true"
+            className="text-muted group-hover:text-accent-ink transition-colors shrink-0"
           >
             <path d="M5 3l4 4-4 4" />
           </svg>
@@ -41,11 +46,22 @@ export function HubCard({ href, title, icon, children, className }: Props) {
   );
 
   if (!href) {
-    return <div className={baseClass}>{inner}</div>;
+    return (
+      <Card
+        rounded="2xl"
+        padding="md"
+        className={`group ${className ?? ""}`}
+      >
+        {inner}
+      </Card>
+    );
   }
 
   return (
-    <Link href={href} className={`${baseClass} hover:border-accent/40`}>
+    <Link
+      href={href}
+      className={`group block rounded-2xl bg-surface shadow-card p-4 transition-all hover:-translate-y-0.5 hover:shadow-hero ${className ?? ""}`}
+    >
       {inner}
     </Link>
   );

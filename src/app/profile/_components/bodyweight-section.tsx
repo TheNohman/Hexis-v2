@@ -57,13 +57,13 @@ export function BodyWeightSection({ entries }: Props) {
   return (
     <section className="space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-xs font-semibold text-muted uppercase tracking-wider">
+        <h2 className="text-[10px] font-semibold text-muted uppercase tracking-widest">
           Poids corporel
         </h2>
         <button
           type="button"
           onClick={() => setShowForm(!showForm)}
-          className="text-xs text-accent hover:text-accent-hover cursor-pointer transition-colors"
+          className="text-xs text-accent-ink hover:text-foreground cursor-pointer transition-colors"
         >
           {showForm ? "Annuler" : "+ Ajouter"}
         </button>
@@ -72,14 +72,14 @@ export function BodyWeightSection({ entries }: Props) {
       {/* Summary cards */}
       {latestWeight != null && (
         <div className="grid grid-cols-2 gap-3">
-          <div className="rounded-xl border border-border bg-surface p-4 text-center">
-            <p className="text-2xl font-display font-bold text-accent tabular-nums">
+          <div className="rounded-2xl bg-surface shadow-card p-4 text-center">
+            <p className="font-display font-black text-3xl text-accent-ink tabular-nums">
               {latestWeight.toFixed(1)}
             </p>
             <p className="text-xs text-muted mt-1">Dernier poids (kg)</p>
           </div>
           {avg7d != null && (
-            <div className="rounded-xl border border-border bg-surface p-4 text-center">
+            <div className="rounded-2xl bg-surface shadow-card p-4 text-center">
               <p className="text-2xl font-display font-bold tabular-nums">
                 {avg7d.toFixed(1)}
               </p>
@@ -98,7 +98,7 @@ export function BodyWeightSection({ entries }: Props) {
             onClick={() => setPeriod(p.key)}
             className={`flex-1 text-xs font-medium py-1.5 rounded-md transition-colors cursor-pointer ${
               period === p.key
-                ? "bg-accent text-white"
+                ? "bg-foreground text-background"
                 : "text-muted hover:text-foreground"
             }`}
           >
@@ -117,7 +117,7 @@ export function BodyWeightSection({ entries }: Props) {
       )}
 
       {chartData.length === 1 && (
-        <div className="rounded-xl border border-border bg-surface p-4 text-center">
+        <div className="rounded-2xl bg-surface shadow-card p-4 text-center">
           <p className="text-lg font-display font-bold tabular-nums">{chartData[0].weightKg.toFixed(1)} kg</p>
           <p className="text-xs text-muted mt-1">{dateFmtFull.format(new Date(chartData[0].date))}</p>
         </div>
@@ -125,7 +125,7 @@ export function BodyWeightSection({ entries }: Props) {
 
       {/* Add form */}
       {showForm && (
-        <form onSubmit={handleAdd} className="rounded-xl border border-border bg-surface p-4 space-y-3">
+        <form onSubmit={handleAdd} className="rounded-2xl bg-surface shadow-card p-4 space-y-3">
           <div className="grid grid-cols-2 gap-3">
             <label className="flex flex-col gap-1.5">
               <span className="text-xs text-muted">Date</span>
@@ -134,7 +134,7 @@ export function BodyWeightSection({ entries }: Props) {
                 name="date"
                 defaultValue={new Date().toISOString().slice(0, 10)}
                 required
-                className="rounded-lg border border-border bg-background px-3 py-2.5 text-sm focus:outline-none focus:border-accent transition-colors"
+                className="rounded-lg border border-border bg-background px-3 py-2.5 text-sm focus:outline-none focus:border-accent-ink transition-colors"
               />
             </label>
             <label className="flex flex-col gap-1.5">
@@ -147,7 +147,7 @@ export function BodyWeightSection({ entries }: Props) {
                 required
                 autoFocus
                 placeholder="ex: 75.2"
-                className="rounded-lg border border-border bg-background px-3 py-2.5 text-sm focus:outline-none focus:border-accent transition-colors tabular-nums"
+                className="rounded-lg border border-border bg-background px-3 py-2.5 text-sm focus:outline-none focus:border-accent-ink transition-colors tabular-nums"
               />
             </label>
           </div>
@@ -155,12 +155,12 @@ export function BodyWeightSection({ entries }: Props) {
             type="text"
             name="notes"
             placeholder="Notes (optionnel)"
-            className="w-full rounded-lg border border-border bg-background px-3 py-2.5 text-sm focus:outline-none focus:border-accent transition-colors"
+            className="w-full rounded-lg border border-border bg-background px-3 py-2.5 text-sm focus:outline-none focus:border-accent-ink transition-colors"
           />
           <button
             type="submit"
             disabled={isPending}
-            className="w-full rounded-lg bg-accent text-white py-2.5 text-sm font-semibold hover:bg-accent-hover transition-colors cursor-pointer disabled:opacity-50"
+            className="w-full rounded-lg bg-foreground text-background py-2.5 text-sm font-semibold hover:opacity-90 transition-colors cursor-pointer disabled:opacity-50"
           >
             {isPending ? "Ajout…" : "Ajouter"}
           </button>
@@ -203,9 +203,10 @@ export function BodyWeightSection({ entries }: Props) {
                   type="button"
                   disabled={isPending}
                   onClick={() => startTransition(() => deleteBodyWeightAction(entry.id))}
+                  aria-label="Supprimer cette entrée"
                   className="text-xs text-subtle hover:text-danger cursor-pointer transition-colors disabled:opacity-50 shrink-0 ml-2"
                 >
-                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+                  <svg aria-hidden="true" width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
                     <line x1="1" y1="1" x2="11" y2="11" />
                     <line x1="11" y1="1" x2="1" y2="11" />
                   </svg>
@@ -268,7 +269,7 @@ function WeightChart({ data }: { data: Entry[] }) {
   ].join(" ");
 
   return (
-    <div className="rounded-xl border border-border bg-surface p-4">
+    <div className="rounded-2xl bg-surface shadow-card p-4">
       <svg viewBox={`0 0 ${totalW} ${totalH}`} className="w-full" style={{ aspectRatio: `${totalW}/${totalH}` }}>
         <defs>
           <linearGradient id="weightFill" x1="0" y1="0" x2="0" y2="1">

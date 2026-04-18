@@ -115,13 +115,17 @@ export function UnifiedSession({ workout, exercises, defaultRestSecs = 90 }: Pro
   const handleRestComplete = useCallback(() => { setRestTimer(null); }, []);
 
   return (
-    <main className="flex-1 flex flex-col px-4 py-6">
+    <main id="main-content" className="flex-1 flex flex-col px-4 py-6">
       <div className="max-w-2xl w-full mx-auto space-y-5" style={{ paddingBottom: restTimer ? 80 : 0 }}>
         {/* Header */}
         <header className="flex items-start justify-between gap-3">
-          <div className="flex-1 min-w-0 space-y-1">
+          <div className="flex-1 min-w-0 space-y-1.5">
             {isEditingName ? (
-              <input type="text" defaultValue={workout.name} autoFocus
+              <input
+                type="text"
+                defaultValue={workout.name}
+                autoFocus
+                aria-label="Nom de la séance"
                 onBlur={(e) => {
                   const next = e.target.value.trim();
                   if (next && next !== workout.name) startTransition(() => renameWorkoutAction(workout.id, next));
@@ -131,11 +135,14 @@ export function UnifiedSession({ workout, exercises, defaultRestSecs = 90 }: Pro
                   if (e.key === "Enter") (e.target as HTMLInputElement).blur();
                   if (e.key === "Escape") setIsEditingName(false);
                 }}
-                className="w-full text-xl font-display font-bold bg-transparent outline-none border-b-2 border-accent"
+                className="w-full font-display font-extrabold text-[28px] sm:text-[32px] tracking-tight bg-transparent outline-none border-b-2 border-accent"
               />
             ) : (
-              <button type="button" onClick={() => setIsEditingName(true)}
-                className="text-xl font-display font-bold cursor-pointer text-left hover:text-accent transition-colors block max-w-full truncate">
+              <button
+                type="button"
+                onClick={() => setIsEditingName(true)}
+                className="font-display font-extrabold text-[28px] sm:text-[32px] tracking-tight cursor-pointer text-left hover:text-accent-ink transition-colors block max-w-full truncate"
+              >
                 {workout.name}
               </button>
             )}
@@ -147,6 +154,7 @@ export function UnifiedSession({ workout, exercises, defaultRestSecs = 90 }: Pro
                 type="datetime-local"
                 defaultValue={startedLocalIso}
                 autoFocus
+                aria-label="Date de début de la séance"
                 onBlur={(e) => {
                   const raw = e.target.value;
                   setIsEditingDate(false);
@@ -160,22 +168,32 @@ export function UnifiedSession({ workout, exercises, defaultRestSecs = 90 }: Pro
               <button
                 type="button"
                 onClick={() => setIsEditingDate(true)}
-                className="text-xs text-subtle hover:text-accent cursor-pointer transition-colors"
+                className="text-xs text-subtle hover:text-accent-ink cursor-pointer transition-colors"
                 title="Modifier la date de la séance"
               >
                 {startedDateLabel}
               </button>
             )}
           </div>
-          <Link href="/dashboard" className="text-xs text-muted hover:text-foreground transition-colors py-1 whitespace-nowrap">
-            &larr; Retour
+          <Link
+            href="/dashboard"
+            className="text-xs text-muted hover:text-foreground transition-colors py-1 whitespace-nowrap"
+          >
+            ← Retour
           </Link>
         </header>
 
         {/* Progress */}
         {hasPlanned && totalCount > 0 && (
           <div className="space-y-1">
-            <div className="w-full h-2 bg-border rounded-full overflow-hidden">
+            <div
+              className="w-full h-2 bg-border rounded-full overflow-hidden"
+              role="progressbar"
+              aria-valuenow={completedCount}
+              aria-valuemin={0}
+              aria-valuemax={totalCount}
+              aria-label="Progression de la séance"
+            >
               <div className="h-full bg-accent rounded-full transition-all duration-500" style={{ width: `${progress * 100}%` }} />
             </div>
             <p className="text-xs text-muted text-right tabular-nums">{completedCount} / {totalCount}</p>
@@ -184,16 +202,23 @@ export function UnifiedSession({ workout, exercises, defaultRestSecs = 90 }: Pro
 
         {/* Notes */}
         {showNotes ? (
-          <textarea defaultValue={workout.notes ?? ""} placeholder="Notes..." rows={2}
+          <textarea
+            defaultValue={workout.notes ?? ""}
+            placeholder="Notes…"
+            rows={2}
+            aria-label="Notes de la séance"
             onBlur={(e) => {
               const val = e.target.value.trim();
               if (val !== (workout.notes ?? "")) startTransition(() => updateNotesAction(workout.id, val));
             }}
-            className="w-full rounded-xl border border-border bg-surface px-4 py-3 text-sm resize-none focus:outline-none focus:border-accent transition-colors"
+            className="w-full rounded-xl border border-border bg-surface px-4 py-3 text-sm resize-none focus:outline-none focus:border-accent transition-colors shadow-card"
           />
         ) : (
-          <button type="button" onClick={() => setShowNotes(true)}
-            className="text-xs text-muted hover:text-accent cursor-pointer transition-colors">
+          <button
+            type="button"
+            onClick={() => setShowNotes(true)}
+            className="text-xs text-muted hover:text-accent-ink cursor-pointer transition-colors"
+          >
             + Ajouter des notes
           </button>
         )}
@@ -223,30 +248,41 @@ export function UnifiedSession({ workout, exercises, defaultRestSecs = 90 }: Pro
           </DndContext>
 
           {optimisticBlocks.length === 0 && !showNewBlockInput && (
-            <div className="rounded-xl border border-dashed border-border p-8 text-center">
+            <div className="rounded-2xl border border-dashed border-border p-8 text-center">
               <p className="text-sm text-muted">Commence en ajoutant un premier bloc.</p>
             </div>
           )}
 
           {showNewBlockInput ? (
             <div className="flex gap-2">
-              <input type="text" placeholder='ex. "Haut du corps"' value={newBlockName}
+              <input
+                type="text"
+                placeholder='ex. « Haut du corps »'
+                value={newBlockName}
+                aria-label="Nom du nouveau bloc"
                 onChange={(e) => setNewBlockName(e.target.value)}
                 onKeyDown={(e) => {
                   if (e.key === "Enter") handleAddBlock();
                   if (e.key === "Escape") { setShowNewBlockInput(false); setNewBlockName(""); }
                 }}
                 autoFocus
-                className="flex-1 rounded-xl border border-border bg-background px-4 py-3 text-sm outline-none focus:border-accent transition-colors"
+                className="flex-1 rounded-xl border border-border bg-surface px-4 py-3 text-sm outline-none focus:border-accent transition-colors shadow-card"
               />
-              <button type="button" onClick={handleAddBlock} disabled={isPending}
-                className="rounded-xl bg-accent text-white px-5 text-sm font-medium disabled:opacity-50 cursor-pointer hover:bg-accent-hover transition-colors">
+              <button
+                type="button"
+                onClick={handleAddBlock}
+                disabled={isPending}
+                className="rounded-xl bg-accent text-accent-foreground px-5 text-sm font-semibold disabled:opacity-50 cursor-pointer hover:bg-accent-hover transition-colors"
+              >
                 Ajouter
               </button>
             </div>
           ) : (
-            <button type="button" onClick={() => setShowNewBlockInput(true)}
-              className="w-full rounded-xl border border-dashed border-border px-4 py-3.5 text-sm text-muted hover:text-accent hover:border-accent/40 cursor-pointer transition-colors">
+            <button
+              type="button"
+              onClick={() => setShowNewBlockInput(true)}
+              className="w-full rounded-xl border border-dashed border-border px-4 py-3.5 text-sm text-muted hover:text-accent-ink hover:border-accent/50 cursor-pointer transition-colors"
+            >
               + Ajouter un bloc
             </button>
           )}
@@ -261,18 +297,22 @@ export function UnifiedSession({ workout, exercises, defaultRestSecs = 90 }: Pro
               type="button"
               onClick={() => setConfirmBulk(true)}
               disabled={isPending}
-              className="w-full rounded-xl border border-accent/40 bg-accent/5 text-accent py-2.5 text-sm font-medium hover:bg-accent/10 transition-colors cursor-pointer disabled:opacity-50"
+              className="w-full rounded-xl border border-accent/40 bg-accent-light text-accent-ink py-2.5 text-sm font-semibold hover:bg-accent/20 transition-colors cursor-pointer disabled:opacity-50"
             >
-              Tout valider comme pr&eacute;vu ({plannedCount} s&eacute;rie{plannedCount > 1 ? "s" : ""})
+              Tout valider comme prévu ({plannedCount} série{plannedCount > 1 ? "s" : ""})
             </button>
           </div>
         )}
 
         {/* Finish */}
         <div className="pt-2">
-          <button type="button" onClick={handleFinishClick} disabled={isPending}
-            className="w-full rounded-xl bg-done text-white py-3.5 font-semibold hover:bg-done/90 transition-colors cursor-pointer disabled:opacity-50">
-            Terminer la s&eacute;ance
+          <button
+            type="button"
+            onClick={handleFinishClick}
+            disabled={isPending}
+            className="w-full rounded-xl bg-foreground text-background py-3.5 font-semibold hover:shadow-hero hover:-translate-y-0.5 transition-all cursor-pointer disabled:opacity-50 shadow-card"
+          >
+            Terminer la séance
           </button>
         </div>
       </div>

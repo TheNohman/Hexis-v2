@@ -32,7 +32,7 @@ export function RecordsHubCard({ prs }: { prs: PR[] }) {
         {prs.map((pr) => (
           <div
             key={pr.exerciseId}
-            className="flex items-center justify-between rounded-lg bg-background/50 px-3 py-2"
+            className="flex items-center justify-between rounded-xl bg-background px-3 py-2"
           >
             <span className="text-xs text-muted truncate mr-2">{pr.name}</span>
             <span className="text-sm font-medium tabular-nums shrink-0">

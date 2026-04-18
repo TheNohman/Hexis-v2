@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { useToast } from "@/app/_components/toast";
 import { ConfirmDialog } from "@/app/_components/confirm-dialog";
+import { Card } from "@/app/_components/card";
 import {
   deleteWorkoutAction,
   unfinishWorkoutAction,
@@ -66,30 +67,27 @@ export function WorkoutReadonlyActions({ workoutId }: Props) {
 
   return (
     <div className="space-y-3 pt-2">
-      <div className="rounded-xl border border-border bg-surface p-4 space-y-2">
-        <p className="text-xs text-subtle">
-          Une s&eacute;ance termin&eacute;e par erreur&nbsp;? Cette action la
-          remet en cours.
+      <Card padding="md" className="space-y-2">
+        <p className="text-xs text-muted">
+          Une séance terminée par erreur ? Cette action la remet en cours.
         </p>
         <button
           type="button"
           onClick={handleUnfinish}
           disabled={busy}
-          className="w-full rounded-xl border border-border text-muted py-3 text-sm font-medium hover:bg-surface-hover hover:text-accent transition-colors cursor-pointer disabled:opacity-50"
+          className="w-full rounded-xl bg-surface border border-border text-foreground py-3 text-sm font-medium hover:bg-surface-hover hover:text-accent-ink transition-colors cursor-pointer disabled:opacity-50"
         >
           {isUnfinishing ? "Reprise…" : "Reprendre cette séance"}
         </button>
-      </div>
+      </Card>
 
       <button
         type="button"
         onClick={() => setConfirmOpen(true)}
         disabled={busy}
-        className="w-full rounded-xl border border-danger/40 text-danger py-3 text-xs font-medium hover:bg-danger/10 transition-colors cursor-pointer disabled:opacity-50"
+        className="w-full rounded-xl border border-danger/40 bg-danger-soft text-danger py-3 text-xs font-semibold hover:bg-danger/15 transition-colors cursor-pointer disabled:opacity-50"
       >
-        {isDeleting
-          ? "Suppression…"
-          : "Supprimer cette séance"}
+        {isDeleting ? "Suppression…" : "Supprimer cette séance"}
       </button>
 
       <ConfirmDialog

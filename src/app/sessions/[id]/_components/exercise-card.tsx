@@ -35,29 +35,38 @@ export function ExerciseCard({ workoutId, blockId, group, onEntryValidated }: Pr
   }
 
   return (
-    <div className="rounded-xl border border-border overflow-hidden">
+    <div className="rounded-2xl bg-surface shadow-card overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-surface">
+      <div className="flex items-center justify-between px-4 py-3 border-b border-border">
         <div className="min-w-0 flex-1">
           <p className="text-sm font-semibold truncate">{group.exerciseName}</p>
-          <p className="text-xs text-muted mt-0.5">{group.sets.length} s&eacute;rie{group.sets.length > 1 ? "s" : ""}</p>
+          <p className="text-xs text-muted mt-0.5">
+            {group.sets.length} série{group.sets.length > 1 ? "s" : ""}
+          </p>
         </div>
         <div className="relative">
-          <button type="button" onClick={() => setMenuOpen(!menuOpen)}
-            className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg text-subtle hover:text-foreground hover:bg-surface-hover cursor-pointer transition-colors"
-            aria-label="Options de l'exercice">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+          <button
+            type="button"
+            onClick={() => setMenuOpen(!menuOpen)}
+            className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg text-muted hover:text-foreground hover:bg-surface-hover cursor-pointer transition-colors"
+            aria-label="Options de l’exercice"
+            aria-expanded={menuOpen}
+          >
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
               <circle cx="8" cy="3" r="1.5" /><circle cx="8" cy="8" r="1.5" /><circle cx="8" cy="13" r="1.5" />
             </svg>
           </button>
           {menuOpen && (
             <>
               <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(false)} />
-              <div className="absolute right-0 top-full z-50 mt-1 w-48 rounded-xl border border-border bg-background shadow-lg py-1">
-                <button type="button" disabled={isPending}
+              <div className="absolute right-0 top-full z-50 mt-1 w-48 rounded-xl bg-surface shadow-hero py-1">
+                <button
+                  type="button"
+                  disabled={isPending}
                   onClick={() => { setMenuOpen(false); setConfirmDelete(true); }}
-                  className="w-full px-4 py-2.5 text-left text-sm text-danger hover:bg-danger-light cursor-pointer disabled:opacity-50 transition-colors">
-                  Supprimer l&apos;exercice
+                  className="w-full px-4 py-2.5 text-left text-sm text-danger hover:bg-danger-soft cursor-pointer disabled:opacity-50 transition-colors"
+                >
+                  Supprimer l’exercice
                 </button>
               </div>
             </>
@@ -66,27 +75,37 @@ export function ExerciseCard({ workoutId, blockId, group, onEntryValidated }: Pr
       </div>
 
       {/* Sets */}
-      <div className="divide-y divide-border/50">
+      <div className="divide-y divide-border/60">
         {group.sets.map((set, i) => (
           <SetRow key={set.id} workoutId={workoutId} entry={set} setNumber={i + 1} onValidated={onEntryValidated} />
         ))}
       </div>
 
       {/* Add set */}
-      <button type="button" onClick={handleAddSet} disabled={isPending}
-        className="w-full px-4 py-3 text-sm text-muted hover:text-accent border-t border-border cursor-pointer transition-colors disabled:opacity-50">
-        + S&eacute;rie
+      <button
+        type="button"
+        onClick={handleAddSet}
+        disabled={isPending}
+        className="w-full px-4 py-3 text-sm text-muted hover:text-accent-ink border-t border-border cursor-pointer transition-colors disabled:opacity-50"
+      >
+        + Série
       </button>
 
       {group.restDurationSecs != null && group.restDurationSecs > 0 && (
-        <div className="px-4 py-2 border-t border-border/50 text-xs text-subtle">
-          Repos : {formatDuration(group.restDurationSecs)}
+        <div className="px-4 py-2 border-t border-border/60 text-[10px] text-muted uppercase tracking-widest font-semibold">
+          Repos · {formatDuration(group.restDurationSecs)}
         </div>
       )}
 
-      <ConfirmDialog open={confirmDelete} title="Supprimer l'exercice"
-        message={`Supprimer toutes les séries de "${group.exerciseName}" ?`}
-        confirmLabel="Supprimer" destructive onConfirm={handleDeleteAll} onCancel={() => setConfirmDelete(false)} />
+      <ConfirmDialog
+        open={confirmDelete}
+        title="Supprimer l’exercice"
+        message={`Supprimer toutes les séries de « ${group.exerciseName} » ?`}
+        confirmLabel="Supprimer"
+        destructive
+        onConfirm={handleDeleteAll}
+        onCancel={() => setConfirmDelete(false)}
+      />
     </div>
   );
 }

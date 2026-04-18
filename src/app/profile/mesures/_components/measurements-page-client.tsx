@@ -32,7 +32,7 @@ export function MeasurementsPageClient({ typeConfigs, entries }: Props) {
             setShowAddType(!showAddType);
             setShowManager(false);
           }}
-          className="text-xs text-accent hover:text-accent-hover cursor-pointer transition-colors"
+          className="text-xs text-accent-ink hover:text-foreground cursor-pointer transition-colors"
         >
           + Nouveau type
         </button>
@@ -98,7 +98,7 @@ function SuggestionButton({ label, unit }: { label: string; unit: string }) {
       type="button"
       onClick={handleClick}
       disabled={isPending}
-      className="rounded-lg border border-dashed border-border px-3 py-2 text-xs text-muted hover:text-accent hover:border-accent transition-colors cursor-pointer disabled:opacity-50"
+      className="rounded-lg border border-dashed border-border px-3 py-2 text-xs text-muted hover:text-accent-ink hover:border-accent-ink transition-colors cursor-pointer disabled:opacity-50"
     >
       + {label}
     </button>

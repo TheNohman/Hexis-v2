@@ -113,26 +113,26 @@ export function ProfileForm({ profile, sportProfile, showEnduranceRefs = false }
   }
 
   return (
-    <form onSubmit={handleSubmit} className="rounded-xl border border-border bg-surface p-5 space-y-4">
-      <h2 className="text-xs font-semibold text-muted uppercase tracking-wider">
-        Pr&eacute;f&eacute;rences
+    <form onSubmit={handleSubmit} className="rounded-2xl bg-surface shadow-card p-5 space-y-4">
+      <h2 className="text-[10px] font-semibold text-muted uppercase tracking-widest">
+        Préférences
       </h2>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <label className="flex flex-col gap-1.5">
-          <span className="text-xs text-muted">Unit&eacute;s</span>
+          <span className="text-xs text-muted">Unités</span>
           <select
             name="unitSystem"
             defaultValue={profile.unitSystem}
-            className="rounded-lg border border-border bg-background px-3 py-2.5 text-sm focus:outline-none focus:border-accent transition-colors"
+            className="rounded-xl border border-border bg-background px-3 py-2.5 text-sm focus:outline-none focus:border-accent-ink transition-colors"
           >
-            <option value="metric">M&eacute;trique (kg, km)</option>
-            <option value="imperial">Imp&eacute;rial (lbs, mi)</option>
+            <option value="metric">Métrique (kg, km)</option>
+            <option value="imperial">Impérial (lbs, mi)</option>
           </select>
         </label>
 
         <label className="flex flex-col gap-1.5">
-          <span className="text-xs text-muted">Repos par d&eacute;faut (sec)</span>
+          <span className="text-xs text-muted">Repos par défaut (sec)</span>
           <input
             type="number"
             name="defaultRestSecs"
@@ -141,7 +141,7 @@ export function ProfileForm({ profile, sportProfile, showEnduranceRefs = false }
             inputMode="numeric"
             defaultValue={profile.defaultRestSecs ?? ""}
             placeholder="ex: 90"
-            className="rounded-lg border border-border bg-background px-3 py-2.5 text-sm focus:outline-none focus:border-accent transition-colors tabular-nums"
+            className="rounded-xl border border-border bg-background px-3 py-2.5 text-sm focus:outline-none focus:border-accent-ink transition-colors tabular-nums"
           />
         </label>
 
@@ -169,7 +169,7 @@ export function ProfileForm({ profile, sportProfile, showEnduranceRefs = false }
                 inputMode="numeric"
                 defaultValue={profile.fcMax ?? ""}
                 placeholder="ex: 185"
-                className="rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-accent tabular-nums"
+                className="rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-accent-ink tabular-nums"
               />
             </label>
             <label className="flex flex-col gap-1.5">
@@ -183,7 +183,7 @@ export function ProfileForm({ profile, sportProfile, showEnduranceRefs = false }
                 inputMode="numeric"
                 defaultValue={profile.fcResting ?? ""}
                 placeholder="ex: 55"
-                className="rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-accent tabular-nums"
+                className="rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-accent-ink tabular-nums"
               />
             </label>
             <label className="flex flex-col gap-1.5">
@@ -197,7 +197,7 @@ export function ProfileForm({ profile, sportProfile, showEnduranceRefs = false }
                 inputMode="decimal"
                 defaultValue={profile.vmaKmh ?? ""}
                 placeholder="ex: 15.5"
-                className="rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-accent tabular-nums"
+                className="rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-accent-ink tabular-nums"
               />
             </label>
             <label className="flex flex-col gap-1.5">
@@ -211,7 +211,7 @@ export function ProfileForm({ profile, sportProfile, showEnduranceRefs = false }
                 inputMode="numeric"
                 defaultValue={profile.ftp ?? ""}
                 placeholder="ex: 240"
-                className="rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-accent tabular-nums"
+                className="rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-accent-ink tabular-nums"
               />
             </label>
           </div>
@@ -250,7 +250,7 @@ export function ProfileForm({ profile, sportProfile, showEnduranceRefs = false }
                 <select
                   value={primarySport}
                   onChange={(e) => setPrimarySport(e.target.value as PrimarySport | "")}
-                  className="rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:border-accent transition-colors"
+                  className="rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:border-accent-ink transition-colors"
                 >
                   <option value="">—</option>
                   {SPORTS.map((s) => (
@@ -266,7 +266,7 @@ export function ProfileForm({ profile, sportProfile, showEnduranceRefs = false }
                 <select
                   value={sportLevel}
                   onChange={(e) => setSportLevel(e.target.value as SportLevel | "")}
-                  className="rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:border-accent transition-colors"
+                  className="rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:border-accent-ink transition-colors"
                 >
                   <option value="">—</option>
                   {LEVELS.map((l) => (
@@ -285,7 +285,7 @@ export function ProfileForm({ profile, sportProfile, showEnduranceRefs = false }
                 value={sportObjective}
                 onChange={(e) => setSportObjective(e.target.value)}
                 placeholder="Ex : préparer mon premier semi en octobre"
-                className="rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:border-accent transition-colors"
+                className="rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:border-accent-ink transition-colors"
               />
             </label>
 
@@ -293,7 +293,7 @@ export function ProfileForm({ profile, sportProfile, showEnduranceRefs = false }
               <div className="space-y-1">
                 <div className="flex items-center justify-between">
                   <span className="text-[11px] text-muted">Séances / semaine</span>
-                  <span className="text-accent font-semibold tabular-nums text-sm">{weeklyTarget}</span>
+                  <span className="text-accent-ink font-semibold tabular-nums text-sm">{weeklyTarget}</span>
                 </div>
                 <input
                   type="range"
@@ -308,7 +308,7 @@ export function ProfileForm({ profile, sportProfile, showEnduranceRefs = false }
               <div className="space-y-1">
                 <div className="flex items-center justify-between">
                   <span className="text-[11px] text-muted">Durée séance (min)</span>
-                  <span className="text-accent font-semibold tabular-nums text-sm">{sessionDuration}</span>
+                  <span className="text-accent-ink font-semibold tabular-nums text-sm">{sessionDuration}</span>
                 </div>
                 <input
                   type="range"
@@ -353,7 +353,7 @@ export function ProfileForm({ profile, sportProfile, showEnduranceRefs = false }
                 onChange={(e) => setMedicalNotes(e.target.value)}
                 rows={2}
                 placeholder="Ex : épaule droite sensible, tendinite Achille récurrente…"
-                className="rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:border-accent transition-colors resize-none"
+                className="rounded-lg border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:border-accent-ink transition-colors resize-none"
               />
             </label>
           </div>
@@ -365,7 +365,7 @@ export function ProfileForm({ profile, sportProfile, showEnduranceRefs = false }
           type="checkbox"
           name="mentorEnabled"
           defaultChecked={profile.mentorEnabled}
-          className="w-4 h-4 rounded border-border text-accent focus:ring-accent cursor-pointer accent-accent"
+          className="w-4 h-4 rounded border-border text-accent-ink focus:ring-accent-ink cursor-pointer accent-accent"
         />
         <div>
           <span className="text-sm font-medium">Mentor IA</span>
@@ -376,7 +376,7 @@ export function ProfileForm({ profile, sportProfile, showEnduranceRefs = false }
       <button
         type="submit"
         disabled={isPending}
-        className="w-full rounded-lg bg-accent text-white py-2.5 text-sm font-semibold hover:bg-accent-hover transition-colors cursor-pointer disabled:opacity-50"
+        className="w-full rounded-xl bg-foreground text-background py-2.5 text-sm font-semibold hover:opacity-90 transition-opacity cursor-pointer disabled:opacity-50"
       >
         {isPending ? "Sauvegarde…" : "Sauvegarder"}
       </button>

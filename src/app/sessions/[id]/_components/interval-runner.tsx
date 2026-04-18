@@ -278,14 +278,23 @@ export function IntervalRunner({ workoutId, block, onClose }: Props) {
     rawDispatch({ type: "RESET", leadSecs: cfg.leadSecs });
   }
 
+  // Phase palette — dark immersive base with electric-blue energy on WORK,
+  // warm peach on REST, muted dark on GET_READY, and black on DONE.
   const bg =
     state.phase === "WORK"
-      ? "bg-[color:var(--done,#22c55e)]"
+      ? "bg-accent"
       : state.phase === "REST"
-        ? "bg-orange-500"
+        ? "bg-[color:var(--peach)]"
         : state.phase === "GET_READY"
-          ? "bg-accent"
-          : "bg-background";
+          ? "bg-foreground"
+          : "bg-foreground";
+  // Text color per phase — bg-accent requires black text (AA rule).
+  const fg =
+    state.phase === "WORK"
+      ? "text-accent-foreground"
+      : state.phase === "REST"
+        ? "text-foreground"
+        : "text-background";
   const label =
     state.phase === "WORK"
       ? "EFFORT"
@@ -297,21 +306,23 @@ export function IntervalRunner({ workoutId, block, onClose }: Props) {
 
   return (
     <div
-      className={`fixed inset-0 z-[100] flex flex-col text-white transition-colors ${bg}`}
+      className={`fixed inset-0 z-[100] flex flex-col transition-colors ${bg} ${fg}`}
       role="dialog"
-      aria-label="Minuteur d&rsquo;intervalles"
+      aria-modal="true"
+      aria-label="Minuteur d’intervalles"
     >
       {/* Top bar */}
       <div className="flex items-center justify-between p-4">
         <button
           type="button"
           onClick={onClose}
-          className="text-xs uppercase tracking-wider text-white/80 hover:text-white cursor-pointer inline-flex items-center gap-1"
+          className="text-[10px] uppercase tracking-widest font-semibold opacity-80 hover:opacity-100 cursor-pointer inline-flex items-center gap-1 transition-opacity"
+          aria-label="Quitter le minuteur"
         >
           <ChevronLeft className="h-3.5 w-3.5" aria-hidden="true" />
           Quitter
         </button>
-        <p className="text-xs uppercase tracking-wider text-white/80 tabular-nums">
+        <p className="text-[10px] uppercase tracking-widest font-semibold opacity-80 tabular-nums">
           Round{" "}
           {Math.min(state.currentRound + (state.phase === "WORK" ? 1 : 0), cfg.rounds)} /{" "}
           {cfg.rounds}
@@ -319,7 +330,8 @@ export function IntervalRunner({ workoutId, block, onClose }: Props) {
         <button
           type="button"
           onClick={handleReset}
-          className="text-xs uppercase tracking-wider text-white/80 hover:text-white cursor-pointer inline-flex items-center gap-1"
+          className="text-[10px] uppercase tracking-widest font-semibold opacity-80 hover:opacity-100 cursor-pointer inline-flex items-center gap-1 transition-opacity"
+          aria-label="Réinitialiser le circuit"
         >
           <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />
           Reset
@@ -328,11 +340,14 @@ export function IntervalRunner({ workoutId, block, onClose }: Props) {
 
       {/* Center */}
       <div className="flex-1 flex flex-col items-center justify-center gap-6 px-6">
-        <p className="text-xs uppercase tracking-[0.25em] text-white/90 font-bold">
+        <p className="text-xs uppercase tracking-[0.25em] font-bold opacity-90">
           {label}
         </p>
 
-        <p className="font-display font-bold text-[min(50vw,240px)] leading-none tabular-nums flex items-center justify-center">
+        <p
+          className="font-display font-black text-[min(50vw,240px)] leading-none tabular-nums flex items-center justify-center"
+          aria-live="polite"
+        >
           {state.phase === "DONE" ? (
             <Check className="h-[min(40vw,200px)] w-[min(40vw,200px)]" strokeWidth={3} aria-hidden="true" />
           ) : (
@@ -346,7 +361,7 @@ export function IntervalRunner({ workoutId, block, onClose }: Props) {
               {currentExercise.name}
             </p>
             {nextExercise && state.phase === "REST" && (
-              <p className="text-sm text-white/75 mt-3">
+              <p className="text-sm opacity-75 mt-3">
                 Ensuite →{" "}
                 <span className="font-semibold">{nextExercise.name}</span>
               </p>
@@ -360,12 +375,16 @@ export function IntervalRunner({ workoutId, block, onClose }: Props) {
       </div>
 
       {/* Round dots */}
-      <div className="flex items-center justify-center gap-1.5 pb-3">
+      <div
+        className="flex items-center justify-center gap-1.5 pb-3"
+        aria-label={`Progression : ${state.currentRound} sur ${cfg.rounds} rounds`}
+      >
         {Array.from({ length: cfg.rounds }).map((_, i) => (
           <span
             key={i}
-            className={`h-2 w-2 rounded-full ${
-              i < state.currentRound ? "bg-white" : "bg-white/30"
+            aria-hidden="true"
+            className={`h-2 w-2 rounded-full bg-current ${
+              i < state.currentRound ? "opacity-100" : "opacity-30"
             }`}
           />
         ))}
@@ -377,7 +396,7 @@ export function IntervalRunner({ workoutId, block, onClose }: Props) {
           <button
             type="button"
             onClick={onClose}
-            className="col-span-2 rounded-xl bg-white text-foreground py-4 text-sm font-bold uppercase tracking-wider cursor-pointer hover:opacity-90 transition-opacity"
+            className="col-span-2 rounded-xl bg-background text-foreground py-4 text-sm font-bold uppercase tracking-widest cursor-pointer hover:opacity-90 transition-opacity"
           >
             Revenir à la séance
           </button>
@@ -389,7 +408,8 @@ export function IntervalRunner({ workoutId, block, onClose }: Props) {
                 ensureAudio();
                 rawDispatch({ type: "TOGGLE_PAUSE" });
               }}
-              className="rounded-xl bg-white/15 backdrop-blur py-4 text-sm font-bold uppercase tracking-wider cursor-pointer hover:bg-white/25 transition-colors inline-flex items-center justify-center gap-2"
+              className="rounded-xl bg-black/10 backdrop-blur py-4 text-sm font-bold uppercase tracking-widest cursor-pointer hover:bg-black/20 transition-colors inline-flex items-center justify-center gap-2"
+              aria-label={state.paused ? "Reprendre le minuteur" : "Mettre en pause"}
             >
               {state.paused ? (
                 <>
@@ -406,7 +426,8 @@ export function IntervalRunner({ workoutId, block, onClose }: Props) {
             <button
               type="button"
               onClick={() => rawDispatch({ type: "SKIP_PHASE" })}
-              className="rounded-xl bg-white/15 backdrop-blur py-4 text-sm font-bold uppercase tracking-wider cursor-pointer hover:bg-white/25 transition-colors inline-flex items-center justify-center gap-2"
+              className="rounded-xl bg-black/10 backdrop-blur py-4 text-sm font-bold uppercase tracking-widest cursor-pointer hover:bg-black/20 transition-colors inline-flex items-center justify-center gap-2"
+              aria-label="Passer cette phase"
             >
               <SkipForward className="h-4 w-4" aria-hidden="true" />
               Passer

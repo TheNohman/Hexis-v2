@@ -43,7 +43,7 @@ export function RegenerateButton({ disabled, disabledReason }: Props) {
       type="button"
       onClick={onClick}
       disabled={pending}
-      className="inline-flex items-center gap-2 rounded-xl bg-accent text-white px-4 py-2 text-sm font-semibold hover:bg-accent-hover transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+      className="inline-flex items-center gap-2 rounded-xl bg-accent text-accent-foreground px-4 py-2 text-sm font-semibold hover:bg-accent-hover transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
     >
       {pending ? "Génération…" : "Régénérer maintenant"}
     </button>

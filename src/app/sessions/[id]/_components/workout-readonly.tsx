@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { formatDuration } from "@/lib/format";
 import type { WorkoutDetail } from "@/lib/workouts/types";
+import { Card } from "@/app/_components/card";
+import { Stat } from "@/app/_components/stat";
 import { SaveAsTemplateButton } from "./save-as-template-button";
 import { RedoWorkoutButton } from "./redo-workout-button";
 import { WorkoutReadonlyActions } from "./workout-readonly-actions";
@@ -61,58 +63,65 @@ export function WorkoutReadonly({ workout }: Props) {
     .some((e) => e.exercise.type === "STRENGTH");
 
   return (
-    <main className="flex-1 flex flex-col px-4 py-6">
+    <main id="main-content" className="flex-1 flex flex-col px-4 py-6">
       <div className="max-w-2xl w-full mx-auto space-y-6">
         <header className="flex items-start justify-between gap-3">
-          <div>
-            <h1 className="text-2xl font-display font-bold">{workout.name}</h1>
-            <p className="text-xs text-subtle mt-1.5 font-medium">{dateLabel}</p>
+          <div className="min-w-0">
+            <p className="text-[10px] uppercase tracking-widest text-muted font-semibold">
+              Séance terminée
+            </p>
+            <h1 className="font-display font-extrabold text-[28px] sm:text-[32px] tracking-tight mt-1 truncate">
+              {workout.name}
+            </h1>
+            <p className="text-xs text-muted mt-1">{dateLabel}</p>
           </div>
           <Link
             href="/dashboard"
-            className="text-xs text-subtle hover:text-foreground whitespace-nowrap px-3 py-2 rounded-lg hover:bg-surface transition-colors"
+            className="text-xs text-muted hover:text-foreground whitespace-nowrap px-3 py-2 rounded-lg hover:bg-surface-hover transition-colors"
           >
-            &larr; Retour
+            ← Retour
           </Link>
         </header>
 
         {/* Summary stats */}
         <div className="grid grid-cols-3 gap-3">
           {durationMins != null && (
-            <div className="rounded-xl border border-border bg-surface p-3 text-center">
-              <p className="text-lg font-display font-bold text-accent tabular-nums">
-                {formatDuration(durationMins * 60)}
-              </p>
-              <p className="text-[10px] text-muted mt-0.5">Dur&eacute;e</p>
-            </div>
+            <Stat
+              value={formatDuration(durationMins * 60)}
+              label="Durée"
+              variant="accent"
+              dense
+            />
           )}
-          <div className="rounded-xl border border-border bg-surface p-3 text-center">
-            <p className="text-lg font-display font-bold tabular-nums">{totalSets}</p>
-            <p className="text-[10px] text-muted mt-0.5">S&eacute;ries</p>
-          </div>
+          <Stat value={totalSets} label="Séries" dense />
           {totalVolume > 0 && (
-            <div className="rounded-xl border border-border bg-surface p-3 text-center">
-              <p className="text-lg font-display font-bold text-accent tabular-nums">
-                {Math.round(totalVolume).toLocaleString("fr-FR")} kg
-              </p>
-              <p className="text-[10px] text-muted mt-0.5">Volume</p>
-            </div>
+            <Stat
+              value={`${Math.round(totalVolume).toLocaleString("fr-FR")} kg`}
+              label="Volume"
+              variant="accent"
+              dense
+            />
           )}
         </div>
 
         <div className="space-y-3">
           {workout.blocks.length === 0 ? (
-            <p className="text-sm text-subtle text-center py-8">
-              Cette s&eacute;ance est vide.
+            <p className="text-sm text-muted text-center py-8">
+              Cette séance est vide.
             </p>
           ) : (
             workout.blocks.map((block) => (
-              <section
+              <Card
                 key={block.id}
-                className="rounded-2xl border border-border bg-surface overflow-hidden"
+                as="section"
+                padding="none"
+                rounded="2xl"
+                className="overflow-hidden"
               >
                 <header className="px-4 py-3 border-b border-border">
-                  <h2 className="text-xs font-bold uppercase tracking-widest">{block.name}</h2>
+                  <h2 className="font-display font-bold text-[10px] uppercase tracking-widest">
+                    {block.name}
+                  </h2>
                 </header>
                 <ul className="p-2">
                   {block.entries.map((entry) => {
@@ -120,24 +129,26 @@ export function WorkoutReadonly({ workout }: Props) {
                     return (
                       <li
                         key={entry.id}
-                        className={`flex items-start justify-between py-2.5 px-3 rounded-lg ${entry.status === "SKIPPED" ? "opacity-40" : ""}`}
+                        className={`flex items-start justify-between py-2.5 px-3 rounded-lg ${entry.status === "SKIPPED" ? "opacity-50" : ""}`}
                       >
                         <div className="min-w-0 flex-1">
                           <p className={`text-sm font-semibold truncate ${entry.status === "SKIPPED" ? "line-through" : ""}`}>
                             {entry.exercise.name}
                           </p>
                           {values && (
-                            <p className="text-xs text-muted mt-0.5">
+                            <p className="text-xs text-muted mt-0.5 tabular-nums">
                               {values}
                             </p>
                           )}
                         </div>
                         {entry.status === "SKIPPED" && (
-                          <span className="text-[10px] text-subtle ml-2 uppercase tracking-wide font-medium">pass&eacute;e</span>
+                          <span className="text-[10px] text-muted ml-2 uppercase tracking-widest font-semibold">
+                            passée
+                          </span>
                         )}
                         {entry.status === "DONE" && (
-                          <span className="text-done ml-2">
-                            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <span className="text-accent-ink ml-2" aria-label="Validée">
+                            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                               <polyline points="2,8 5,11 12,3" />
                             </svg>
                           </span>
@@ -146,12 +157,12 @@ export function WorkoutReadonly({ workout }: Props) {
                     );
                   })}
                 </ul>
-              </section>
+              </Card>
             ))
           )}
         </div>
 
-        {/* Save as template */}
+        {/* Actions */}
         <RedoWorkoutButton sourceWorkoutId={workout.id} hasStrengthExercises={hasStrength} />
         <SaveAsTemplateButton workoutId={workout.id} workoutName={workout.name} />
         <WorkoutReadonlyActions workoutId={workout.id} />
