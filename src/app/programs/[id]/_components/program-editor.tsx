@@ -17,11 +17,8 @@ import {
   cloneCycleAction,
 } from "@/app/programs/actions";
 import type { ProgramDetail } from "@/lib/programs/types";
-import {
-  computeSlotDate,
-  formatSlotDate,
-  cycleLabel,
-} from "@/lib/programs/utils";
+// formatSlotDate / computeSlotDate / cycleLabel not used here after the
+// "Prochaine séance" hero card was removed; cycle utilities live in CycleSection.
 import { Card } from "@/app/_components/card";
 import { useToast } from "@/app/_components/toast";
 import { CycleSection } from "./cycle-section";
@@ -32,9 +29,15 @@ type Props = {
   program: ProgramDetail;
   templates: TemplateOption[];
   mentorEnabled: boolean;
+  completionBySlot: Record<string, number>;
 };
 
-export function ProgramEditor({ program, templates, mentorEnabled }: Props) {
+export function ProgramEditor({
+  program,
+  templates,
+  mentorEnabled,
+  completionBySlot,
+}: Props) {
   const toast = useToast();
   const [isPending, startTransition] = useTransition();
   const [editingSlotId, setEditingSlotId] = useState<string | null>(null);
@@ -133,12 +136,6 @@ export function ProgramEditor({ program, templates, mentorEnabled }: Props) {
     });
   }
 
-  // Derive "next session" info for the hero meta line.
-  const currentSlot = program.slots.find((s) => s.id === program.currentSlotId);
-  const nextDate =
-    currentSlot && program.startDate
-      ? computeSlotDate(program.startDate, program.cycleDays, currentSlot.cycle, currentSlot.day)
-      : null;
   const slotCount = program.slots.filter((s) => s.templateId).length;
   // All (cycle, day) positions that have NO assigned template — either an
   // empty slot exists there, or no slot exists at all. These are the AI targets.
@@ -151,6 +148,15 @@ export function ProgramEditor({ program, templates, mentorEnabled }: Props) {
       if (!assignedKeySet.has(`${c}:${d}`)) emptySlotCount++;
     }
   }
+  // Completed slots: slots where the user has at least one finished workout.
+  const completedSlotCount = program.slots.filter(
+    (s) => s.templateId && (completionBySlot[s.id] ?? 0) > 0,
+  ).length;
+  const progressPct =
+    slotCount > 0 ? Math.round((completedSlotCount / slotCount) * 100) : 0;
+  // Which cycle is "current" — defaults to cycle of currentSlotId, else 0.
+  const currentSlot = program.slots.find((s) => s.id === program.currentSlotId);
+  const currentCycleIdx = currentSlot?.cycle ?? 0;
   const canFillWithAI = mentorEnabled && emptySlotCount > 0;
   const fillTooltip = !mentorEnabled
     ? "Active le Mentor IA dans ton profil"
@@ -214,7 +220,7 @@ export function ProgramEditor({ program, templates, mentorEnabled }: Props) {
                 <button
                   type="button"
                   onClick={() => setEditingDesc(true)}
-                  className="text-left text-sm text-muted leading-relaxed hover:text-foreground transition-colors cursor-text"
+                  className="text-left text-[15px] font-display font-medium text-ink-strong leading-snug hover:text-foreground transition-colors cursor-text block max-w-[60ch]"
                 >
                   {program.description}
                 </button>
@@ -222,7 +228,7 @@ export function ProgramEditor({ program, templates, mentorEnabled }: Props) {
                 <button
                   type="button"
                   onClick={() => setEditingDesc(true)}
-                  className="text-left text-sm text-subtle italic hover:text-muted transition-colors cursor-text"
+                  className="text-left text-sm text-subtle italic hover:text-accent-ink transition-colors cursor-text"
                 >
                   + Ajouter une description (objectif, niveau, contraintes…)
                 </button>
@@ -345,24 +351,36 @@ export function ProgramEditor({ program, templates, mentorEnabled }: Props) {
           </button>
         )}
 
-        {/* Next session callout — hero black card, right-arrow affordance */}
-        {nextDate && currentSlot && (
-          <div className="inline-flex w-full sm:w-auto items-center gap-4 rounded-2xl bg-foreground text-background px-5 py-3.5 shadow-hero">
-            <div className="shrink-0 w-10 h-10 rounded-xl bg-accent flex items-center justify-center">
-              <span aria-hidden="true" className="text-foreground text-lg">→</span>
+        {/* Progress strip — shows trajectory when there's at least 1 planned slot */}
+        {slotCount > 0 && (
+          <div className="space-y-1.5 pt-1">
+            <div className="flex items-baseline justify-between gap-3">
+              <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted">
+                Progression
+              </p>
+              <p className="text-xs tabular-nums">
+                <span className="font-display font-black text-foreground text-base">
+                  {completedSlotCount}
+                </span>
+                <span className="text-muted"> / {slotCount} </span>
+                <span className="text-subtle">
+                  · {progressPct}%
+                </span>
+              </p>
             </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-accent">
-                Prochaine séance
-              </p>
-              <p className="font-display font-bold text-base leading-tight mt-0.5">
-                {currentSlot.templateName ?? "Séance sans modèle"}
-              </p>
-              <p className="text-[11px] text-background/70 mt-0.5">
-                {formatSlotDate(nextDate)}
-                {currentSlot.startTime && ` · ${currentSlot.startTime}`}
-                {program.cycleCount > 1 && ` · ${cycleLabel(currentSlot.cycle)}`}
-              </p>
+            <div
+              className="relative h-1.5 rounded-full bg-border/60 overflow-hidden"
+              role="progressbar"
+              aria-valuenow={completedSlotCount}
+              aria-valuemin={0}
+              aria-valuemax={slotCount}
+              aria-label="Progression du programme"
+            >
+              <span
+                aria-hidden="true"
+                className="absolute inset-y-0 left-0 bg-accent rounded-full transition-[width] duration-500 ease-out"
+                style={{ width: `${progressPct}%` }}
+              />
             </div>
           </div>
         )}
@@ -488,6 +506,8 @@ export function ProgramEditor({ program, templates, mentorEnabled }: Props) {
             cycleDays={program.cycleDays}
             startDate={program.startDate}
             slots={slots}
+            completionBySlot={completionBySlot}
+            isFocusCycle={cycle === currentCycleIdx}
             nextCycleSlotCount={
               cycles.find((c) => c.cycle === cycle + 1)?.slots.length ?? 0
             }

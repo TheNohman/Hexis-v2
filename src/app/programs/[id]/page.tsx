@@ -12,15 +12,31 @@ type Props = { params: Promise<{ id: string }> };
 export default async function ProgramPage(props: Props) {
   const params = await props.params;
   const userId = await getCurrentUserId();
-  const [program, templates, user] = await Promise.all([
+  const [program, templates, user, finishedWorkouts] = await Promise.all([
     getProgramById(params.id, userId),
     listTemplates(userId),
     prisma.user.findUnique({
       where: { id: userId },
       select: { mentorEnabled: true },
     }),
+    // Per-slot completion count — counts every finished workout ever done for
+    // each slot.id. Used to show "X/Y séances complétées" + per-slot done mark.
+    prisma.workout.groupBy({
+      by: ["programSlotId"],
+      where: {
+        programId: params.id,
+        finishedAt: { not: null },
+        programSlotId: { not: null },
+      },
+      _count: { _all: true },
+    }),
   ]);
   const mentorEnabled = Boolean(user?.mentorEnabled);
+
+  const completionBySlot: Record<string, number> = {};
+  for (const row of finishedWorkouts) {
+    if (row.programSlotId) completionBySlot[row.programSlotId] = row._count._all;
+  }
 
   const templateOptions = templates.map((t) => ({ id: t.id, name: t.name }));
 
@@ -41,6 +57,7 @@ export default async function ProgramPage(props: Props) {
           program={program}
           templates={templateOptions}
           mentorEnabled={mentorEnabled}
+          completionBySlot={completionBySlot}
         />
       </div>
     </main>

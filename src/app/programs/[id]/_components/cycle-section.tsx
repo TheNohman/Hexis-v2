@@ -19,6 +19,10 @@ type Props = {
   cycleDays: number;
   startDate: Date | null;
   slots: ProgramSlotDetail[];
+  /** Number of finished workouts per slot id — used for per-slot ✓ marker and cycle stats. */
+  completionBySlot: Record<string, number>;
+  /** True when this cycle should get visual focus (contains cursor slot). Others dim. */
+  isFocusCycle: boolean;
   /** Slot count in the NEXT cycle — used to warn before cloning into a non-empty cycle. */
   nextCycleSlotCount: number;
   currentSlotId: string | null;
@@ -42,6 +46,8 @@ export function CycleSection({
   cycleDays,
   startDate,
   slots,
+  completionBySlot,
+  isFocusCycle,
   nextCycleSlotCount,
   currentSlotId,
   expandedSlotId,
@@ -58,6 +64,12 @@ export function CycleSection({
   const canClone = cycle + 1 < cycleCount && slots.length > 0;
   const cycleRange = computeCycleRange(startDate, cycleDays, cycle);
 
+  // Per-cycle stats: planned vs completed (at least 1 finished workout).
+  const plannedCount = slots.filter((s) => s.templateId).length;
+  const completedCount = slots.filter(
+    (s) => s.templateId && (completionBySlot[s.id] ?? 0) > 0,
+  ).length;
+
   // Group slots by day when a start date is set — makes multi-session days obvious.
   const slotsByDay = new Map<number, ProgramSlotDetail[]>();
   for (const s of slots) {
@@ -68,7 +80,9 @@ export function CycleSection({
 
   return (
     <section
-      className="space-y-4 animate-fade-in-up"
+      className={`space-y-4 animate-fade-in-up transition-opacity duration-300 ${
+        isFocusCycle ? "opacity-100" : "opacity-75 hover:opacity-100"
+      }`}
       style={{ animationDelay: `${cycle * 60}ms` }}
       aria-labelledby={`cycle-${cycle}`}
     >
@@ -76,9 +90,13 @@ export function CycleSection({
       <div className="flex items-center gap-3.5 pt-2">
         <span
           aria-hidden="true"
-          className="font-display font-black text-[56px] sm:text-[64px] leading-none text-transparent tabular-nums shrink-0 select-none"
+          className={`font-display font-black text-[56px] sm:text-[64px] leading-none text-transparent tabular-nums shrink-0 select-none transition-colors ${
+            isFocusCycle ? "" : "opacity-60"
+          }`}
           style={{
-            WebkitTextStroke: "2px var(--foreground)",
+            WebkitTextStroke: isFocusCycle
+              ? "2px var(--foreground)"
+              : "1.5px var(--muted)",
           }}
         >
           {String(cycle + 1).padStart(2, "0")}
@@ -126,6 +144,20 @@ export function CycleSection({
             </p>
           ) : (
             <p className="text-sm text-muted mt-0.5">{cycleDays} jours</p>
+          )}
+          {plannedCount > 0 && (
+            <p className="text-[11px] text-muted mt-1 tabular-nums">
+              <span className="font-semibold text-foreground">{plannedCount}</span>
+              {" séance"}{plannedCount > 1 ? "s " : " "}
+              {completedCount > 0 && (
+                <span>
+                  {" · "}
+                  <span className="font-semibold text-accent-ink">
+                    {completedCount} terminée{completedCount > 1 ? "s" : ""}
+                  </span>
+                </span>
+              )}
+            </p>
           )}
         </div>
       </div>
