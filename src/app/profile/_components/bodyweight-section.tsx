@@ -162,7 +162,7 @@ export function BodyWeightSection({ entries }: Props) {
             disabled={isPending}
             className="w-full rounded-lg bg-accent text-white py-2.5 text-sm font-semibold hover:bg-accent-hover transition-colors cursor-pointer disabled:opacity-50"
           >
-            {isPending ? "Ajout\u2026" : "Ajouter"}
+            {isPending ? "Ajout…" : "Ajouter"}
           </button>
         </form>
       )}

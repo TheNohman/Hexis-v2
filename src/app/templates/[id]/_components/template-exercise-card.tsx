@@ -164,7 +164,7 @@ export function TemplateExerciseCard({ templateId, group }: Props) {
       <ConfirmDialog
         open={confirmDeleteOpen}
         title="Supprimer cet exercice ?"
-        message={`\u00ab\u00a0${group.exerciseName}\u00a0\u00bb et ses ${group.sets.length} s\u00e9rie${group.sets.length > 1 ? "s" : ""} seront supprim\u00e9${group.sets.length > 1 ? "s" : ""}.`}
+        message={`« ${group.exerciseName} » et ses ${group.sets.length} série${group.sets.length > 1 ? "s" : ""} seront supprimé${group.sets.length > 1 ? "s" : ""}.`}
         confirmLabel="Supprimer"
         destructive
         onConfirm={handleConfirmDelete}
@@ -200,7 +200,7 @@ function TemplateSetRow({
       return null;
     })
     .filter(Boolean)
-    .join(" \u00b7 ");
+    .join(" · ");
 
   return (
     <div className="grid grid-cols-[2rem_1fr_2.5rem_2.5rem] items-center px-4 py-2.5">

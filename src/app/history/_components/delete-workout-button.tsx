@@ -38,7 +38,7 @@ export function DeleteWorkoutButton({ workoutId, workoutName }: Props) {
           return;
         }
         console.error(err);
-        toast.show("\u00c9chec de la suppression.", { kind: "error" });
+        toast.show("Échec de la suppression.", { kind: "error" });
       }
     });
   }
@@ -49,15 +49,15 @@ export function DeleteWorkoutButton({ workoutId, workoutName }: Props) {
         type="button"
         onClick={askConfirm}
         disabled={isPending}
-        aria-label="Supprimer cette s\u00e9ance"
+        aria-label="Supprimer cette séance"
         className="text-[11px] text-subtle hover:text-danger transition-colors px-2 py-1 rounded-md hover:bg-danger/10 cursor-pointer disabled:opacity-50"
       >
-        {isPending ? "\u2026" : "Supprimer"}
+        {isPending ? "…" : "Supprimer"}
       </button>
       <ConfirmDialog
         open={confirmOpen}
-        title="Supprimer la s\u00e9ance ?"
-        message={`\u00ab\u00a0${workoutName}\u00a0\u00bb sera d\u00e9finitivement supprim\u00e9e. Cette action est irr\u00e9versible.`}
+        title="Supprimer la séance ?"
+        message={`« ${workoutName} » sera définitivement supprimée. Cette action est irréversible.`}
         confirmLabel="Supprimer"
         destructive
         onConfirm={handleConfirm}

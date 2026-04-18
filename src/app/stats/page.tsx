@@ -44,12 +44,12 @@ export default async function StatsPage() {
         {/* Summary */}
         <section className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {[
-            { value: stats.totalWorkouts, label: "S\u00e9ances" },
-            { value: stats.totalFinished, label: "Termin\u00e9es" },
-            { value: stats.totalSetsDone, label: "S\u00e9ries" },
+            { value: stats.totalWorkouts, label: "Séances" },
+            { value: stats.totalFinished, label: "Terminées" },
+            { value: stats.totalSetsDone, label: "Séries" },
             {
-              value: stats.avgDurationMins != null ? formatDuration(stats.avgDurationMins * 60) : "\u2014",
-              label: "Dur\u00e9e moy.",
+              value: stats.avgDurationMins != null ? formatDuration(stats.avgDurationMins * 60) : "—",
+              label: "Durée moy.",
             },
           ].map(({ value, label }) => (
             <Card key={label} className="text-center">

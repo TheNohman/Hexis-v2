@@ -109,7 +109,7 @@ export function TemplateBlockCard({ templateId, block, exercises }: Props) {
       <ConfirmDialog
         open={confirmDeleteOpen}
         title="Supprimer ce bloc ?"
-        message={`\u00ab\u00a0${block.name}\u00a0\u00bb et tous ses exercices seront supprim\u00e9s.`}
+        message={`« ${block.name} » et tous ses exercices seront supprimés.`}
         confirmLabel="Supprimer"
         destructive
         onConfirm={() => {

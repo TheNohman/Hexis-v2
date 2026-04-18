@@ -70,15 +70,15 @@ export default async function HistoryPage({
           q ? (
             <EmptyState
               icon={Search}
-              title="Aucun r\u00e9sultat"
-              description={`Aucune s\u00e9ance ne correspond \u00e0 \u00ab\u00a0${q}\u00a0\u00bb.`}
+              title="Aucun résultat"
+              description={`Aucune séance ne correspond à « ${q} ».`}
             />
           ) : (
             <EmptyState
               icon={History}
-              title="Aucune s\u00e9ance"
-              description="Tes s\u00e9ances termin\u00e9es appara\u00eetront ici."
-              cta={{ label: "Lancer une s\u00e9ance", href: "/dashboard" }}
+              title="Aucune séance"
+              description="Tes séances terminées apparaîtront ici."
+              cta={{ label: "Lancer une séance", href: "/dashboard" }}
             />
           )
         ) : (

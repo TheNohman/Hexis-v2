@@ -22,7 +22,7 @@ export function RegenerateButton({ disabled, disabledReason }: Props) {
   function onClick() {
     if (disabled) {
       toast.show(
-        disabledReason ?? "Impossible de r\u00e9g\u00e9n\u00e9rer pour le moment.",
+        disabledReason ?? "Impossible de régénérer pour le moment.",
         { kind: "info" },
       );
       return;
@@ -30,10 +30,10 @@ export function RegenerateButton({ disabled, disabledReason }: Props) {
     startTransition(async () => {
       try {
         await regenerateMentorAdviceAction();
-        toast.show("Nouveau conseil g\u00e9n\u00e9r\u00e9.", { kind: "success" });
+        toast.show("Nouveau conseil généré.", { kind: "success" });
       } catch (error) {
         console.error("[mentor] regenerate", error);
-        toast.show("La r\u00e9g\u00e9n\u00e9ration a \u00e9chou\u00e9.", { kind: "error" });
+        toast.show("La régénération a échoué.", { kind: "error" });
       }
     });
   }
@@ -45,7 +45,7 @@ export function RegenerateButton({ disabled, disabledReason }: Props) {
       disabled={pending}
       className="inline-flex items-center gap-2 rounded-xl bg-accent text-white px-4 py-2 text-sm font-semibold hover:bg-accent-hover transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
     >
-      {pending ? "G\u00e9n\u00e9ration\u2026" : "R\u00e9g\u00e9n\u00e9rer maintenant"}
+      {pending ? "Génération…" : "Régénérer maintenant"}
     </button>
   );
 }

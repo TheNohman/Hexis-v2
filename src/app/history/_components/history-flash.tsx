@@ -21,7 +21,7 @@ export function HistoryFlash({ flash }: Props) {
     if (!flash) return;
     firedRef.current = true;
     if (flash === "deleted") {
-      toast.show("S\u00e9ance supprim\u00e9e.", { kind: "success" });
+      toast.show("Séance supprimée.", { kind: "success" });
     }
   }, [flash, toast]);
 

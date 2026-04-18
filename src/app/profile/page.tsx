@@ -87,7 +87,7 @@ export default async function ProfilePage() {
     const v = latestByType.get(config.slug);
     measureRows.push({
       label: config.label,
-      value: v != null ? `${v.toFixed(1)} ${config.unit}` : "\u2014",
+      value: v != null ? `${v.toFixed(1)} ${config.unit}` : "—",
     });
   }
 

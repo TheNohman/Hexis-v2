@@ -10,7 +10,7 @@ function slugify(name: string): string {
   const base = name
     .toLowerCase()
     .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "") // strip accents
+    .replace(/[̀-ͯ]/g, "") // strip accents
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
   const rand = Math.random().toString(36).substring(2, 6);

@@ -10,7 +10,7 @@ export function dayLabel(day: number): string {
  */
 export function formatSlotTime(day: number, startTime: string | null): string {
   const d = dayLabel(day);
-  return startTime ? `${d} \u2014 ${startTime}` : d;
+  return startTime ? `${d} — ${startTime}` : d;
 }
 
 /**

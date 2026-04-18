@@ -93,7 +93,7 @@ export function AICreateForm() {
               onClick={() => handleGenerate(goals)}
               className="w-full rounded-xl bg-accent text-white py-3.5 font-semibold hover:bg-accent-hover transition-colors cursor-pointer disabled:opacity-50"
             >
-              {isPending ? "G\u00e9n\u00e9ration en cours..." : "G\u00e9n\u00e9rer le programme"}
+              {isPending ? "Génération en cours..." : "Générer le programme"}
             </button>
           </div>
         </>
@@ -168,7 +168,7 @@ export function AICreateForm() {
               onClick={handleConfirm}
               className="flex-1 rounded-xl bg-accent text-white py-3.5 font-semibold hover:bg-accent-hover transition-colors cursor-pointer disabled:opacity-50"
             >
-              {isPending ? "Cr\u00e9ation..." : "Cr\u00e9er ce programme"}
+              {isPending ? "Création..." : "Créer ce programme"}
             </button>
             <button
               type="button"

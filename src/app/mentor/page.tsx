@@ -65,7 +65,7 @@ export default async function MentorPage() {
 
   const rateLimited = rate.remaining <= 0;
   const disabledReason = rateLimited
-    ? `Limite horaire atteinte. R\u00e9essaie plus tard.`
+    ? `Limite horaire atteinte. Réessaie plus tard.`
     : null;
 
   return (
@@ -102,13 +102,13 @@ export default async function MentorPage() {
               }`}
               title={
                 rate.resetAt
-                  ? `Remise \u00e0 z\u00e9ro vers ${new Date(rate.resetAt).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}`
+                  ? `Remise à zéro vers ${new Date(rate.resetAt).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}`
                   : undefined
               }
             >
               {rateLimited
                 ? "Limite atteinte"
-                : `Il reste ${rate.remaining} g\u00e9n\u00e9ration${rate.remaining > 1 ? "s" : ""} cette heure`}
+                : `Il reste ${rate.remaining} génération${rate.remaining > 1 ? "s" : ""} cette heure`}
             </span>
           </div>
 

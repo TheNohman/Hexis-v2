@@ -49,7 +49,7 @@ export function ProgramHubCard({ activeProgram }: { activeProgram: ActiveProgram
           {currentSlot && (
             <p className="text-xs text-muted mt-0.5">
               {currentCycleDisplay} &middot; {currentDayDisplay}
-              {currentSlot.startTime && ` \u2014 ${currentSlot.startTime}`}
+              {currentSlot.startTime && ` — ${currentSlot.startTime}`}
             </p>
           )}
         </div>
