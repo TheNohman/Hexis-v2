@@ -1,6 +1,23 @@
 "use client";
 
-import { CopyPlus } from "lucide-react";
+import { CopyPlus, GripVertical } from "lucide-react";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  TouchSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import type { ProgramSlotDetail } from "@/lib/programs/types";
 import {
   cycleLabel,
@@ -77,6 +94,32 @@ export function CycleSection({
     arr.push(s);
     slotsByDay.set(s.day, arr);
   }
+
+  // ─── Drag-and-drop sensors & handler ───
+  // Touch sensor: 250ms delay + 8px tolerance keeps tap-to-expand working.
+  // Pointer sensor (desktop): 8px distance prevents accidental drags on click.
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(TouchSensor, {
+      activationConstraint: { delay: 250, tolerance: 8 },
+    }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
+
+  function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const draggedSlot = slots.find((s) => s.id === active.id);
+    const targetSlot = slots.find((s) => s.id === over.id);
+    if (!draggedSlot || !targetSlot) return;
+    // Move to the target's day only if different — same-day reorders are
+    // resolved by start-time anyway (no explicit slot order persisted).
+    if (draggedSlot.day !== targetSlot.day) {
+      onUpdateSlot(draggedSlot.id, { day: targetSlot.day });
+    }
+  }
+
+  const slotIds = slots.map((s) => s.id);
 
   return (
     <section
@@ -162,64 +205,137 @@ export function CycleSection({
         </div>
       </div>
 
-      {startDate ? (
-        <DateGroupedDays
-          cycle={cycle}
-          cycleDays={cycleDays}
-          startDate={startDate}
-          slotsByDay={slotsByDay}
-          currentSlotId={currentSlotId}
-          expandedSlotId={expandedSlotId}
-          onSlotClickTemplate={onSlotClickTemplate}
-          onChangeTemplate={onChangeTemplate}
-          onAddSlotAtDay={onAddSlotAtDay}
-          onDeleteSlot={onDeleteSlot}
-          onUpdateSlot={onUpdateSlot}
-          isPending={isPending}
-        />
-      ) : (
-        <div className="space-y-2">
-          {slots.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-border p-5 text-center">
-              <p className="text-xs text-subtle">Aucun créneau</p>
-            </div>
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragEnd={handleDragEnd}
+      >
+        <SortableContext items={slotIds} strategy={verticalListSortingStrategy}>
+          {startDate ? (
+            <DateGroupedDays
+              cycle={cycle}
+              cycleDays={cycleDays}
+              startDate={startDate}
+              slotsByDay={slotsByDay}
+              currentSlotId={currentSlotId}
+              expandedSlotId={expandedSlotId}
+              onSlotClickTemplate={onSlotClickTemplate}
+              onChangeTemplate={onChangeTemplate}
+              onAddSlotAtDay={onAddSlotAtDay}
+              onDeleteSlot={onDeleteSlot}
+              onUpdateSlot={onUpdateSlot}
+              isPending={isPending}
+            />
           ) : (
-            slots.map((slot) => (
-              <div key={slot.id}>
-                <SlotCard
-                  slot={slot}
-                  cycleDays={cycleDays}
-                  scheduledDate={null}
-                  isCurrent={slot.id === currentSlotId}
-                  isExpanded={slot.id === expandedSlotId}
-                  onClickTemplate={() => onSlotClickTemplate(slot.id)}
-                  onDelete={() => onDeleteSlot(slot.id)}
-                  onUpdateDay={(day) => onUpdateSlot(slot.id, { day })}
-                  onUpdateTime={(startTime) => onUpdateSlot(slot.id, { startTime })}
-                  onUpdateLabel={(label) => onUpdateSlot(slot.id, { label })}
-                  isPending={isPending}
-                />
-                {slot.id === expandedSlotId && slot.templateId && (
-                  <SlotEntriesPanel
-                    templateId={slot.templateId}
-                    templateName={slot.templateName}
+            <div className="space-y-2">
+              {slots.length === 0 ? (
+                <div className="rounded-2xl border border-dashed border-border p-5 text-center">
+                  <p className="text-xs text-subtle">Aucun créneau</p>
+                </div>
+              ) : (
+                slots.map((slot) => (
+                  <SortableSlot
+                    key={slot.id}
+                    slot={slot}
+                    cycleDays={cycleDays}
+                    scheduledDate={null}
+                    currentSlotId={currentSlotId}
+                    expandedSlotId={expandedSlotId}
+                    onClickTemplate={() => onSlotClickTemplate(slot.id)}
                     onChangeTemplate={() => onChangeTemplate(slot.id)}
+                    onDelete={() => onDeleteSlot(slot.id)}
+                    onUpdateSlot={onUpdateSlot}
+                    isPending={isPending}
                   />
-                )}
-              </div>
-            ))
+                ))
+              )}
+              <button
+                type="button"
+                onClick={onAddSlot}
+                disabled={isPending}
+                className="w-full rounded-xl border border-dashed border-border py-2.5 text-xs font-medium text-muted hover:text-foreground hover:border-foreground/40 transition-colors cursor-pointer disabled:opacity-50"
+              >
+                + Ajouter un créneau
+              </button>
+            </div>
           )}
-          <button
-            type="button"
-            onClick={onAddSlot}
-            disabled={isPending}
-            className="w-full rounded-xl border border-dashed border-border py-2.5 text-xs font-medium text-muted hover:text-foreground hover:border-foreground/40 transition-colors cursor-pointer disabled:opacity-50"
-          >
-            + Ajouter un créneau
-          </button>
-        </div>
-      )}
+        </SortableContext>
+      </DndContext>
     </section>
+  );
+}
+
+/** Wraps a SlotCard with a drag handle and dnd-kit sortable bindings.
+ *  The handle is the only drag source — the rest of the card keeps its
+ *  normal click behaviour (expand / open picker). */
+function SortableSlot({
+  slot,
+  cycleDays,
+  scheduledDate,
+  currentSlotId,
+  expandedSlotId,
+  onClickTemplate,
+  onChangeTemplate,
+  onDelete,
+  onUpdateSlot,
+  isPending,
+}: {
+  slot: ProgramSlotDetail;
+  cycleDays: number;
+  scheduledDate: Date | null;
+  currentSlotId: string | null;
+  expandedSlotId: string | null;
+  onClickTemplate: () => void;
+  onChangeTemplate: () => void;
+  onDelete: () => void;
+  onUpdateSlot: (
+    slotId: string,
+    data: { day?: number; startTime?: string | null; label?: string | null },
+  ) => void;
+  isPending: boolean;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
+    useSortable({ id: slot.id });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    zIndex: isDragging ? 10 : undefined,
+    opacity: isDragging ? 0.85 : undefined,
+  };
+
+  return (
+    <div ref={setNodeRef} style={style} className="group/slot relative">
+      {/* Drag handle — hidden by default on desktop, subtly visible on touch */}
+      <button
+        type="button"
+        aria-label="Glisser pour déplacer ce créneau"
+        className="hover-action absolute left-1 top-1/2 -translate-y-1/2 z-10 flex items-center justify-center w-5 h-6 rounded-md text-subtle hover:text-foreground hover:bg-surface-hover transition-colors cursor-grab active:cursor-grabbing touch-none"
+        {...attributes}
+        {...listeners}
+      >
+        <GripVertical className="w-3.5 h-3.5" aria-hidden="true" />
+      </button>
+      <SlotCard
+        slot={slot}
+        cycleDays={cycleDays}
+        scheduledDate={scheduledDate}
+        isCurrent={slot.id === currentSlotId}
+        isExpanded={slot.id === expandedSlotId}
+        onClickTemplate={onClickTemplate}
+        onDelete={onDelete}
+        onUpdateDay={(day) => onUpdateSlot(slot.id, { day })}
+        onUpdateTime={(startTime) => onUpdateSlot(slot.id, { startTime })}
+        onUpdateLabel={(label) => onUpdateSlot(slot.id, { label })}
+        isPending={isPending}
+      />
+      {slot.id === expandedSlotId && slot.templateId && (
+        <SlotEntriesPanel
+          templateId={slot.templateId}
+          templateName={slot.templateName}
+          onChangeTemplate={onChangeTemplate}
+        />
+      )}
+    </div>
   );
 }
 
@@ -303,7 +419,7 @@ function DateGroupedDays({
                 disabled={isPending}
                 aria-label={`Ajouter une séance le ${formatSlotDateShort(date)}`}
                 className={`shrink-0 inline-flex items-center gap-1 rounded-full bg-surface px-2.5 py-1 text-[10px] font-semibold text-muted hover:text-accent-ink hover:bg-accent-light shadow-sm cursor-pointer transition-all disabled:opacity-50 ${
-                  hasSlots ? "opacity-0 group-hover/day:opacity-100 focus:opacity-100" : ""
+                  hasSlots ? "hover-action" : ""
                 }`}
               >
                 <span aria-hidden="true" className="text-sm leading-none">+</span>
@@ -329,30 +445,19 @@ function DateGroupedDays({
             ) : (
               <div className="space-y-2">
                 {slotsForDay.map((slot) => (
-                  <div key={slot.id}>
-                    <SlotCard
-                      slot={slot}
-                      cycleDays={cycleDays}
-                      scheduledDate={date}
-                      isCurrent={slot.id === currentSlotId}
-                      isExpanded={slot.id === expandedSlotId}
-                      onClickTemplate={() => onSlotClickTemplate(slot.id)}
-                      onDelete={() => onDeleteSlot(slot.id)}
-                      onUpdateDay={(d) => onUpdateSlot(slot.id, { day: d })}
-                      onUpdateTime={(startTime) =>
-                        onUpdateSlot(slot.id, { startTime })
-                      }
-                      onUpdateLabel={(label) => onUpdateSlot(slot.id, { label })}
-                      isPending={isPending}
-                    />
-                    {slot.id === expandedSlotId && slot.templateId && (
-                      <SlotEntriesPanel
-                        templateId={slot.templateId}
-                        templateName={slot.templateName}
-                        onChangeTemplate={() => onChangeTemplate(slot.id)}
-                      />
-                    )}
-                  </div>
+                  <SortableSlot
+                    key={slot.id}
+                    slot={slot}
+                    cycleDays={cycleDays}
+                    scheduledDate={date}
+                    currentSlotId={currentSlotId}
+                    expandedSlotId={expandedSlotId}
+                    onClickTemplate={() => onSlotClickTemplate(slot.id)}
+                    onChangeTemplate={() => onChangeTemplate(slot.id)}
+                    onDelete={() => onDeleteSlot(slot.id)}
+                    onUpdateSlot={onUpdateSlot}
+                    isPending={isPending}
+                  />
                 ))}
               </div>
             )}

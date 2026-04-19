@@ -289,7 +289,7 @@ export function SlotCard({
               type="button"
               onClick={() => setEditingTime(true)}
               aria-label="Ajouter une heure de début"
-              className="p-1.5 rounded-lg text-subtle hover:text-accent-ink hover:bg-surface-hover transition-colors cursor-pointer opacity-0 group-hover/slot:opacity-100 focus:opacity-100"
+              className="p-1.5 rounded-lg text-subtle hover:text-accent-ink hover:bg-surface-hover transition-colors cursor-pointer hover-action"
             >
               <Clock className="w-3.5 h-3.5" aria-hidden="true" />
             </button>
@@ -304,7 +304,7 @@ export function SlotCard({
               onClick={(e) => e.stopPropagation()}
               aria-label="Modifier la séance"
               title="Ouvrir le modèle complet"
-              className="min-h-[32px] min-w-[32px] flex items-center justify-center text-subtle hover:text-accent-ink cursor-pointer transition-colors rounded-lg opacity-0 group-hover/slot:opacity-100 focus:opacity-100"
+              className="min-h-[32px] min-w-[32px] flex items-center justify-center text-subtle hover:text-accent-ink cursor-pointer transition-colors rounded-lg hover-action"
             >
               <Pencil className="h-3.5 w-3.5" aria-hidden="true" />
             </Link>
@@ -337,7 +337,7 @@ export function SlotCard({
             onClick={onDelete}
             disabled={isPending}
             aria-label="Supprimer le créneau"
-            className="min-h-[32px] min-w-[32px] flex items-center justify-center text-subtle hover:text-danger cursor-pointer transition-colors disabled:opacity-50 rounded-lg opacity-0 group-hover/slot:opacity-100 focus:opacity-100"
+            className="min-h-[32px] min-w-[32px] flex items-center justify-center text-subtle hover:text-danger cursor-pointer transition-colors disabled:opacity-50 rounded-lg hover-action"
           >
             <XIcon className="h-3.5 w-3.5" aria-hidden="true" />
           </button>

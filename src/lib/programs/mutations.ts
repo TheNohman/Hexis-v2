@@ -25,6 +25,57 @@ export async function deleteProgram(programId: string, userId: string) {
   return prisma.program.delete({ where: { id: programId } });
 }
 
+export async function bulkDeletePrograms(
+  programIds: string[],
+  userId: string,
+) {
+  if (programIds.length === 0) return { count: 0 };
+  const programs = await prisma.program.findMany({
+    where: { id: { in: programIds } },
+    select: { id: true, userId: true },
+  });
+  if (programs.length !== programIds.length) {
+    throw new Error("Some programs not found");
+  }
+  for (const p of programs) {
+    if (p.userId !== userId) throw new Error("Forbidden");
+  }
+  return prisma.program.deleteMany({
+    where: { id: { in: programIds }, userId },
+  });
+}
+
+export async function toggleProgramFavorite(
+  programId: string,
+  userId: string,
+) {
+  const program = await prisma.program.findUnique({
+    where: { id: programId },
+    select: { id: true, userId: true, isFavorite: true },
+  });
+  if (!program || program.userId !== userId) throw new Error("Forbidden");
+  return prisma.program.update({
+    where: { id: programId },
+    data: { isFavorite: !program.isFavorite },
+  });
+}
+
+export async function updateProgramTags(
+  programId: string,
+  userId: string,
+  tags: string[],
+) {
+  const program = await prisma.program.findUnique({
+    where: { id: programId },
+    select: { id: true, userId: true },
+  });
+  if (!program || program.userId !== userId) throw new Error("Forbidden");
+  return prisma.program.update({
+    where: { id: programId },
+    data: { tags },
+  });
+}
+
 export async function renameProgram(programId: string, userId: string, name: string) {
   const program = await prisma.program.findUnique({ where: { id: programId } });
   if (!program || program.userId !== userId) throw new Error("Forbidden");

@@ -258,3 +258,29 @@ input[type="number"] {
 .animate-fade-in-up {
   animation: fadeInUp 0.7s ease-out both;
 }
+
+/* Touch-friendly visibility for hover-only actions.
+ * On pointing devices (desktop), the action is fully hidden and reveals on
+ * hover of the nearest `.group`, `.group\/slot`, or `.group\/day` ancestor.
+ * On touch devices (no hover), it sits at reduced opacity so users can
+ * still discover it — avoids invisible-only-on-hover affordances that fail
+ * RGAA AA on mobile.
+ * Always revealed on keyboard focus for accessibility. */
+@media (hover: none) {
+  .hover-action {
+    opacity: 0.6;
+  }
+}
+@media (hover: hover) {
+  .hover-action {
+    opacity: 0;
+  }
+  .group:hover > .hover-action,
+  .group:hover .hover-action,
+  .group\/slot:hover .hover-action,
+  .group\/day:hover .hover-action,
+  .group\/card:hover .hover-action,
+  .hover-action:focus-visible {
+    opacity: 1;
+  }
+}

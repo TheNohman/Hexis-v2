@@ -10,11 +10,23 @@ function slugify(label: string): string {
     .replace(/^_|_$/g, "");
 }
 
+/**
+ * Reserved slugs that must never be created as user measurement types —
+ * they collide with a dedicated table (e.g. `BodyWeightEntry` for "poids").
+ * Keeping it central avoids the pseudo-type double-write bug on /profile/mesures.
+ */
+const RESERVED_SLUGS = new Set(["poids"]);
+
 export async function createTypeConfig(
   userId: string,
   data: { label: string; unit: string; color?: string },
 ): Promise<void> {
   const slug = slugify(data.label);
+  if (RESERVED_SLUGS.has(slug)) {
+    throw new Error(
+      "Ce type est déjà suivi dans la section poids corporel.",
+    );
+  }
 
   // Get max sortOrder for this user
   const last = await prisma.measurementTypeConfig.findFirst({

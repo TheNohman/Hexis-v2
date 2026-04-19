@@ -1,5 +1,7 @@
 // --------------- Types ---------------
 
+import type { ProgramSource } from "@/generated/prisma/enums";
+
 export type ProgramListItem = {
   id: string;
   name: string;
@@ -9,6 +11,12 @@ export type ProgramListItem = {
   currentSlotId: string | null;
   slotCount: number;
   startDate: Date | null;
+  tags: string[];
+  source: ProgramSource;
+  isFavorite: boolean;
+  /** How many program slots across the program carry a template — useful as a
+   *  "progression weight" for sort-by-most-sessions. */
+  populatedSlotCount: number;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -32,6 +40,9 @@ export type ProgramDetail = {
   isActive: boolean;
   currentSlotId: string | null;
   startDate: Date | null;
+  tags: string[];
+  source: ProgramSource;
+  isFavorite: boolean;
   slots: ProgramSlotDetail[];
   createdAt: Date;
   updatedAt: Date;

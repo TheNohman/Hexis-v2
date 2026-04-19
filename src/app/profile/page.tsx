@@ -7,7 +7,6 @@ import { getWorkoutStats } from "@/lib/stats/queries";
 import { getActiveProgram } from "@/lib/programs/queries";
 import { listTypeConfigs } from "@/lib/measurements/type-config-queries";
 import { listAllMeasurements } from "@/lib/measurements/queries";
-import { getSessionAdvice } from "@/lib/mentor/advice";
 import { getSportProfile } from "@/lib/profile/onboarding";
 import { computeHeartRateZones, computePaceZones } from "@/lib/endurance/zones";
 import { ProfileForm } from "./_components/profile-form";
@@ -31,7 +30,6 @@ export default async function ProfilePage() {
     wellnessLogs,
     stats,
     activeProgram,
-    mentorAdvice,
     sportProfile,
   ] = await Promise.all([
     getUserProfile(userId),
@@ -41,7 +39,6 @@ export default async function ProfilePage() {
     getRecentWellnessLogs(userId, 30),
     getWorkoutStats(userId),
     getActiveProgram(userId),
-    getSessionAdvice(userId),
     getSportProfile(userId),
   ]);
 
@@ -119,7 +116,7 @@ export default async function ProfilePage() {
           <WellnessHubCard wellnessLogs={wellnessLogs} />
           <RecordsHubCard prs={prs} />
           <MesuresHubCard rows={measureRows} />
-          {mentorAdvice && <MentorAdviceCard advice={mentorAdvice} />}
+          {profile.mentorEnabled && <MentorAdviceCard />}
         </div>
 
         {/* ─── Préférences (en bas, replié visuellement) ─── */}
