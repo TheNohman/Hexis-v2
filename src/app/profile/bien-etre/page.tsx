@@ -1,13 +1,20 @@
 import Link from "next/link";
 import { getCurrentUserId } from "@/lib/auth-helpers";
-import { getRecentWellnessLogs } from "@/lib/wellness/queries";
+import {
+  getRecentWellnessLogs,
+  getTodayWellnessLog,
+} from "@/lib/wellness/queries";
 import { WellnessHistorySection } from "../_components/wellness-history";
+import { WellnessCheckin } from "@/app/dashboard/_components/wellness-checkin";
 
 export const dynamic = "force-dynamic";
 
 export default async function BienEtrePage() {
   const userId = await getCurrentUserId();
-  const logs = await getRecentWellnessLogs(userId, 90);
+  const [logs, todayLog] = await Promise.all([
+    getRecentWellnessLogs(userId, 90),
+    getTodayWellnessLog(userId),
+  ]);
 
   return (
     <main id="main-content" className="flex-1 flex flex-col items-center px-4 py-8">
@@ -29,13 +36,10 @@ export default async function BienEtrePage() {
           </Link>
         </header>
 
-        <Link
-          href="/dashboard#wellness"
-          className="inline-flex items-center gap-2 rounded-xl border border-dashed border-border px-3 py-2 text-sm text-muted hover:border-accent-ink hover:text-accent-ink transition-colors"
-        >
-          <span className="text-base leading-none" aria-hidden="true">+</span>
-          Ajouter un jour (rattrapage)
-        </Link>
+        {/* Inline check-in — formerly redirected to /dashboard#wellness.
+            Same component, self-hosting here so the user can backfill or
+            edit today's entry without leaving the bien-être screen. */}
+        <WellnessCheckin existingLog={todayLog} />
 
         <WellnessHistorySection logs={logs} />
       </div>

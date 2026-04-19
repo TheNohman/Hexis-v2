@@ -8,8 +8,11 @@ import type {
 export async function listPrograms(userId: string): Promise<ProgramListItem[]> {
   const programs = await prisma.program.findMany({
     where: { userId },
-    orderBy: [{ isActive: "desc" }, { updatedAt: "desc" }],
-    include: { _count: { select: { slots: true } } },
+    orderBy: [{ isFavorite: "desc" }, { isActive: "desc" }, { updatedAt: "desc" }],
+    include: {
+      _count: { select: { slots: true } },
+      slots: { where: { templateId: { not: null } }, select: { id: true } },
+    },
   });
 
   return programs.map((p) => ({
@@ -20,7 +23,11 @@ export async function listPrograms(userId: string): Promise<ProgramListItem[]> {
     isActive: p.isActive,
     currentSlotId: p.currentSlotId,
     slotCount: p._count.slots,
+    populatedSlotCount: p.slots.length,
     startDate: p.startDate,
+    tags: p.tags,
+    source: p.source,
+    isFavorite: p.isFavorite,
     createdAt: p.createdAt,
     updatedAt: p.updatedAt,
   }));
@@ -48,6 +55,9 @@ export async function getProgramById(programId: string, userId: string): Promise
     isActive: program.isActive,
     currentSlotId: program.currentSlotId,
     startDate: program.startDate,
+    tags: program.tags,
+    source: program.source,
+    isFavorite: program.isFavorite,
     slots: program.slots.map((s) => ({
       id: s.id,
       cycle: s.cycle,

@@ -1,7 +1,14 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { MoreHorizontal, Settings2, ChevronDown, Sparkles } from "lucide-react";
+import {
+  MoreHorizontal,
+  Settings2,
+  ChevronDown,
+  Sparkles,
+  Plus,
+  X as XIcon,
+} from "lucide-react";
 import {
   renameProgramAction,
   updateCycleCountAction,
@@ -13,6 +20,7 @@ import {
   deleteSlotAction,
   updateStartDateAction,
   updateProgramObjectiveAction,
+  updateProgramTagsAction,
   fillProgramCyclesAction,
   cloneCycleAction,
 } from "@/app/programs/actions";
@@ -48,6 +56,40 @@ export function ProgramEditor({
   const [editingName, setEditingName] = useState(false);
   const [editingObjective, setEditingObjective] = useState(false);
   const [filling, setFilling] = useState(false);
+  const [tagDraft, setTagDraft] = useState("");
+  const [isAddingTag, setIsAddingTag] = useState(false);
+
+  const MAX_TAGS = 10;
+  const MAX_TAG_LEN = 32;
+
+  function handleAddTag() {
+    const raw = tagDraft.trim().slice(0, MAX_TAG_LEN);
+    if (!raw) {
+      setIsAddingTag(false);
+      setTagDraft("");
+      return;
+    }
+    const existingLower = program.tags.map((t) => t.toLowerCase());
+    if (existingLower.includes(raw.toLowerCase())) {
+      setTagDraft("");
+      setIsAddingTag(false);
+      return;
+    }
+    if (program.tags.length >= MAX_TAGS) {
+      setTagDraft("");
+      setIsAddingTag(false);
+      return;
+    }
+    const next = [...program.tags, raw];
+    setTagDraft("");
+    setIsAddingTag(false);
+    startTransition(() => updateProgramTagsAction(program.id, next));
+  }
+
+  function handleRemoveTag(tag: string) {
+    const next = program.tags.filter((t) => t !== tag);
+    startTransition(() => updateProgramTagsAction(program.id, next));
+  }
 
   function handleRename(e: React.FocusEvent<HTMLInputElement>) {
     const name = e.target.value.trim();
@@ -290,7 +332,7 @@ export function ProgramEditor({
           </div>
         </div>
 
-        {/* Meta row — status dot + summary line */}
+        {/* Meta row — status dot + summary line + source badge */}
         <div className="flex items-center gap-3 flex-wrap text-sm">
           <button
             type="button"
@@ -311,6 +353,16 @@ export function ProgramEditor({
             />
             {program.isActive ? "Actif" : "Inactif"}
           </button>
+
+          {program.source === "AI" && (
+            <span
+              className="inline-flex items-center gap-1 rounded-full bg-accent text-accent-foreground px-2.5 py-1 text-[11px] font-bold"
+              aria-label="Programme généré par l'IA"
+            >
+              <Sparkles className="w-3 h-3" aria-hidden="true" />
+              IA
+            </span>
+          )}
 
           <p className="text-xs text-muted">
             <span className="font-semibold text-foreground">{program.cycleCount}</span>
@@ -333,6 +385,62 @@ export function ProgramEditor({
               </>
             )}
           </p>
+        </div>
+
+        {/* Tags — inline editor (parity with template-editor) */}
+        <div className="flex items-center gap-1.5 flex-wrap">
+          {program.tags.map((tag) => (
+            <span
+              key={tag}
+              className="group/tag inline-flex items-center gap-1 rounded-full bg-surface border border-border pl-2 pr-1 py-0.5 text-[11px] font-medium text-muted"
+            >
+              {tag}
+              <button
+                type="button"
+                onClick={() => handleRemoveTag(tag)}
+                disabled={isPending}
+                aria-label={`Retirer le tag ${tag}`}
+                className="flex items-center justify-center w-4 h-4 rounded-full text-subtle hover:text-danger hover:bg-danger-soft transition-colors cursor-pointer disabled:opacity-60"
+              >
+                <XIcon className="w-3 h-3" aria-hidden="true" />
+              </button>
+            </span>
+          ))}
+          {isAddingTag ? (
+            <input
+              type="text"
+              value={tagDraft}
+              autoFocus
+              maxLength={MAX_TAG_LEN}
+              placeholder="nouveau tag"
+              aria-label="Nouveau tag"
+              onChange={(e) => setTagDraft(e.target.value)}
+              onBlur={handleAddTag}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  handleAddTag();
+                }
+                if (e.key === "Escape") {
+                  setIsAddingTag(false);
+                  setTagDraft("");
+                }
+              }}
+              className="rounded-full bg-surface border border-accent-ink px-2 py-0.5 text-[11px] font-medium outline-none w-32"
+            />
+          ) : (
+            program.tags.length < MAX_TAGS && (
+              <button
+                type="button"
+                onClick={() => setIsAddingTag(true)}
+                aria-label="Ajouter un tag"
+                className="inline-flex items-center gap-1 rounded-full border border-dashed border-border px-2 py-0.5 text-[11px] font-medium text-subtle hover:text-foreground hover:border-foreground/40 transition-colors cursor-pointer"
+              >
+                <Plus className="w-3 h-3" aria-hidden="true" />
+                Ajouter un tag
+              </button>
+            )
+          )}
         </div>
 
         {/* AI Fill CTA — primary action when there are empty slots + description */}

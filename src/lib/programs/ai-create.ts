@@ -27,6 +27,7 @@ export async function materializeAIProgram(
       name: generated.name,
       cycleCount: generated.cycleCount,
       cycleDays: generated.cycleDays,
+      source: "AI",
     },
   });
 

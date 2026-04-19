@@ -514,6 +514,10 @@ model Program {
   currentSlotId String? // pointeur vers le prochain créneau
   startDate     DateTime? @db.Date // date à laquelle commence le cycle 1 jour 1 (optionnelle)
 
+  tags       String[]      @default([]) // ex: ["force", "hypertrophie", "prépa compet"]
+  source     ProgramSource @default(MANUAL) // provenance — manuel, IA, clone
+  isFavorite Boolean       @default(false)
+
   user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   slots       ProgramSlot[]
   workouts    Workout[]
@@ -523,6 +527,12 @@ model Program {
   updatedAt DateTime @updatedAt
 
   @@index([userId])
+}
+
+enum ProgramSource {
+  MANUAL
+  AI
+  CLONED
 }
 
 /// Un créneau dans un programme : cycle X, jour Y → template Z

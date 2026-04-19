@@ -7,7 +7,10 @@ import { getCurrentUserId } from "@/lib/auth-helpers";
 import {
   createProgram,
   deleteProgram,
+  bulkDeletePrograms,
   renameProgram,
+  toggleProgramFavorite,
+  updateProgramTags,
   updateCycleCount,
   updateCycleDays,
   toggleProgramActive,
@@ -333,4 +336,38 @@ export async function confirmAIProgramAction(rawJson: string): Promise<{ error?:
   const programId = await materializeAIProgram(userId, parsed);
   revalidatePath("/planning");
   redirect(`/programs/${programId}`);
+}
+
+export async function toggleProgramFavoriteAction(programId: string) {
+  assertValid(idSchema, programId);
+  const userId = await getCurrentUserId();
+  await toggleProgramFavorite(programId, userId);
+  revalidatePath("/planning");
+  revalidatePath(`/programs/${programId}`);
+}
+
+export async function bulkDeleteProgramsAction(programIds: string[]) {
+  assertValid(z.array(idSchema).min(1).max(50), programIds);
+  const userId = await getCurrentUserId();
+  await bulkDeletePrograms(programIds, userId);
+  revalidatePath("/planning");
+}
+
+export async function updateProgramTagsAction(programId: string, tags: string[]) {
+  assertValid(idSchema, programId);
+  // Mirror the template tag policy: max 10 tags × 32 chars, case-insensitive dedupe.
+  const tagArraySchema = z.array(z.string().trim().min(1).max(32)).max(10);
+  const parsed = assertValid(tagArraySchema, tags);
+  const seen = new Set<string>();
+  const deduped: string[] = [];
+  for (const t of parsed) {
+    const key = t.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    deduped.push(t);
+  }
+  const userId = await getCurrentUserId();
+  await updateProgramTags(programId, userId, deduped);
+  revalidatePath(`/programs/${programId}`);
+  revalidatePath("/planning");
 }

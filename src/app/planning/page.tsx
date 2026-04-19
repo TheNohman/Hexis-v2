@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Calendar, ClipboardList, Sparkles } from "lucide-react";
+import { ClipboardList, Sparkles } from "lucide-react";
 import { getCurrentUserId } from "@/lib/auth-helpers";
 import { listPrograms } from "@/lib/programs/queries";
 import { listTemplates } from "@/lib/templates/queries";
@@ -7,6 +7,7 @@ import { createProgramAction } from "@/app/programs/actions";
 import { createTemplateAction } from "@/app/templates/actions";
 import { EmptyState } from "@/app/_components/empty-state";
 import { prisma } from "@/lib/prisma";
+import { ProgramsList } from "./_components/programs-list";
 
 export const dynamic = "force-dynamic";
 
@@ -161,50 +162,7 @@ async function ProgramsTab({ userId, mentorEnabled }: { userId: string; mentorEn
         )}
       </div>
 
-      {programs.length === 0 ? (
-        !isNewUser && (
-          <EmptyState
-            icon={Calendar}
-            title="Aucun programme"
-            description="Crée un programme pour planifier tes semaines d&rsquo;entraînement."
-          />
-        )
-      ) : (
-        <ul className="space-y-2.5">
-          {programs.map((p) => (
-            <li key={p.id}>
-              <Link
-                href={`/programs/${p.id}`}
-                className="block rounded-2xl bg-surface shadow-card p-4 hover:shadow-hero hover:-translate-y-0.5 transition-all"
-              >
-                <div className="flex items-center justify-between gap-3">
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <p className="font-display font-bold text-[15px] truncate">{p.name}</p>
-                      {p.isActive && (
-                        <span className="shrink-0 inline-flex items-center rounded-full bg-accent px-2 py-0.5 text-[10px] font-bold uppercase tracking-widest text-accent-foreground">
-                          Actif
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-[11px] text-muted mt-1 tabular-nums">
-                      {p.cycleCount} cycle{p.cycleCount > 1 ? "s" : ""} de {p.cycleDays}j
-                      {" · "}
-                      {p.slotCount} créneau{p.slotCount > 1 ? "x" : ""}
-                    </p>
-                  </div>
-                  <span
-                    aria-hidden="true"
-                    className="shrink-0 text-subtle"
-                  >
-                    →
-                  </span>
-                </div>
-              </Link>
-            </li>
-          ))}
-        </ul>
-      )}
+      {isNewUser ? null : <ProgramsList programs={programs} />}
     </div>
   );
 }
