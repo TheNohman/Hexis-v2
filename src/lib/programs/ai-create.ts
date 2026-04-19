@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import type { GeneratedProgram, GeneratedFill } from "@/lib/mentor/parser";
+import { expandEquipmentBundles } from "@/lib/exercises/equipment";
 
 /**
  * Find the best matching exercise for a name the AI generated, starting
@@ -49,13 +50,30 @@ export async function materializeAIProgram(
   generated: GeneratedProgram,
 ): Promise<string> {
   // 1. Load all exercises and KPI definitions for matching
-  const [allExercises, allKpis] = await Promise.all([
+  const [allExercises, allKpis, userProfile] = await Promise.all([
     prisma.exercise.findMany({
       where: { OR: [{ userId }, { isSystem: true }] },
       include: { exerciseKpis: { include: { kpiDefinition: true } } },
     }),
     prisma.kpiDefinition.findMany(),
+    prisma.userSportProfile.findUnique({
+      where: { userId },
+      select: { equipmentAccess: true },
+    }),
   ]);
+
+  // Post-filter safeguard: gpt-4o-mini occasionally hallucinates exercises
+  // outside the filtered catalog we sent it (observed: Développé couché
+  // proposed to a home-only user, even though it was removed from the
+  // context). Drop any resolved exercise whose equipment isn't a subset
+  // of what the user declared. Empty availableEquipment = no filter.
+  const availableEquipment = expandEquipmentBundles(
+    userProfile?.equipmentAccess ?? [],
+  );
+  const availableSet = new Set(availableEquipment);
+  const isEquipmentOk = (exercise: { equipment: string[] }) =>
+    availableSet.size === 0 ||
+    exercise.equipment.every((tag) => availableSet.has(tag));
 
   const kpiBySlug = new Map(allKpis.map((k) => [k.slug, k]));
 
@@ -77,11 +95,15 @@ export async function materializeAIProgram(
     const tpl = slot.template;
 
     // Create template with blocks and entries. Keep blocks that have at
-    // least one resolvable exercise — dropping fully-unresolvable blocks
-    // (e.g. "Cardio liberte" with no matching exercise) so the detail
-    // view doesn't render empty placeholder cards.
+    // least one resolvable AND equipment-compatible exercise — dropping
+    // fully-unresolvable blocks so the detail view isn't polluted with
+    // placeholders, and dropping blocks where every exercise violates
+    // the user's equipmentAccess.
     const populatedBlocks = tpl.blocks.filter((block) =>
-      block.exercises.some((ex) => resolveExercise(allExercises, ex.name) != null),
+      block.exercises.some((ex) => {
+        const resolved = resolveExercise(allExercises, ex.name);
+        return resolved != null && isEquipmentOk(resolved);
+      }),
     );
     const template = await prisma.workoutTemplate.create({
       data: {
@@ -100,6 +122,11 @@ export async function materializeAIProgram(
                 const exercise = resolveExercise(allExercises, ex.name);
 
                 if (!exercise) return [];
+                // Equipment post-filter — AI sometimes hallucinates outside
+                // the filtered catalog (e.g. Développé couché for a
+                // home-only user). Drop the entry silently rather than
+                // persisting an incompatible exercise.
+                if (!isEquipmentOk(exercise)) return [];
 
                 // Build KPI values based on exercise type
                 const values: { kpiDefinitionId: string; valueNumeric: number | null; valueText: string | null }[] = [];
