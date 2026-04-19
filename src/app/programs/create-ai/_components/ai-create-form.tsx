@@ -225,15 +225,17 @@ export function AICreateForm({
                     // Render per-type so MOBILITY/CARDIO show as "30s" or
                     // "3min / 500m" instead of the STRENGTH default
                     // "3×? @ ?kg" which was rendering "Planche ×30" for a
-                    // 30-second hold.
+                    // 30-second hold. Fallback `sets` to "?" when the AI
+                    // omits it — "undefined×6" leaked through before.
                     let spec = "";
+                    const sets = ex.sets != null ? ex.sets : "?";
                     if (ex.type === "STRENGTH") {
                       const reps = ex.reps ?? "?";
                       const w = ex.weight_kg != null ? ` @ ${ex.weight_kg}kg` : "";
-                      spec = `${ex.sets}×${reps}${w}`;
+                      spec = `${sets}×${reps}${w}`;
                     } else if (ex.type === "BODYWEIGHT") {
                       const reps = ex.reps ?? "?";
-                      spec = `${ex.sets}×${reps}`;
+                      spec = `${sets}×${reps}`;
                     } else if (ex.type === "CARDIO") {
                       const parts: string[] = [];
                       if (ex.duration_secs != null)

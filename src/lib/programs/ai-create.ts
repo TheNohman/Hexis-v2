@@ -134,8 +134,13 @@ export async function materializeAIProgram(
                   }
                 }
 
-                // Create N sets for this exercise
-                return Array.from({ length: ex.sets }, (_, setIdx) => ({
+                // Create N sets for this exercise. Guard against the AI
+                // omitting `sets` for BODYWEIGHT/MOBILITY (observed in
+                // production: "Tractions" persisted as 0 sets because
+                // Array.from({length: undefined}) === []). Same
+                // clamp as the fill path below.
+                const sets = Math.max(1, Math.min(10, ex.sets ?? 3));
+                return Array.from({ length: sets }, (_, setIdx) => ({
                   exerciseId: exercise.id,
                   displayOrder: exIdx * 100 + setIdx,
                   values: {
