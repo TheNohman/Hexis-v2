@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getCurrentUserId } from "@/lib/auth-helpers";
 import { listExercisesForUser } from "@/lib/workouts/queries";
+import { getExerciseUsageMap } from "@/lib/exercises/queries";
 import { formatExerciseType } from "@/lib/format";
 import { createExerciseAction } from "./actions";
 import type { ExerciseType } from "@/generated/prisma/enums";
@@ -19,6 +20,10 @@ const TYPE_ORDER: ExerciseType[] = [
 export default async function ExercisesPage() {
   const userId = await getCurrentUserId();
   const exercises = await listExercisesForUser(userId);
+  // Usage counts feed the delete ConfirmDialog — we only need counts for
+  // custom (non-system) exercises since system ones can't be deleted.
+  const customIds = exercises.filter((e) => !e.isSystem).map((e) => e.id);
+  const usageMap = await getExerciseUsageMap(customIds);
 
   return (
     <main id="main-content" className="flex-1 flex flex-col items-center px-4 py-6 pb-28">
@@ -87,7 +92,7 @@ export default async function ExercisesPage() {
         </form>
 
         {/* Searchable exercise list */}
-        <ExerciseList exercises={exercises} />
+        <ExerciseList exercises={exercises} usageMap={usageMap} />
       </div>
     </main>
   );

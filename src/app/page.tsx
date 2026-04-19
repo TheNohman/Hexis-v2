@@ -38,6 +38,55 @@ export default async function Home() {
           </p>
         </div>
 
+        {/* Feature strip — sets expectations before the auth wall. */}
+        <ul
+          aria-label="Ce que fait Hexis"
+          className="grid grid-cols-3 gap-3 text-left"
+        >
+          <li className="rounded-2xl bg-surface/80 backdrop-blur-sm shadow-card p-3 space-y-1">
+            <div
+              className="w-8 h-8 rounded-xl bg-accent/15 flex items-center justify-center text-accent-ink text-base"
+              aria-hidden="true"
+            >
+              📅
+            </div>
+            <p className="font-display font-bold text-[13px] leading-tight">
+              Programme
+            </p>
+            <p className="text-[11px] text-muted leading-snug">
+              Des cycles planifiés, pas improvisés.
+            </p>
+          </li>
+          <li className="rounded-2xl bg-surface/80 backdrop-blur-sm shadow-card p-3 space-y-1">
+            <div
+              className="w-8 h-8 rounded-xl bg-accent/15 flex items-center justify-center text-accent-ink text-base"
+              aria-hidden="true"
+            >
+              💪
+            </div>
+            <p className="font-display font-bold text-[13px] leading-tight">
+              Séance
+            </p>
+            <p className="text-[11px] text-muted leading-snug">
+              Tes séries, tes charges, en temps réel.
+            </p>
+          </li>
+          <li className="rounded-2xl bg-surface/80 backdrop-blur-sm shadow-card p-3 space-y-1">
+            <div
+              className="w-8 h-8 rounded-xl bg-accent/15 flex items-center justify-center text-accent-ink text-base"
+              aria-hidden="true"
+            >
+              📊
+            </div>
+            <p className="font-display font-bold text-[13px] leading-tight">
+              Stats
+            </p>
+            <p className="text-[11px] text-muted leading-snug">
+              Progression, records, fatigue cumulée.
+            </p>
+          </li>
+        </ul>
+
         <div className="space-y-3">
           <form
             action={async () => {

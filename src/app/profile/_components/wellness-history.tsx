@@ -2,10 +2,12 @@
 
 import type { WellnessLogData } from "@/lib/wellness/queries";
 
+// Mirrors the emoji bank in dashboard/_components/wellness-checkin.tsx —
+// picked for monotonic progression (worst → best) and distinctness.
 const MOOD_EMOJI = ["", "\ud83d\ude2b", "\ud83d\ude1f", "\ud83d\ude10", "\ud83d\ude0a", "\ud83d\ude04"];
-const SLEEP_EMOJI = ["", "\ud83d\ude34", "\ud83d\ude25", "\ud83d\ude0c", "\ud83d\ude34", "⭐"];
-const ENERGY_EMOJI = ["", "\ud83e\udead", "\ud83e\udd71", "\ud83d\ude10", "⚡", "\ud83d\udd25"];
-const STRESS_EMOJI = ["", "\ud83d\ude30", "\ud83d\ude1f", "\ud83d\ude10", "\ud83d\ude0c", "\ud83e\uddd8"];
+const SLEEP_EMOJI = ["", "\ud83d\ude35", "\ud83d\ude2a", "\ud83d\ude34", "\ud83d\ude0c", "✨"];
+const ENERGY_EMOJI = ["", "\ud83e\udd74", "\ud83d\ude2a", "\ud83d\ude10", "⚡", "\ud83d\udd25"];
+const STRESS_EMOJI = ["", "\ud83d\ude30", "\ud83d\ude23", "\ud83d\ude10", "\ud83d\ude0c", "\ud83e\uddd8"];
 
 type Props = { logs: WellnessLogData[] };
 

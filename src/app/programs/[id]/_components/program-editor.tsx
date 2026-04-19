@@ -21,6 +21,7 @@ import type { ProgramDetail } from "@/lib/programs/types";
 // "Prochaine séance" hero card was removed; cycle utilities live in CycleSection.
 import { Card } from "@/app/_components/card";
 import { useToast } from "@/app/_components/toast";
+import { ConfirmDialog } from "@/app/_components/confirm-dialog";
 import { CycleSection } from "./cycle-section";
 import { TemplatePickerDialog } from "./template-picker-dialog";
 
@@ -43,6 +44,7 @@ export function ProgramEditor({
   const [editingSlotId, setEditingSlotId] = useState<string | null>(null);
   const [expandedSlotId, setExpandedSlotId] = useState<string | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteTypedName, setDeleteTypedName] = useState("");
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [editingName, setEditingName] = useState(false);
@@ -548,35 +550,91 @@ export function ProgramEditor({
         />
       )}
 
-      {/* Delete confirm dialog */}
-      {showDeleteConfirm && (
+      {/* Delete confirm — shared ConfirmDialog when the program is inactive;
+          elevated "type-the-name" dialog when the program is active so it
+          can't be destroyed in one tap. */}
+      {!program.isActive && (
+        <ConfirmDialog
+          open={showDeleteConfirm}
+          title="Supprimer ce programme ?"
+          message="Les créneaux disparaîtront. Les séances déjà enregistrées restent dans ton historique. Cette action est irréversible."
+          confirmLabel="Supprimer"
+          cancelLabel="Annuler"
+          destructive
+          onConfirm={() => {
+            setShowDeleteConfirm(false);
+            startTransition(() => deleteProgramAction(program.id));
+          }}
+          onCancel={() => setShowDeleteConfirm(false)}
+        />
+      )}
+      {program.isActive && showDeleteConfirm && (
         <div
-          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 backdrop-blur-sm"
+          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm px-4"
           role="dialog"
           aria-modal="true"
           aria-labelledby="delete-confirm-title"
+          onClick={() => {
+            setShowDeleteConfirm(false);
+            setDeleteTypedName("");
+          }}
         >
-          <div className="w-full sm:max-w-md bg-surface rounded-t-3xl sm:rounded-3xl shadow-hero border border-border p-5 space-y-4 animate-fade-in-up">
-            <h3 id="delete-confirm-title" className="font-display font-bold text-lg">
-              Supprimer ce programme ?
-            </h3>
-            <p className="text-sm text-muted">
-              Les créneaux disparaîtront. Les séances déjà enregistrées restent dans ton historique.
-              Cette action est irréversible.
-            </p>
-            <div className="flex gap-2">
+          <div
+            className="w-full sm:max-w-md bg-background border border-border rounded-t-3xl sm:rounded-2xl p-6 shadow-xl space-y-4 animate-fade-in-up"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="space-y-2">
+              <h3
+                id="delete-confirm-title"
+                className="text-lg font-semibold"
+              >
+                Supprimer ce programme actif ?
+              </h3>
+              <p className="text-sm text-muted">
+                Ce programme est actuellement <strong>actif</strong>. Pour confirmer,
+                tape son nom exact ci-dessous.
+              </p>
+              <p className="text-xs text-subtle">
+                Les créneaux disparaîtront. Les séances déjà enregistrées restent dans ton historique.
+              </p>
+            </div>
+            <label className="block space-y-1.5">
+              <span className="text-[10px] uppercase tracking-widest font-semibold text-muted">
+                Nom à saisir
+              </span>
+              <code className="block text-sm font-mono text-foreground bg-surface rounded-md px-2 py-1">
+                {program.name}
+              </code>
+              <input
+                type="text"
+                autoFocus
+                value={deleteTypedName}
+                onChange={(e) => setDeleteTypedName(e.target.value)}
+                placeholder="Tape le nom exact"
+                aria-label="Confirmer en tapant le nom du programme"
+                className="w-full rounded-xl border border-border bg-surface px-3 py-2.5 text-sm focus:outline-none focus:border-accent-ink transition-colors"
+              />
+            </label>
+            <div className="flex gap-3">
               <button
                 type="button"
-                onClick={() => setShowDeleteConfirm(false)}
-                className="flex-1 rounded-xl border border-border bg-surface py-2.5 text-sm font-semibold hover:bg-surface-hover transition-colors cursor-pointer"
+                onClick={() => {
+                  setShowDeleteConfirm(false);
+                  setDeleteTypedName("");
+                }}
+                className="flex-1 rounded-xl border border-border py-2.5 text-sm font-medium hover:bg-surface-hover transition-colors cursor-pointer"
               >
                 Annuler
               </button>
               <button
                 type="button"
-                onClick={() => startTransition(() => deleteProgramAction(program.id))}
-                disabled={isPending}
-                className="flex-1 rounded-xl bg-danger text-white py-2.5 text-sm font-semibold hover:opacity-90 transition-opacity cursor-pointer disabled:opacity-50"
+                disabled={isPending || deleteTypedName.trim() !== program.name}
+                onClick={() => {
+                  setShowDeleteConfirm(false);
+                  setDeleteTypedName("");
+                  startTransition(() => deleteProgramAction(program.id));
+                }}
+                className="flex-1 rounded-xl bg-danger text-white py-2.5 text-sm font-medium hover:bg-danger/90 transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 Supprimer
               </button>

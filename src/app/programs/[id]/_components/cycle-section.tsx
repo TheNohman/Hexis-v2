@@ -268,7 +268,7 @@ function DateGroupedDays({
             key={day}
             className={`group/day space-y-2 animate-fade-in-up ${
               today
-                ? "relative -mx-3 px-3 py-2 rounded-2xl bg-signal-light/40 ring-1 ring-signal/20"
+                ? "relative -mx-3 px-3 py-2 rounded-2xl bg-accent-light/40 ring-1 ring-accent/20"
                 : ""
             }`}
             style={{ animationDelay: `${day * 25}ms` }}
@@ -287,10 +287,10 @@ function DateGroupedDays({
                   J{day + 1}
                 </span>
                 {today && (
-                  <span className="relative inline-flex items-center gap-1 rounded-full bg-signal px-2 py-0.5 text-[9px] font-bold uppercase tracking-widest text-foreground">
+                  <span className="relative inline-flex items-center gap-1 rounded-full bg-accent text-accent-foreground px-2 py-0.5 text-[9px] font-bold uppercase tracking-widest">
                     <span
                       aria-hidden="true"
-                      className="absolute -left-0.5 -top-0.5 -right-0.5 -bottom-0.5 rounded-full bg-signal animate-ping opacity-40"
+                      className="absolute -left-0.5 -top-0.5 -right-0.5 -bottom-0.5 rounded-full bg-accent animate-ping opacity-40"
                     />
                     <span className="relative">Aujourd&apos;hui</span>
                   </span>

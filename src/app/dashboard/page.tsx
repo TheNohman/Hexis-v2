@@ -6,11 +6,12 @@ import { listWorkouts, getActiveWorkout } from "@/lib/workouts/queries";
 import { getActiveProgram } from "@/lib/programs/queries";
 import { getTodayWellnessLog } from "@/lib/wellness/queries";
 import { getSportProfile, needsOnboarding } from "@/lib/profile/onboarding";
-import { createWorkoutAction } from "@/app/sessions/actions";
 import { formatDuration } from "@/lib/format";
 import { NextWorkoutCard } from "./_components/next-workout-card";
 import { WellnessCheckin } from "./_components/wellness-checkin";
 import { BeginnerTip } from "./_components/beginner-tip";
+import { CreateWorkoutButton } from "./_components/create-workout-button";
+import { DashboardTour } from "./_components/dashboard-tour";
 import { Sparkline } from "@/app/_components/sparkline";
 import { MiniBarChart } from "@/app/_components/mini-bar-chart";
 
@@ -90,6 +91,10 @@ export default async function Dashboard() {
   const firstName = session?.user?.name?.split(" ")[0] ?? null;
   const displayName = session?.user?.name ?? session?.user?.email ?? "";
   const isBeginner = profile.sportLevel === "BEGINNER";
+  // Brand-new user — no in-flight or past workout, no active program.
+  // These users get a single strong CTA instead of competing buttons.
+  const isBrandNew =
+    !activeWorkout && !activeProgram && workouts.length === 0;
 
   const week = weeklyBars(workouts);
   const durations = durationSeries(workouts);
@@ -138,6 +143,11 @@ export default async function Dashboard() {
           </form>
         </header>
 
+        {/* One-time vocabulary mini-tour — only for brand-new users,
+            dismissed forever via localStorage. Kept between the header
+            and the rest so it never floats over interactive content. */}
+        {isBrandNew && <DashboardTour />}
+
         {/* Active session — hero black card */}
         {activeWorkout ? (
           <Link
@@ -177,20 +187,11 @@ export default async function Dashboard() {
           </Link>
         ) : null}
 
-        {/* Wellness check-in (keeps its own logic) */}
-        <WellnessCheckin existingLog={todayWellness} />
-
-        {isBeginner && (
-          <BeginnerTip
-            primarySport={profile.primarySport}
-            hasWorkouts={workouts.length > 0}
-          />
-        )}
-
-        {/* Next program slot / empty-state */}
+        {/* NextWorkoutCard FIRST (if program active) — the workout is
+            the primary job-to-be-done. WellnessCheckin follows. */}
         {!activeWorkout && activeProgram ? (
           <NextWorkoutCard info={activeProgram} />
-        ) : !activeWorkout ? (
+        ) : !activeWorkout && !isBrandNew ? (
           <Link
             href="/planning"
             className="block rounded-3xl border border-dashed border-border bg-surface p-6 text-center hover:border-foreground/30 transition-colors"
@@ -202,19 +203,56 @@ export default async function Dashboard() {
           </Link>
         ) : null}
 
-        {/* Free session CTA — primary if no program slot, secondary otherwise */}
-        <form action={createWorkoutAction}>
-          <button
-            type="submit"
-            className={
-              activeProgram && !activeWorkout
-                ? "w-full rounded-xl bg-transparent border border-border text-foreground py-3 text-sm font-semibold hover:bg-surface hover:border-foreground/40 transition-colors cursor-pointer"
-                : "w-full rounded-full bg-accent text-accent-foreground py-4 font-semibold hover:bg-accent-hover transition-colors cursor-pointer shadow-card"
-            }
+        {/* Brand-new user: elevate the BeginnerTip so there's ONE
+            focal point with a single strong CTA to /planning. For
+            non-beginners who are also brand-new we fall back to a
+            plain editorial CTA so the dashboard is never empty. */}
+        {isBeginner && isBrandNew ? (
+          <BeginnerTip
+            primarySport={profile.primarySport}
+            hasWorkouts={false}
+            primary
+          />
+        ) : isBrandNew ? (
+          <Link
+            href="/planning"
+            className="block rounded-3xl border border-accent/30 bg-accent-light/40 p-5 space-y-2 shadow-card hover:shadow-hero transition-shadow"
           >
-            + Nouvelle séance libre
-          </button>
-        </form>
+            <p className="text-[10px] uppercase tracking-widest font-bold text-accent-ink">
+              Pour commencer
+            </p>
+            <p className="font-display font-bold text-base leading-tight">
+              Crée ton premier programme →
+            </p>
+            <p className="text-xs text-muted">
+              Un programme = tes cycles de séances planifiés dans le temps.
+            </p>
+          </Link>
+        ) : null}
+
+        {/* Wellness check-in — secondary for brand-new users (stays
+            visually quieter via its default collapsed state). */}
+        <WellnessCheckin existingLog={todayWellness} />
+
+        {/* Beginner tip in its quiet form — only when the user has a
+            program OR past workouts but hasn't logged one yet. */}
+        {isBeginner && !isBrandNew && (
+          <BeginnerTip
+            primarySport={profile.primarySport}
+            hasWorkouts={workouts.length > 0}
+          />
+        )}
+
+        {/* Free session CTA. Hidden for brand-new users (the Beginner
+            tip is the single focal point). When a program is active
+            it's secondary. Otherwise a wrapped button that asks for
+            confirmation before closing any in-flight session. */}
+        {!isBrandNew && (
+          <CreateWorkoutButton
+            primary={!activeProgram || !!activeWorkout}
+            hasActiveWorkout={!!activeWorkout}
+          />
+        )}
 
         {/* Quick stats — balanced 2-card row */}
         <section className="grid grid-cols-2 gap-3" aria-label="Statistiques">
