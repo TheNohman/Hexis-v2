@@ -85,6 +85,23 @@ export default async function SessionSummaryPage({
   // Today's wellness for context.
   const wellness = await getTodayWellnessLog(userId);
 
+  // Program context: if this session was launched from a program slot,
+  // resolve its cycle/day so we can show "Cycle X · Jour Y" and offer a
+  // "Retour au programme" CTA. A single query keeps this cheap and the
+  // fields are purely informational (no ownership re-check needed — the
+  // workout is already owned by the user).
+  const programSlot = workout.programSlotId
+    ? await prisma.programSlot.findUnique({
+        where: { id: workout.programSlotId },
+        select: {
+          cycle: true,
+          day: true,
+          label: true,
+          program: { select: { cycleCount: true, cycleDays: true } },
+        },
+      })
+    : null;
+
   const dateLabel = new Intl.DateTimeFormat("fr-FR", {
     weekday: "long",
     day: "numeric",
@@ -105,6 +122,12 @@ export default async function SessionSummaryPage({
               {workout.name}
             </h1>
             <p className="text-xs text-muted mt-1">{dateLabel}</p>
+            {programSlot && (
+              <p className="text-[11px] text-accent-ink font-semibold tabular-nums mt-1.5">
+                Cycle {programSlot.cycle + 1} · Jour {programSlot.day + 1}
+                {programSlot.label ? ` · ${programSlot.label}` : ""}
+              </p>
+            )}
           </div>
           <Link
             href="/dashboard"
@@ -218,13 +241,25 @@ export default async function SessionSummaryPage({
           </ul>
         </section>
 
-        <section className="pt-2 grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <section
+          className={`pt-2 grid grid-cols-1 gap-3 ${
+            workout.programId ? "sm:grid-cols-3" : "sm:grid-cols-2"
+          }`}
+        >
           <Link
             href={`/sessions/${id}`}
             className="rounded-xl bg-surface border border-border text-center py-3 text-sm font-medium hover:shadow-hero hover:-translate-y-0.5 transition-all shadow-card"
           >
             Voir la séance en détail
           </Link>
+          {workout.programId && (
+            <Link
+              href={`/programs/${workout.programId}`}
+              className="rounded-xl bg-accent text-accent-foreground text-center py-3 text-sm font-semibold hover:shadow-hero hover:-translate-y-0.5 transition-all shadow-card"
+            >
+              Retour au programme
+            </Link>
+          )}
           <Link
             href="/dashboard"
             className="rounded-xl bg-foreground text-background text-center py-3 text-sm font-semibold hover:shadow-hero hover:-translate-y-0.5 transition-all shadow-card"

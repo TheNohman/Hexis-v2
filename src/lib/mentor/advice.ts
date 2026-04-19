@@ -186,6 +186,116 @@ export async function getMentorAdviceHistory(
   return rows;
 }
 
+// ────────────────────────────────────────────────────────────────
+// Advice target extraction
+//
+// Scan free-text advice for "N kg/reps" mentions and match them against
+// the user's exercise library. Pure heuristic: we don't try to be clever
+// about conditionals ("tente 80 à 82.5") — we pull every numeric target
+// we find and the nearest exercise name. Returned chips are purely
+// informational; the mutation layer (applying to template/workout) is
+// deliberately out of scope for v1.
+// ────────────────────────────────────────────────────────────────
+
+export type AdviceTarget = {
+  exerciseId: string | null;
+  exerciseName: string;
+  value: number;
+  unit: "kg" | "reps";
+  /** Verbatim excerpt from the advice (for the chip tooltip). */
+  snippet: string;
+};
+
+const TARGET_REGEX =
+  /(\d+(?:[.,]\d+)?)\s*(kg|kilos?|kilogrammes?|reps?|répétitions?|répéts?)\b/giu;
+
+function normalise(text: string): string {
+  return text
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "");
+}
+
+/**
+ * Find targets inside a piece of advice and map them to the best-match
+ * exercise from the supplied library. Returns an empty list if nothing
+ * numeric is found. We keep the API synchronous so callers can invoke it
+ * directly from a page that already has the library loaded.
+ */
+export function extractAdviceTargets(
+  advice: string,
+  library: { id: string; name: string }[],
+): AdviceTarget[] {
+  if (!advice) return [];
+  // Prepare a normalised name index, longest first so "développé couché"
+  // matches before "développé" alone.
+  const index = library
+    .map((ex) => ({ id: ex.id, name: ex.name, normalised: normalise(ex.name) }))
+    .sort((a, b) => b.normalised.length - a.normalised.length);
+
+  const normalisedAdvice = normalise(advice);
+  const targets: AdviceTarget[] = [];
+  const seen = new Set<string>();
+
+  TARGET_REGEX.lastIndex = 0;
+  let match: RegExpExecArray | null;
+  while ((match = TARGET_REGEX.exec(advice)) != null) {
+    const rawValue = match[1].replace(",", ".");
+    const value = Number.parseFloat(rawValue);
+    if (!Number.isFinite(value)) continue;
+    const unitToken = match[2].toLowerCase();
+    const unit: "kg" | "reps" = unitToken.startsWith("k") ? "kg" : "reps";
+
+    // Look ±60 chars around the match for the closest exercise mention.
+    const matchStart = match.index;
+    const windowStart = Math.max(0, matchStart - 80);
+    const windowEnd = Math.min(advice.length, matchStart + 80);
+    const windowText = normalise(advice.slice(windowStart, windowEnd));
+
+    let bestExerciseId: string | null = null;
+    let bestExerciseName = "";
+    for (const ex of index) {
+      if (ex.normalised.length < 3) continue;
+      if (windowText.includes(ex.normalised)) {
+        bestExerciseId = ex.id;
+        bestExerciseName = ex.name;
+        break;
+      }
+    }
+    // Fallback: scan the whole advice if the window had nothing.
+    if (!bestExerciseId) {
+      for (const ex of index) {
+        if (ex.normalised.length < 3) continue;
+        if (normalisedAdvice.includes(ex.normalised)) {
+          bestExerciseId = ex.id;
+          bestExerciseName = ex.name;
+          break;
+        }
+      }
+    }
+
+    // Skip targets with no anchor at all — they're likely generic
+    // ("repose-toi 60 secondes" etc).
+    if (!bestExerciseName) continue;
+
+    const dedupeKey = `${bestExerciseId ?? bestExerciseName}|${value}|${unit}`;
+    if (seen.has(dedupeKey)) continue;
+    seen.add(dedupeKey);
+
+    const snippet = advice.slice(windowStart, windowEnd).trim();
+    targets.push({
+      exerciseId: bestExerciseId,
+      exerciseName: bestExerciseName,
+      value,
+      unit,
+      snippet,
+    });
+    if (targets.length >= 5) break; // cap to keep the UI sane
+  }
+
+  return targets;
+}
+
 /**
  * Invalidate the cached mentor advice so the next call regenerates it.
  * Called from actions that meaningfully change the user's state (wellness

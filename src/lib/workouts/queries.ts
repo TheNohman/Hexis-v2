@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { computeDurationMins } from "@/lib/format";
+import type { Prisma } from "@/generated/prisma/client";
 import type {
   ExerciseListItem,
   WorkoutDetail,
@@ -48,15 +49,27 @@ export async function listExercisesForUser(
 
 /**
  * Returns workouts for the given user, ordered by startedAt desc.
- * Pass `limit` to cap the result (used by the dashboard's "recent"
- * panel); omit to fetch all (used by the full history view).
+ * - `limit` caps the result (used by the dashboard's "recent" panel).
+ * - `templateId` / `exerciseId` apply filters (used by /history chips).
  */
 export async function listWorkouts(
   userId: string,
-  options: { limit?: number } = {},
+  options: { limit?: number; templateId?: string; exerciseId?: string } = {},
 ): Promise<WorkoutListItem[]> {
+  const where: Prisma.WorkoutWhereInput = { userId };
+  if (options.templateId) {
+    where.templateId = options.templateId;
+  }
+  if (options.exerciseId) {
+    where.blocks = {
+      some: {
+        entries: { some: { exerciseId: options.exerciseId } },
+      },
+    };
+  }
+
   const workouts = await prisma.workout.findMany({
-    where: { userId },
+    where,
     orderBy: { startedAt: "desc" },
     ...(options.limit ? { take: options.limit } : {}),
     include: {
@@ -158,6 +171,8 @@ export async function getWorkoutById(
     finishedAt: workout.finishedAt,
     notes: workout.notes,
     templateId: workout.templateId,
+    programId: workout.programId,
+    programSlotId: workout.programSlotId,
     blocks: workout.blocks.map((b) => ({
       id: b.id,
       name: b.name,

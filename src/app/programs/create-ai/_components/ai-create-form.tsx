@@ -12,7 +12,14 @@ const PRESETS = [
   { label: "Force 5x5", prompt: "Crée-moi un programme de force type 5x5 sur 3 jours par semaine." },
 ];
 
-export function AICreateForm() {
+type AICreateContext = {
+  exerciseCount: number;
+  workoutCount: number;
+  wellnessCount: number;
+  hasBodyWeight: boolean;
+};
+
+export function AICreateForm({ context }: { context?: AICreateContext }) {
   const [goals, setGoals] = useState("");
   const [rawResponse, setRawResponse] = useState<string | null>(null);
   const [preview, setPreview] = useState<GeneratedProgram | null>(null);
@@ -56,6 +63,42 @@ export function AICreateForm() {
       {/* Step 1: Goals input */}
       {!preview && (
         <>
+          {context && (
+            <div className="rounded-2xl border border-border bg-surface shadow-card p-4">
+              <p className="text-[10px] uppercase tracking-widest font-semibold text-accent-ink">
+                Ce que l&rsquo;IA lit de toi
+              </p>
+              <ul className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1.5 text-xs text-muted tabular-nums">
+                <li className="flex items-baseline gap-1.5">
+                  <span className="font-semibold text-foreground">
+                    {context.exerciseCount}
+                  </span>
+                  <span>exercice{context.exerciseCount > 1 ? "s" : ""} dispo.</span>
+                </li>
+                <li className="flex items-baseline gap-1.5">
+                  <span className="font-semibold text-foreground">
+                    {context.workoutCount}
+                  </span>
+                  <span>séance{context.workoutCount > 1 ? "s" : ""} d&rsquo;historique</span>
+                </li>
+                <li className="flex items-baseline gap-1.5">
+                  <span
+                    className={`font-semibold ${context.hasBodyWeight ? "text-foreground" : "text-subtle"}`}
+                  >
+                    {context.hasBodyWeight ? "✓" : "—"}
+                  </span>
+                  <span>poids de corps</span>
+                </li>
+                <li className="flex items-baseline gap-1.5">
+                  <span className="font-semibold text-foreground">
+                    {context.wellnessCount}
+                  </span>
+                  <span>wellness 30j</span>
+                </li>
+              </ul>
+            </div>
+          )}
+
           <div className="space-y-3">
             <p className="text-sm text-muted">
               Décris tes objectifs ou choisis un preset. L&rsquo;IA créera un programme

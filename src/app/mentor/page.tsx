@@ -5,7 +5,9 @@ import {
   getSessionAdvice,
   getMentorAdviceHistory,
   getRemainingRateLimit,
+  extractAdviceTargets,
 } from "@/lib/mentor/advice";
+import { listExercisesForUser } from "@/lib/workouts/queries";
 import { RegenerateButton } from "./_components/regenerate-button";
 import { formatRelative } from "@/lib/format";
 import { Card } from "@/app/_components/card";
@@ -56,16 +58,27 @@ export default async function MentorPage() {
     );
   }
 
-  const [advice, history, rate] = await Promise.all([
+  const [advice, history, rate, exerciseLibrary] = await Promise.all([
     getSessionAdvice(userId),
     getMentorAdviceHistory(userId, 10),
     Promise.resolve(getRemainingRateLimit(userId)),
+    listExercisesForUser(userId),
   ]);
 
   const rateLimited = rate.remaining <= 0;
   const disabledReason = rateLimited
     ? `Limite horaire atteinte. Réessaie plus tard.`
     : null;
+
+  // Parse the current advice for actionable numbers (kg / reps) that map
+  // to an exercise the user has in their library. Rendered as chips below
+  // the advice — mutation (applying to next session) is a follow-up.
+  const detectedTargets = advice
+    ? extractAdviceTargets(
+        advice,
+        exerciseLibrary.map((ex) => ({ id: ex.id, name: ex.name })),
+      )
+    : [];
 
   return (
     <main id="main-content" className="flex-1 flex flex-col items-center px-4 py-8">
@@ -117,6 +130,51 @@ export default async function MentorPage() {
             <p className="text-sm text-background/70">
               Aucun conseil disponible pour l&apos;instant. Lance une génération ou enregistre ta première séance.
             </p>
+          )}
+
+          {detectedTargets.length > 0 && (
+            <div className="space-y-2">
+              <p className="text-[10px] uppercase tracking-widest font-semibold text-background/70">
+                Cibles détectées
+              </p>
+              <ul className="flex flex-wrap gap-2">
+                {detectedTargets.map((target, i) => {
+                  const valueLabel =
+                    target.unit === "kg"
+                      ? `${target.value} kg`
+                      : `${target.value} rep${target.value > 1 ? "s" : ""}`;
+                  const body = (
+                    <>
+                      <span>{target.exerciseName}</span>
+                      <span className="text-background/70" aria-hidden="true">·</span>
+                      <span>{valueLabel}</span>
+                    </>
+                  );
+                  const className =
+                    "inline-flex items-center gap-1.5 rounded-full bg-background/10 border border-background/20 px-3 py-1 text-[11px] font-semibold text-background tabular-nums";
+                  return (
+                    <li key={`${target.exerciseId ?? target.exerciseName}-${i}`}>
+                      {target.exerciseId ? (
+                        <Link
+                          href={`/exercises/${target.exerciseId}`}
+                          title={target.snippet}
+                          className={`${className} hover:bg-background/20 transition-colors`}
+                        >
+                          {body}
+                        </Link>
+                      ) : (
+                        <span title={target.snippet} className={className}>
+                          {body}
+                        </span>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+              <p className="text-[10px] text-background/60">
+                Chiffres extraits automatiquement du conseil.
+              </p>
+            </div>
           )}
 
           <div className="flex items-center gap-3 pt-1">

@@ -4,6 +4,8 @@ type PR = {
   exerciseId: string;
   name: string;
   maxWeight: number;
+  reps: number | null;
+  date: Date;
 };
 
 export function RecordsHubCard({ prs }: { prs: PR[] }) {

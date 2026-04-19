@@ -11,16 +11,73 @@ type Props = {
   points: Point[];
 };
 
+type DimKey = keyof Pick<Point, "sleep" | "energy" | "mood" | "stress">;
+
+type Dim = {
+  key: DimKey;
+  icon: string;
+  label: string;
+  /** Label used when the dim's high score matters — "bien dormi" reads better than "haut sommeil". */
+  highPhrase: string;
+  /** Mirror phrase for the low bucket, used when the correlation is negative. */
+  lowPhrase: string;
+  /**
+   * Whether "higher is better" for this signal. Stress is inverted — a 5 on the
+   * stress scale means "very relaxed" in our UX, so positive correlation still
+   * means "more relaxed → more volume".
+   */
+  positiveIsGood: boolean;
+};
+
+const DIMENSIONS: Dim[] = [
+  {
+    key: "sleep",
+    icon: "\u{1F4A4}",
+    label: "Sommeil",
+    highPhrase: "tu as bien dormi",
+    lowPhrase: "tu as mal dormi",
+    positiveIsGood: true,
+  },
+  {
+    key: "energy",
+    icon: "\u{26A1}",
+    label: "Énergie",
+    highPhrase: "tu as de l'énergie",
+    lowPhrase: "tu es à plat",
+    positiveIsGood: true,
+  },
+  {
+    key: "mood",
+    icon: "\u{1F642}",
+    label: "Humeur",
+    highPhrase: "ton humeur est haute",
+    lowPhrase: "ton humeur est basse",
+    positiveIsGood: true,
+  },
+  {
+    key: "stress",
+    icon: "\u{1F9D8}",
+    label: "Détente",
+    highPhrase: "tu es détendu",
+    lowPhrase: "tu es tendu",
+    positiveIsGood: true,
+  },
+];
+
+const R_THRESHOLD = 0.4;
+
 /**
- * Pearson correlation + bucketed average view between wellness signals
- * and training volume. Shown on /stats when at least 7 days of data
- * are available so the number isn't meaningless.
+ * Wellness ↔ training volume — single actionable insight.
+ * Instead of firing four abstract Pearson r values at the user, we pick the
+ * dimension with the strongest signal (|r| >= 0.4) and phrase it as a
+ * narrative: "Sur N jours, ton volume est +38% plus élevé quand tu as
+ * bien dormi (≥4/5)." Below threshold = hide with a "pas assez de
+ * données" fallback.
  */
 export function WellnessCorrelation({ points }: Props) {
   if (points.length < 7) return null;
 
-  // Only consider days with any volume for the correlation; a zero-
-  // volume day depresses the signal artificially.
+  // Zero-volume days flatten the correlation; exclude them.
   const active = points.filter((p) => p.volume > 0);
   if (active.length < 5) {
     return (
@@ -32,114 +89,107 @@ export function WellnessCorrelation({ points }: Props) {
     );
   }
 
-  const dims: Array<{
-    key: keyof Pick<Point, "sleep" | "energy" | "mood" | "stress">;
-    icon: string;
-    label: string;
-    /** Whether "higher is better" for this signal (stress is inverted — high stress = low detente). */
-    positiveIsGood: boolean;
-  }> = [
-    { key: "sleep", icon: "\u{1F4A4}", label: "Sommeil", positiveIsGood: true },
-    { key: "energy", icon: "\u{26A1}", label: "Énergie", positiveIsGood: true },
-    { key: "mood", icon: "\u{1F642}", label: "Humeur", positiveIsGood: true },
-    { key: "stress", icon: "\u{1F9D8}", label: "Détente", positiveIsGood: true },
-  ];
+  // Compute r for every dimension, then pick the strongest.
+  type Scored = Dim & {
+    r: number;
+    highAvg: number | null;
+    lowAvg: number | null;
+    highDays: number;
+    lowDays: number;
+  };
 
-  const rows = dims.map((dim) => {
+  const scored: Scored[] = DIMENSIONS.map((dim) => {
     const xs = active.map((p) => p[dim.key]);
     const ys = active.map((p) => p.volume);
     const r = pearson(xs, ys);
-    const { verdict, tone } = interpret(r);
     const low = active.filter((p) => p[dim.key] <= 2).map((p) => p.volume);
     const high = active.filter((p) => p[dim.key] >= 4).map((p) => p.volume);
-    const lowAvg = low.length ? avg(low) : null;
-    const highAvg = high.length ? avg(high) : null;
     return {
       ...dim,
       r,
-      verdict,
-      tone,
-      lowAvg,
-      highAvg,
+      lowAvg: low.length ? avg(low) : null,
+      highAvg: high.length ? avg(high) : null,
       lowDays: low.length,
       highDays: high.length,
     };
   });
 
+  const strongest = scored
+    .filter((s) => Math.abs(s.r) >= R_THRESHOLD)
+    .sort((a, b) => Math.abs(b.r) - Math.abs(a.r))[0];
+
+  if (!strongest) {
+    return (
+      <section className="rounded-2xl bg-surface shadow-card p-5 text-center">
+        <p className="text-sm text-subtle">
+          Pas assez de données pour un lien clair entre ton bien-être et ton volume.
+        </p>
+        <p className="text-[11px] text-subtle mt-1">
+          Basé sur {active.length} jours d&rsquo;entraînement.
+        </p>
+      </section>
+    );
+  }
+
+  // Phrase the takeaway. Positive r = higher score ↔ higher volume.
+  // We always compare the "favourable" bucket vs the "unfavourable" one
+  // so the delta reads naturally in French.
+  const direction: "pos" | "neg" = strongest.r > 0 ? "pos" : "neg";
+  const phrase = direction === "pos" ? strongest.highPhrase : strongest.lowPhrase;
+
+  const { highAvg, lowAvg } = strongest;
+  let pctDelta: number | null = null;
+  if (highAvg != null && lowAvg != null && lowAvg > 0) {
+    // If positive r, high bucket is the good one — show its uplift over low.
+    // If negative r, low bucket is the good one — compare low over high.
+    const numerator = direction === "pos" ? highAvg : lowAvg;
+    const denominator = direction === "pos" ? lowAvg : highAvg;
+    if (denominator > 0) {
+      pctDelta = Math.round(((numerator - denominator) / denominator) * 100);
+    }
+  }
+
+  const pctLabel =
+    pctDelta != null && pctDelta !== 0
+      ? `${pctDelta > 0 ? "+" : ""}${pctDelta}% plus élevé`
+      : "nettement plus élevé";
+  const bucketLabel = direction === "pos" ? "≥ 4/5" : "≤ 2/5";
+
   return (
     <section className="space-y-3">
       <h2 className="font-display font-bold text-lg tracking-tight">
-        Bien-être ↔ volume d&rsquo;entraînement
+        Bien-être ↔ volume
       </h2>
-      <ul className="rounded-2xl bg-surface shadow-card divide-y divide-border overflow-hidden">
-        {rows.map((row) => {
-          // r ∈ [-1, 1] → bar position 0..100 with midpoint at 50
-          const pct = Math.max(0, Math.min(100, (row.r + 1) * 50));
-          return (
-            <li key={row.key} className="p-3.5 flex items-center gap-3">
-              <span aria-hidden="true" className="text-xl shrink-0">
-                {row.icon}
-              </span>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-baseline justify-between gap-2">
-                  <p className="text-sm font-display font-bold">{row.label}</p>
-                  <div className="flex items-center gap-2 shrink-0">
-                    <span
-                      className={`inline-flex items-center gap-1 text-[10px] uppercase tracking-widest font-semibold rounded-full px-2 py-0.5 ${
-                        row.tone === "pos"
-                          ? "bg-done/20 text-foreground"
-                          : row.tone === "neg"
-                            ? "bg-danger-soft text-danger"
-                            : "bg-surface-hover text-muted"
-                      }`}
-                    >
-                      <span aria-hidden="true">
-                        {row.tone === "pos" ? "↑" : row.tone === "neg" ? "↓" : "→"}
-                      </span>
-                      {row.tone === "pos" ? "positif" : row.tone === "neg" ? "négatif" : "neutre"}
-                    </span>
-                    <span className="font-display font-bold text-sm tabular-nums">
-                      {row.r >= 0 ? "+" : ""}
-                      {row.r.toFixed(2)}
-                    </span>
-                  </div>
-                </div>
-                {/* Visual bar: -1 ← 0 → +1, marker shows r. Redundant with numeric r. */}
-                <div
-                  className="relative h-1.5 rounded-full bg-surface-hover mt-2 overflow-hidden"
-                  aria-hidden="true"
-                >
-                  <div className="absolute inset-y-0 left-1/2 w-px bg-border" />
-                  <div
-                    className={`absolute top-0 h-full rounded-full ${
-                      row.tone === "pos"
-                        ? "bg-done"
-                        : row.tone === "neg"
-                          ? "bg-danger"
-                          : "bg-muted"
-                    }`}
-                    style={{
-                      left: row.r >= 0 ? "50%" : `${pct}%`,
-                      width: `${Math.abs(pct - 50)}%`,
-                    }}
-                  />
-                </div>
-                <p className="text-[11px] text-muted mt-1.5">{row.verdict}</p>
-                {row.lowAvg != null && row.highAvg != null && (
-                  <p className="text-[10px] text-subtle tabular-nums mt-0.5">
-                    Bas ({row.lowDays} j) : {formatVolume(row.lowAvg)} · Élevé (
-                    {row.highDays} j) : {formatVolume(row.highAvg)}
-                  </p>
-                )}
-              </div>
-            </li>
-          );
-        })}
-      </ul>
-      <p className="text-[10px] text-subtle text-center">
-        Basé sur {active.length} jours d&rsquo;entraînement. r ∈ [-1, 1] : +1 = corrélation
-        parfaitement positive, 0 = aucune, -1 = parfaitement négative.
-      </p>
+      <div className="rounded-2xl bg-surface shadow-card p-5">
+        <div className="flex items-start gap-3">
+          <span aria-hidden="true" className="text-2xl shrink-0">
+            {strongest.icon}
+          </span>
+          <div className="min-w-0">
+            <p className="text-[15px] leading-relaxed">
+              Sur{" "}
+              <span className="tabular-nums font-semibold">{active.length}</span>{" "}
+              jours, ton volume est{" "}
+              <span
+                className={`font-semibold ${direction === "pos" ? "text-accent-ink" : "text-danger"}`}
+              >
+                {pctLabel}
+              </span>{" "}
+              quand {phrase} ({bucketLabel}).
+            </p>
+            {highAvg != null && lowAvg != null && (
+              <p className="text-[11px] text-subtle tabular-nums mt-1.5">
+                {direction === "pos"
+                  ? `${formatVolume(highAvg)} en moyenne vs ${formatVolume(lowAvg)}`
+                  : `${formatVolume(lowAvg)} en moyenne vs ${formatVolume(highAvg)}`}
+                {" · "}
+                r = {strongest.r >= 0 ? "+" : ""}
+                {strongest.r.toFixed(2)}
+              </p>
+            )}
+          </div>
+        </div>
+      </div>
     </section>
   );
 }
@@ -173,24 +223,6 @@ function pearson(xs: number[], ys: number[]): number {
   const denom = Math.sqrt(dx2 * dy2);
   if (denom === 0) return 0;
   return num / denom;
-}
-
-function interpret(r: number): { verdict: string; tone: "pos" | "neg" | "neutral" } {
-  const a = Math.abs(r);
-  if (a < 0.2) return { verdict: "Pas de lien clair", tone: "neutral" };
-  if (a < 0.4) {
-    return r > 0
-      ? { verdict: "Lien positif faible", tone: "pos" }
-      : { verdict: "Lien négatif faible", tone: "neg" };
-  }
-  if (a < 0.6) {
-    return r > 0
-      ? { verdict: "Lien positif modéré", tone: "pos" }
-      : { verdict: "Lien négatif modéré", tone: "neg" };
-  }
-  return r > 0
-    ? { verdict: "Lien positif fort", tone: "pos" }
-    : { verdict: "Lien négatif fort", tone: "neg" };
 }
 
 function formatVolume(v: number): string {

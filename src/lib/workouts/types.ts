@@ -50,6 +50,8 @@ export type WorkoutDetail = {
   finishedAt: Date | null;
   notes: string | null;
   templateId: string | null;
+  programId: string | null;
+  programSlotId: string | null;
   blocks: {
     id: string;
     name: string;

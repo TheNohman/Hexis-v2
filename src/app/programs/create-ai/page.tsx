@@ -8,12 +8,33 @@ export const dynamic = "force-dynamic";
 
 export default async function CreateAIProgramPage() {
   const userId = await getCurrentUserId();
-  const [user, templateCount] = await Promise.all([
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+  const [
+    user,
+    templateCount,
+    exerciseCount,
+    workoutCount,
+    wellnessCount,
+    bodyWeightEntry,
+  ] = await Promise.all([
     prisma.user.findUnique({
       where: { id: userId },
-      select: { mentorEnabled: true },
+      select: { mentorEnabled: true, bodyWeightKg: true },
     }),
     prisma.workoutTemplate.count({ where: { userId } }),
+    prisma.exercise.count({
+      where: { OR: [{ isSystem: true }, { userId }] },
+    }),
+    prisma.workout.count({ where: { userId } }),
+    prisma.wellnessLog.count({
+      where: { userId, date: { gte: thirtyDaysAgo } },
+    }),
+    prisma.bodyWeightEntry.findFirst({
+      where: { userId },
+      orderBy: { date: "desc" },
+      select: { id: true },
+    }),
   ]);
 
   if (!user?.mentorEnabled) {
@@ -51,7 +72,15 @@ export default async function CreateAIProgramPage() {
           </Link>
         </header>
 
-        <AICreateForm />
+        <AICreateForm
+          context={{
+            exerciseCount,
+            workoutCount,
+            wellnessCount,
+            hasBodyWeight:
+              user.bodyWeightKg != null || bodyWeightEntry != null,
+          }}
+        />
       </div>
     </main>
   );

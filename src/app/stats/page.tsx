@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getCurrentUserId } from "@/lib/auth-helpers";
 import { getWorkoutStats, getWellnessPerformanceCorrelation } from "@/lib/stats/queries";
+import type { PeriodDelta } from "@/lib/stats/types";
 import { listRecentEvents, countEventsByName } from "@/lib/telemetry/queries";
 import { formatDuration } from "@/lib/format";
 import { WellnessCorrelation } from "./_components/wellness-correlation";
@@ -18,6 +19,57 @@ function formatVolumeShort(v: number): string {
   return `${Math.round(v)}`;
 }
 
+/**
+ * Return a "+12%", "-4%" or "—" label, plus the semantic tone used to
+ * colour the chip. Neutral stays subtle; positive uses accent-ink (teal);
+ * strong negative uses danger.
+ */
+function formatDelta(
+  pct: number | null,
+  { invert = false }: { invert?: boolean } = {},
+): { label: string; tone: "pos" | "neg" | "neutral" } {
+  if (pct == null) return { label: "—", tone: "neutral" };
+  const signed = invert ? -pct : pct;
+  const rounded = Math.round(pct * 100);
+  if (rounded === 0) return { label: "±0%", tone: "neutral" };
+  const sign = rounded > 0 ? "+" : "";
+  const label = `${sign}${rounded}%`;
+  if (Math.abs(signed) < 0.05) return { label, tone: "neutral" };
+  return { label, tone: signed > 0 ? "pos" : "neg" };
+}
+
+function DeltaChip({
+  delta,
+  compareLabel = "vs 30j préc.",
+  invert = false,
+}: {
+  delta: PeriodDelta;
+  compareLabel?: string;
+  invert?: boolean;
+}) {
+  const { label, tone } = formatDelta(delta.changePct, { invert });
+  if (delta.changePct == null) {
+    return (
+      <p className="text-[10px] text-subtle tabular-nums mt-1">
+        — {compareLabel}
+      </p>
+    );
+  }
+  const arrow = tone === "pos" ? "↑" : tone === "neg" ? "↓" : "→";
+  const toneClass =
+    tone === "pos"
+      ? "text-accent-ink"
+      : tone === "neg"
+        ? "text-danger"
+        : "text-subtle";
+  return (
+    <p className={`text-[10px] tabular-nums mt-1 ${toneClass}`}>
+      <span aria-hidden="true">{arrow}</span> {label}{" "}
+      <span className="text-subtle">{compareLabel}</span>
+    </p>
+  );
+}
+
 export default async function StatsPage() {
   const userId = await getCurrentUserId();
   const since30d = thirtyDaysAgo();
@@ -33,6 +85,17 @@ export default async function StatsPage() {
 
   const activityValues = stats.weeklyActivity.map((w) => w.count);
   const volumeValues = stats.weeklyVolume.map((w) => w.volume);
+
+  // Hero metric — 30d rolling volume with 30-prev delta.
+  const volumeDelta: PeriodDelta = {
+    current: stats.volumeLast30d,
+    previous: stats.volumePrev30d,
+    changePct:
+      stats.volumePrev30d > 0
+        ? (stats.volumeLast30d - stats.volumePrev30d) / stats.volumePrev30d
+        : null,
+  };
+  const heroDelta = formatDelta(volumeDelta.changePct);
 
   return (
     <main id="main-content" className="flex-1 flex flex-col items-center px-4 py-6 pb-28">
@@ -52,18 +115,18 @@ export default async function StatsPage() {
           </Link>
         </header>
 
-        {/* Hero total volume — only if meaningful data */}
-        {stats.totalVolume > 0 ? (
+        {/* Hero — 30j rolling volume (was lifetime; lifetime now a secondary chip) */}
+        {stats.volumeLast30d > 0 || stats.totalVolume > 0 ? (
           <section
-            aria-label="Volume total soulevé"
+            aria-label="Volume soulevé sur 30 jours"
             className="rounded-3xl bg-foreground text-background p-6 shadow-hero"
           >
             <p className="text-[10px] uppercase tracking-widest font-semibold text-accent">
-              Volume total soulevé
+              Volume · 30 derniers jours
             </p>
             <div className="mt-2 flex items-end justify-between gap-4">
               <p className="font-display font-black text-5xl tabular-nums leading-none">
-                {Math.round(stats.totalVolume).toLocaleString("fr-FR")}
+                {Math.round(stats.volumeLast30d).toLocaleString("fr-FR")}
                 <span className="text-2xl text-background/70 font-bold ml-1">kg</span>
               </p>
               {volumeValues.length > 1 && (
@@ -76,31 +139,76 @@ export default async function StatsPage() {
                 />
               )}
             </div>
-            <p className="text-xs text-background/70 mt-3 tabular-nums">
-              {stats.totalFinished} séance{stats.totalFinished > 1 ? "s" : ""} terminée
-              {stats.totalFinished > 1 ? "s" : ""} · {stats.totalSetsDone} série
-              {stats.totalSetsDone > 1 ? "s" : ""}
-            </p>
+            <div className="mt-3 flex items-center gap-2 flex-wrap">
+              {volumeDelta.changePct != null ? (
+                <span
+                  className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold tabular-nums ${
+                    heroDelta.tone === "pos"
+                      ? "bg-accent text-accent-foreground"
+                      : heroDelta.tone === "neg"
+                        ? "bg-danger-soft text-danger"
+                        : "bg-background/10 text-background/70"
+                  }`}
+                >
+                  <span aria-hidden="true">
+                    {heroDelta.tone === "pos"
+                      ? "↑"
+                      : heroDelta.tone === "neg"
+                        ? "↓"
+                        : "→"}
+                  </span>
+                  {heroDelta.label} vs 30j précédents
+                </span>
+              ) : (
+                <span className="inline-flex items-center rounded-full bg-background/10 px-2.5 py-1 text-[11px] font-semibold text-background/70">
+                  Pas de période de comparaison
+                </span>
+              )}
+              {stats.totalVolume > 0 && (
+                <span className="inline-flex items-center rounded-full bg-background/10 px-2.5 py-1 text-[11px] font-semibold text-background/70 tabular-nums">
+                  Total :{" "}
+                  {Math.round(stats.totalVolume).toLocaleString("fr-FR")} kg
+                </span>
+              )}
+            </div>
           </section>
         ) : null}
 
-        {/* Summary — 4 stat cards */}
+        {/* Summary — 4 stat cards with 30d deltas */}
         <section
           aria-label="Résumé de l&rsquo;activité"
           className="grid grid-cols-2 sm:grid-cols-4 gap-2.5"
         >
           {[
-            { value: stats.totalWorkouts, label: "Séances" },
-            { value: stats.totalFinished, label: "Terminées" },
-            { value: stats.totalSetsDone, label: "Séries" },
+            {
+              value: stats.totalWorkouts,
+              label: "Séances",
+              delta: stats.workoutsLast30d,
+              invert: false,
+            },
+            {
+              value: stats.totalFinished,
+              label: "Terminées",
+              delta: stats.finishedLast30d,
+              invert: false,
+            },
+            {
+              value: stats.totalSetsDone,
+              label: "Séries",
+              delta: stats.setsLast30d,
+              invert: false,
+            },
             {
               value:
                 stats.avgDurationMins != null
                   ? formatDuration(stats.avgDurationMins * 60)
                   : "—",
               label: "Durée moy.",
+              delta: stats.avgDurationLast30d,
+              // Shorter avg-duration isn't really "bad" — leave neutral tone.
+              invert: false,
             },
-          ].map(({ value, label }) => (
+          ].map(({ value, label, delta, invert }) => (
             <div
               key={label}
               className="rounded-2xl bg-surface shadow-card p-4"
@@ -111,6 +219,7 @@ export default async function StatsPage() {
               <p className="font-display font-black text-2xl tabular-nums mt-1.5 leading-none">
                 {value}
               </p>
+              <DeltaChip delta={delta} invert={invert} />
             </div>
           ))}
         </section>
@@ -122,26 +231,33 @@ export default async function StatsPage() {
               Records personnels
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-              {stats.personalRecords.map((pr) => (
-                <Link
-                  key={pr.exerciseId}
-                  href={`/exercises/${pr.exerciseId}`}
-                  className="group flex items-center justify-between gap-3 rounded-2xl bg-surface shadow-card p-4 hover:shadow-hero hover:-translate-y-0.5 transition-all"
-                >
-                  <div className="min-w-0">
-                    <p className="text-[10px] uppercase tracking-widest font-semibold text-muted">
-                      Charge max
-                    </p>
-                    <p className="text-sm font-display font-bold truncate mt-0.5">
-                      {pr.name}
-                    </p>
-                  </div>
-                  <p className="shrink-0 font-display font-black text-2xl tabular-nums">
-                    {pr.maxWeight}
-                    <span className="text-sm text-muted font-bold ml-0.5">kg</span>
-                  </p>
-                </Link>
-              ))}
+              {stats.personalRecords.map((pr) => {
+                const dateLabel = new Intl.DateTimeFormat("fr-FR", {
+                  day: "numeric",
+                  month: "short",
+                }).format(new Date(pr.date));
+                const repsLabel =
+                  pr.reps != null && pr.reps > 0 ? ` × ${pr.reps}` : "";
+                return (
+                  <Link
+                    key={pr.exerciseId}
+                    href={`/exercises/${pr.exerciseId}`}
+                    className="group flex items-center justify-between gap-3 rounded-2xl bg-surface shadow-card p-4 hover:shadow-hero hover:-translate-y-0.5 transition-all"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[10px] uppercase tracking-widest font-semibold text-muted">
+                        Record
+                      </p>
+                      <p className="text-sm font-display font-bold truncate mt-0.5">
+                        {pr.name}
+                      </p>
+                      <p className="text-[11px] text-subtle tabular-nums mt-0.5">
+                        {pr.maxWeight} kg{repsLabel} · {dateLabel}
+                      </p>
+                    </div>
+                  </Link>
+                );
+              })}
             </div>
           </section>
         )}

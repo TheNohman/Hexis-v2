@@ -2,6 +2,7 @@ import Link from "next/link";
 import { History, Search } from "lucide-react";
 import { getCurrentUserId } from "@/lib/auth-helpers";
 import { listWorkoutHistory } from "@/lib/history/queries";
+import { prisma } from "@/lib/prisma";
 import { formatDuration } from "@/lib/format";
 import { EmptyState } from "@/app/_components/empty-state";
 import { DeleteWorkoutButton } from "./_components/delete-workout-button";
@@ -36,21 +37,58 @@ function workoutInitials(name: string): string {
 export default async function HistoryPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; page?: string; flash?: string }>;
+  searchParams: Promise<{
+    q?: string;
+    page?: string;
+    flash?: string;
+    template?: string;
+    exercise?: string;
+  }>;
 }) {
-  const { q, page: pageStr, flash } = await searchParams;
+  const {
+    q,
+    page: pageStr,
+    flash,
+    template: templateId,
+    exercise: exerciseId,
+  } = await searchParams;
   const userId = await getCurrentUserId();
   const page = Math.max(1, parseInt(pageStr ?? "1", 10) || 1);
   const pageSize = 20;
 
-  const { items, total } = await listWorkoutHistory(
-    userId,
-    { search: q || undefined },
-    page,
-    pageSize,
-  );
+  // Populate filter dropdowns with the templates/exercises this user has
+  // actually used in past workouts (avoid polluting the UI with dormant
+  // library items that would return zero results).
+  const [templateOptions, exerciseOptions, { items, total }] = await Promise.all([
+    prisma.workoutTemplate.findMany({
+      where: {
+        userId,
+        workouts: { some: { userId } },
+      },
+      select: { id: true, name: true },
+      orderBy: { name: "asc" },
+    }),
+    prisma.exercise.findMany({
+      where: {
+        entries: { some: { block: { workout: { userId } } } },
+      },
+      select: { id: true, name: true },
+      orderBy: { name: "asc" },
+    }),
+    listWorkoutHistory(
+      userId,
+      {
+        search: q || undefined,
+        templateId: templateId || undefined,
+        exerciseId: exerciseId || undefined,
+      },
+      page,
+      pageSize,
+    ),
+  ]);
 
   const totalPages = Math.ceil(total / pageSize);
+  const hasFilter = Boolean(q || templateId || exerciseId);
 
   return (
     <main id="main-content" className="flex-1 flex flex-col items-center px-4 py-6 pb-28">
@@ -73,22 +111,88 @@ export default async function HistoryPage({
           </Link>
         </header>
 
-        {/* Search */}
-        <form className="flex gap-2">
-          <input
-            type="search"
-            name="q"
-            defaultValue={q ?? ""}
-            placeholder="Rechercher une séance..."
-            aria-label="Rechercher une séance"
-            className="flex-1 rounded-xl bg-surface shadow-card px-4 py-3 text-sm placeholder:text-subtle focus:outline-none focus:ring-2 focus:ring-accent/60 transition-shadow"
-          />
-          <button
-            type="submit"
-            className="rounded-xl bg-foreground text-background px-5 text-sm font-semibold hover:bg-foreground/90 transition-colors cursor-pointer"
-          >
-            Chercher
-          </button>
+        {/* Search + filter chips */}
+        <form className="space-y-2">
+          <div className="flex gap-2">
+            <input
+              type="search"
+              name="q"
+              defaultValue={q ?? ""}
+              placeholder="Rechercher une séance..."
+              aria-label="Rechercher une séance"
+              className="flex-1 rounded-xl bg-surface shadow-card px-4 py-3 text-sm placeholder:text-subtle focus:outline-none focus:ring-2 focus:ring-accent/60 transition-shadow"
+            />
+            <button
+              type="submit"
+              className="rounded-xl bg-foreground text-background px-5 text-sm font-semibold hover:bg-foreground/90 transition-colors cursor-pointer"
+            >
+              Chercher
+            </button>
+          </div>
+          {(templateOptions.length > 0 || exerciseOptions.length > 0) && (
+            <div className="flex gap-2 flex-wrap">
+              {templateOptions.length > 0 && (
+                <label className="flex-1 min-w-[140px] relative">
+                  <span className="sr-only">Filtrer par modèle</span>
+                  <select
+                    name="template"
+                    defaultValue={templateId ?? ""}
+                    className="w-full appearance-none rounded-xl bg-surface shadow-card px-3 py-2 pr-8 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-accent/60 transition-shadow cursor-pointer"
+                  >
+                    <option value="">Tous les modèles</option>
+                    {templateOptions.map((t) => (
+                      <option key={t.id} value={t.id}>
+                        {t.name}
+                      </option>
+                    ))}
+                  </select>
+                  <span
+                    aria-hidden="true"
+                    className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted"
+                  >
+                    ▾
+                  </span>
+                </label>
+              )}
+              {exerciseOptions.length > 0 && (
+                <label className="flex-1 min-w-[140px] relative">
+                  <span className="sr-only">Filtrer par exercice</span>
+                  <select
+                    name="exercise"
+                    defaultValue={exerciseId ?? ""}
+                    className="w-full appearance-none rounded-xl bg-surface shadow-card px-3 py-2 pr-8 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-accent/60 transition-shadow cursor-pointer"
+                  >
+                    <option value="">Tous les exercices</option>
+                    {exerciseOptions.map((e) => (
+                      <option key={e.id} value={e.id}>
+                        {e.name}
+                      </option>
+                    ))}
+                  </select>
+                  <span
+                    aria-hidden="true"
+                    className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted"
+                  >
+                    ▾
+                  </span>
+                </label>
+              )}
+              <button
+                type="submit"
+                className="rounded-xl border border-border bg-surface px-3 py-2 text-xs font-semibold text-muted hover:text-foreground transition-colors cursor-pointer"
+              >
+                Appliquer
+              </button>
+              {hasFilter && (
+                <Link
+                  href="/history"
+                  className="rounded-xl border border-border px-3 py-2 text-xs font-semibold text-subtle hover:text-foreground transition-colors"
+                >
+                  Réinitialiser
+                </Link>
+              )}
+            </div>
+          )}
         </form>
 
         {/* Results */}
@@ -183,7 +287,12 @@ export default async function HistoryPage({
           <div className="flex items-center justify-center gap-3 pt-2">
             {page > 1 && (
               <Link
-                href={`/history?${new URLSearchParams({ ...(q ? { q } : {}), page: String(page - 1) })}`}
+                href={`/history?${new URLSearchParams({
+                  ...(q ? { q } : {}),
+                  ...(templateId ? { template: templateId } : {}),
+                  ...(exerciseId ? { exercise: exerciseId } : {}),
+                  page: String(page - 1),
+                })}`}
                 className="rounded-full bg-surface shadow-card px-4 py-2 text-sm font-semibold hover:shadow-hero transition-shadow"
               >
                 ← Précédent
@@ -194,7 +303,12 @@ export default async function HistoryPage({
             </span>
             {page < totalPages && (
               <Link
-                href={`/history?${new URLSearchParams({ ...(q ? { q } : {}), page: String(page + 1) })}`}
+                href={`/history?${new URLSearchParams({
+                  ...(q ? { q } : {}),
+                  ...(templateId ? { template: templateId } : {}),
+                  ...(exerciseId ? { exercise: exerciseId } : {}),
+                  page: String(page + 1),
+                })}`}
                 className="rounded-full bg-surface shadow-card px-4 py-2 text-sm font-semibold hover:shadow-hero transition-shadow"
               >
                 Suivant →

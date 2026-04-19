@@ -1,63 +1,81 @@
 import { prisma } from "@/lib/prisma";
+import type {
+  PeriodDelta,
+  PersonalRecord,
+  RecentExercise,
+  WeekActivity,
+  WeekVolume,
+  WorkoutStats,
+} from "./types";
 
-// --------------- Types ---------------
+// Re-export types so existing imports (e.g. `@/lib/stats/queries`) keep working.
+export type {
+  PeriodDelta,
+  PersonalRecord,
+  RecentExercise,
+  WeekActivity,
+  WeekVolume,
+  WorkoutStats,
+} from "./types";
 
-export type RecentExercise = {
-  exerciseId: string;
-  name: string;
-  lastUsedAt: Date;
-};
+// --------------- Helpers ---------------
 
-export type WeekActivity = {
-  /** ISO week start date (Monday) as YYYY-MM-DD */
-  weekStart: string;
-  count: number;
-};
-
-export type WeekVolume = {
-  weekStart: string;
-  volume: number;
-};
-
-export type PersonalRecord = {
-  exerciseId: string;
-  name: string;
-  maxWeight: number;
-};
-
-export type WorkoutStats = {
-  totalWorkouts: number;
-  totalFinished: number;
-  totalEntries: number;
-  totalSetsDone: number;
-  avgDurationMins: number | null;
-  totalVolume: number;
-  recentExercises: RecentExercise[];
-  weeklyActivity: WeekActivity[];
-  weeklyVolume: WeekVolume[];
-  personalRecords: PersonalRecord[];
-};
+function deltaPct(current: number, previous: number): number | null {
+  if (previous <= 0) return null;
+  return (current - previous) / previous;
+}
 
 // --------------- Query ---------------
 
-export async function getWorkoutStats(
-  userId: string,
-): Promise<WorkoutStats> {
-  // 1. Totals: workouts & finished workouts
-  const [totalWorkouts, totalFinished] = await Promise.all([
-    prisma.workout.count({ where: { userId } }),
-    prisma.workout.count({
-      where: { userId, finishedAt: { not: null } },
-    }),
-  ]);
+export async function getWorkoutStats(userId: string): Promise<WorkoutStats> {
+  const now = new Date();
+  const d30 = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+  const d60 = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000);
 
-  // 2. Total entries & total sets done (status = DONE)
-  const [totalEntries, totalSetsDone] = await Promise.all([
+  // 1. Totals: workouts & finished workouts (all-time + 30d windows)
+  const [totalWorkouts, totalFinished, workoutsC, workoutsP, finishedC, finishedP] =
+    await Promise.all([
+      prisma.workout.count({ where: { userId } }),
+      prisma.workout.count({ where: { userId, finishedAt: { not: null } } }),
+      prisma.workout.count({ where: { userId, startedAt: { gte: d30 } } }),
+      prisma.workout.count({
+        where: { userId, startedAt: { gte: d60, lt: d30 } },
+      }),
+      prisma.workout.count({
+        where: {
+          userId,
+          finishedAt: { not: null },
+          startedAt: { gte: d30 },
+        },
+      }),
+      prisma.workout.count({
+        where: {
+          userId,
+          finishedAt: { not: null },
+          startedAt: { gte: d60, lt: d30 },
+        },
+      }),
+    ]);
+
+  // 2. Total entries & total sets done (status = DONE) — all-time + 30d windows
+  const [totalEntries, totalSetsDone, setsC, setsP] = await Promise.all([
     prisma.workoutEntry.count({
       where: { block: { workout: { userId } } },
     }),
     prisma.workoutEntry.count({
       where: { block: { workout: { userId } }, status: "DONE" },
+    }),
+    prisma.workoutEntry.count({
+      where: {
+        block: { workout: { userId, startedAt: { gte: d30 } } },
+        status: "DONE",
+      },
+    }),
+    prisma.workoutEntry.count({
+      where: {
+        block: { workout: { userId, startedAt: { gte: d60, lt: d30 } } },
+        status: "DONE",
+      },
     }),
   ]);
 
@@ -107,7 +125,6 @@ export async function getWorkoutStats(
     ORDER BY week_start ASC
   `;
 
-  // Build a complete 8-week array (fill missing weeks with 0)
   const weeklyMap = new Map<string, number>();
   for (const row of weekRows) {
     const key =
@@ -119,7 +136,6 @@ export async function getWorkoutStats(
 
   const weeklyActivity: WeekActivity[] = [];
   const cursor = new Date(eightWeeksAgo);
-  // Align to Monday
   cursor.setDate(cursor.getDate() - ((cursor.getDay() + 6) % 7));
   for (let i = 0; i < 8; i++) {
     const key = cursor.toISOString().slice(0, 10);
@@ -127,36 +143,88 @@ export async function getWorkoutStats(
     cursor.setDate(cursor.getDate() + 7);
   }
 
-  // 5. Average duration of finished workouts (in minutes)
-  const durationRows = await prisma.$queryRaw<
-    { avg_mins: number | null }[]
-  >`
-    SELECT AVG(EXTRACT(EPOCH FROM ("finishedAt" - "startedAt")) / 60.0) AS avg_mins
-    FROM   "Workout"
-    WHERE  "userId" = ${userId}
-      AND  "finishedAt" IS NOT NULL
-  `;
+  // 5. Average duration of finished workouts (all-time + 30d windows)
+  const [durationAllRows, durationCurrentRows, durationPrevRows] = await Promise.all([
+    prisma.$queryRaw<{ avg_mins: number | null }[]>`
+      SELECT AVG(EXTRACT(EPOCH FROM ("finishedAt" - "startedAt")) / 60.0) AS avg_mins
+      FROM   "Workout"
+      WHERE  "userId" = ${userId}
+        AND  "finishedAt" IS NOT NULL
+    `,
+    prisma.$queryRaw<{ avg_mins: number | null }[]>`
+      SELECT AVG(EXTRACT(EPOCH FROM ("finishedAt" - "startedAt")) / 60.0) AS avg_mins
+      FROM   "Workout"
+      WHERE  "userId" = ${userId}
+        AND  "finishedAt" IS NOT NULL
+        AND  "startedAt" >= ${d30}
+    `,
+    prisma.$queryRaw<{ avg_mins: number | null }[]>`
+      SELECT AVG(EXTRACT(EPOCH FROM ("finishedAt" - "startedAt")) / 60.0) AS avg_mins
+      FROM   "Workout"
+      WHERE  "userId" = ${userId}
+        AND  "finishedAt" IS NOT NULL
+        AND  "startedAt" >= ${d60}
+        AND  "startedAt" <  ${d30}
+    `,
+  ]);
   const avgDurationMins =
-    durationRows[0]?.avg_mins != null
-      ? Math.round(durationRows[0].avg_mins * 10) / 10
+    durationAllRows[0]?.avg_mins != null
+      ? Math.round(durationAllRows[0].avg_mins * 10) / 10
       : null;
+  const avgDurationCurrent = durationCurrentRows[0]?.avg_mins ?? 0;
+  const avgDurationPrev = durationPrevRows[0]?.avg_mins ?? 0;
 
-  // 6. Total volume: sum of (weight_kg * reps) for DONE entries
-  const volumeRows = await prisma.$queryRaw<{ total_volume: number | null }[]>`
-    SELECT SUM(w_val."valueNumeric" * r_val."valueNumeric") AS total_volume
-    FROM   "WorkoutEntry" e
-    JOIN   "WorkoutBlock" b ON b."id" = e."blockId"
-    JOIN   "Workout" wo ON wo."id" = b."workoutId"
-    JOIN   "EntryKpiValue" w_val ON w_val."entryId" = e."id"
-    JOIN   "KpiDefinition" w_kpi ON w_kpi."id" = w_val."kpiDefinitionId" AND w_kpi."slug" = 'weight_kg'
-    JOIN   "EntryKpiValue" r_val ON r_val."entryId" = e."id"
-    JOIN   "KpiDefinition" r_kpi ON r_kpi."id" = r_val."kpiDefinitionId" AND r_kpi."slug" = 'reps'
-    WHERE  wo."userId" = ${userId}
-      AND  e."status" = 'DONE'
-      AND  w_val."valueNumeric" IS NOT NULL
-      AND  r_val."valueNumeric" IS NOT NULL
-  `;
-  const totalVolume = volumeRows[0]?.total_volume ?? 0;
+  // 6. Volume: all-time + last 30d + previous 30d
+  const [volumeAllRows, volumeCurrentRows, volumePrevRows] = await Promise.all([
+    prisma.$queryRaw<{ total_volume: number | null }[]>`
+      SELECT SUM(w_val."valueNumeric" * r_val."valueNumeric") AS total_volume
+      FROM   "WorkoutEntry" e
+      JOIN   "WorkoutBlock" b ON b."id" = e."blockId"
+      JOIN   "Workout" wo ON wo."id" = b."workoutId"
+      JOIN   "EntryKpiValue" w_val ON w_val."entryId" = e."id"
+      JOIN   "KpiDefinition" w_kpi ON w_kpi."id" = w_val."kpiDefinitionId" AND w_kpi."slug" = 'weight_kg'
+      JOIN   "EntryKpiValue" r_val ON r_val."entryId" = e."id"
+      JOIN   "KpiDefinition" r_kpi ON r_kpi."id" = r_val."kpiDefinitionId" AND r_kpi."slug" = 'reps'
+      WHERE  wo."userId" = ${userId}
+        AND  e."status" = 'DONE'
+        AND  w_val."valueNumeric" IS NOT NULL
+        AND  r_val."valueNumeric" IS NOT NULL
+    `,
+    prisma.$queryRaw<{ total_volume: number | null }[]>`
+      SELECT SUM(w_val."valueNumeric" * r_val."valueNumeric") AS total_volume
+      FROM   "WorkoutEntry" e
+      JOIN   "WorkoutBlock" b ON b."id" = e."blockId"
+      JOIN   "Workout" wo ON wo."id" = b."workoutId"
+      JOIN   "EntryKpiValue" w_val ON w_val."entryId" = e."id"
+      JOIN   "KpiDefinition" w_kpi ON w_kpi."id" = w_val."kpiDefinitionId" AND w_kpi."slug" = 'weight_kg'
+      JOIN   "EntryKpiValue" r_val ON r_val."entryId" = e."id"
+      JOIN   "KpiDefinition" r_kpi ON r_kpi."id" = r_val."kpiDefinitionId" AND r_kpi."slug" = 'reps'
+      WHERE  wo."userId" = ${userId}
+        AND  e."status" = 'DONE'
+        AND  wo."startedAt" >= ${d30}
+        AND  w_val."valueNumeric" IS NOT NULL
+        AND  r_val."valueNumeric" IS NOT NULL
+    `,
+    prisma.$queryRaw<{ total_volume: number | null }[]>`
+      SELECT SUM(w_val."valueNumeric" * r_val."valueNumeric") AS total_volume
+      FROM   "WorkoutEntry" e
+      JOIN   "WorkoutBlock" b ON b."id" = e."blockId"
+      JOIN   "Workout" wo ON wo."id" = b."workoutId"
+      JOIN   "EntryKpiValue" w_val ON w_val."entryId" = e."id"
+      JOIN   "KpiDefinition" w_kpi ON w_kpi."id" = w_val."kpiDefinitionId" AND w_kpi."slug" = 'weight_kg'
+      JOIN   "EntryKpiValue" r_val ON r_val."entryId" = e."id"
+      JOIN   "KpiDefinition" r_kpi ON r_kpi."id" = r_val."kpiDefinitionId" AND r_kpi."slug" = 'reps'
+      WHERE  wo."userId" = ${userId}
+        AND  e."status" = 'DONE'
+        AND  wo."startedAt" >= ${d60}
+        AND  wo."startedAt" <  ${d30}
+        AND  w_val."valueNumeric" IS NOT NULL
+        AND  r_val."valueNumeric" IS NOT NULL
+    `,
+  ]);
+  const totalVolume = Number(volumeAllRows[0]?.total_volume ?? 0);
+  const volumeLast30d = Number(volumeCurrentRows[0]?.total_volume ?? 0);
+  const volumePrev30d = Number(volumePrevRows[0]?.total_volume ?? 0);
 
   // 7. Volume per week (last 8 weeks)
   const weeklyVolumeRows = await prisma.$queryRaw<
@@ -198,22 +266,43 @@ export async function getWorkoutStats(
     volCursor.setDate(volCursor.getDate() + 7);
   }
 
-  // 8. Personal records (top 3 exercises by max weight)
+  // 8. Personal records — top exercises by heaviest DONE set. For each PR we
+  // surface the exact reps + date (the workout that produced the PR) so the
+  // UI can render "Dev couché · 110 kg × 5 · 12 mars" rather than a bare kg.
   const prRows = await prisma.$queryRaw<
-    { exerciseId: string; max_weight: number }[]
+    {
+      exerciseId: string;
+      max_weight: number;
+      reps: number | null;
+      started_at: Date;
+    }[]
   >`
-    SELECT e."exerciseId", MAX(w_val."valueNumeric") AS max_weight
-    FROM   "WorkoutEntry" e
-    JOIN   "WorkoutBlock" b ON b."id" = e."blockId"
-    JOIN   "Workout" wo ON wo."id" = b."workoutId"
-    JOIN   "EntryKpiValue" w_val ON w_val."entryId" = e."id"
-    JOIN   "KpiDefinition" w_kpi ON w_kpi."id" = w_val."kpiDefinitionId" AND w_kpi."slug" = 'weight_kg'
-    WHERE  wo."userId" = ${userId}
-      AND  e."status" = 'DONE'
-      AND  e."isWarmup" = false
-      AND  w_val."valueNumeric" IS NOT NULL
-      AND  w_val."valueNumeric" > 0
-    GROUP BY e."exerciseId"
+    WITH ranked AS (
+      SELECT
+        e."exerciseId",
+        w_val."valueNumeric"                  AS weight,
+        r_val."valueNumeric"                  AS reps,
+        wo."startedAt"                        AS started_at,
+        ROW_NUMBER() OVER (
+          PARTITION BY e."exerciseId"
+          ORDER BY w_val."valueNumeric" DESC, wo."startedAt" DESC
+        ) AS rnk
+      FROM   "WorkoutEntry" e
+      JOIN   "WorkoutBlock" b ON b."id" = e."blockId"
+      JOIN   "Workout" wo ON wo."id" = b."workoutId"
+      JOIN   "EntryKpiValue" w_val ON w_val."entryId" = e."id"
+      JOIN   "KpiDefinition" w_kpi ON w_kpi."id" = w_val."kpiDefinitionId" AND w_kpi."slug" = 'weight_kg'
+      LEFT JOIN "EntryKpiValue" r_val ON r_val."entryId" = e."id"
+      LEFT JOIN "KpiDefinition" r_kpi ON r_kpi."id" = r_val."kpiDefinitionId" AND r_kpi."slug" = 'reps'
+      WHERE  wo."userId" = ${userId}
+        AND  e."status" = 'DONE'
+        AND  e."isWarmup" = false
+        AND  w_val."valueNumeric" IS NOT NULL
+        AND  w_val."valueNumeric" > 0
+    )
+    SELECT "exerciseId", weight AS max_weight, reps, started_at
+    FROM   ranked
+    WHERE  rnk = 1
     ORDER BY max_weight DESC
     LIMIT 5
   `;
@@ -230,8 +319,31 @@ export async function getWorkoutStats(
       exerciseId: r.exerciseId,
       name: prNameMap.get(r.exerciseId) ?? "Inconnu",
       maxWeight: Number(r.max_weight),
+      reps: r.reps != null ? Number(r.reps) : null,
+      date: r.started_at,
     }));
   }
+
+  const workoutsLast30d: PeriodDelta = {
+    current: workoutsC,
+    previous: workoutsP,
+    changePct: deltaPct(workoutsC, workoutsP),
+  };
+  const finishedLast30d: PeriodDelta = {
+    current: finishedC,
+    previous: finishedP,
+    changePct: deltaPct(finishedC, finishedP),
+  };
+  const setsLast30d: PeriodDelta = {
+    current: setsC,
+    previous: setsP,
+    changePct: deltaPct(setsC, setsP),
+  };
+  const avgDurationLast30d: PeriodDelta = {
+    current: Number(avgDurationCurrent) || 0,
+    previous: Number(avgDurationPrev) || 0,
+    changePct: deltaPct(Number(avgDurationCurrent) || 0, Number(avgDurationPrev) || 0),
+  };
 
   return {
     totalWorkouts,
@@ -240,6 +352,12 @@ export async function getWorkoutStats(
     totalSetsDone,
     avgDurationMins,
     totalVolume,
+    volumeLast30d,
+    volumePrev30d,
+    workoutsLast30d,
+    finishedLast30d,
+    setsLast30d,
+    avgDurationLast30d,
     recentExercises,
     weeklyActivity,
     weeklyVolume,
