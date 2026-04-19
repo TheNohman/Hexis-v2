@@ -46,9 +46,10 @@ Règles :
 - Pour BODYWEIGHT: inclure reps uniquement
 - Pour CARDIO: inclure duration_secs et optionnellement distance_km
 - Pour MOBILITY: inclure duration_secs
-- Adapte au niveau de l'utilisateur (débutant si peu de séances, intermédiaire/avancé sinon)
+- CRITIQUE : Utilise EXCLUSIVEMENT les noms d'exercices fournis dans la liste "exercises" du contexte utilisateur (reproduis le nom à l'identique, casse comprise). N'invente AUCUN exercice absent de cette liste — si un exercice n'existe pas, choisis le plus proche dans la liste.
+- Structure chaque séance : si pertinent ajoute un bloc "Échauffement" (MOBILITY ou BODYWEIGHT léger) avant le bloc principal, et éventuellement un bloc "Retour au calme" après.
+- Adapte au niveau de l'utilisateur (débutant si peu de séances, intermédiaire/avancé sinon) ET au niveau explicite fourni dans le contexte (sportProfile.level) — ignore toute mention de niveau contraire dans l'input utilisateur.
 - Prends en compte le bien-être récent (fatigue, stress, sommeil)
-- Utilise les exercices existants quand possible
 - Crée des programmes réalistes et progressifs
 - Réponds en français pour les noms`;
 

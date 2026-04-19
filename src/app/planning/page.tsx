@@ -1,11 +1,10 @@
 import Link from "next/link";
-import { ClipboardList, Sparkles } from "lucide-react";
+import { redirect } from "next/navigation";
+import { Sparkles } from "lucide-react";
 import { getCurrentUserId } from "@/lib/auth-helpers";
 import { listPrograms } from "@/lib/programs/queries";
 import { listTemplates } from "@/lib/templates/queries";
 import { createProgramAction } from "@/app/programs/actions";
-import { createTemplateAction } from "@/app/templates/actions";
-import { EmptyState } from "@/app/_components/empty-state";
 import { prisma } from "@/lib/prisma";
 import { ProgramsList } from "./_components/programs-list";
 
@@ -15,7 +14,14 @@ type Props = { searchParams: Promise<{ tab?: string }> };
 
 export default async function PlanningPage(props: Props) {
   const searchParams = await props.searchParams;
-  const tab = searchParams.tab === "templates" ? "templates" : "programs";
+  // The "Modèles" tab used to render a duplicate (and weaker) list of
+  // templates here. `/templates` already provides the full management
+  // surface (search, category filters, sort, bulk, favorites, IA chip).
+  // Rather than maintain two surfaces, redirect the tab click there.
+  if (searchParams.tab === "templates") {
+    redirect("/templates");
+  }
+  const tab = "programs" as const;
   const userId = await getCurrentUserId();
   const userSettings = await prisma.user.findUnique({
     where: { id: userId },
@@ -57,24 +63,16 @@ export default async function PlanningPage(props: Props) {
             Programmes
           </Link>
           <Link
-            href="/planning?tab=templates"
+            href="/templates"
             role="tab"
-            aria-selected={tab === "templates"}
-            className={`px-4 py-2.5 text-sm font-semibold transition-colors border-b-2 -mb-px ${
-              tab === "templates"
-                ? "border-foreground text-foreground"
-                : "border-transparent text-muted hover:text-foreground"
-            }`}
+            aria-selected={false}
+            className="px-4 py-2.5 text-sm font-semibold transition-colors border-b-2 -mb-px border-transparent text-muted hover:text-foreground"
           >
-            Modèles
+            Modèles <span aria-hidden="true" className="ml-0.5 text-subtle">↗</span>
           </Link>
         </div>
 
-        {tab === "programs" ? (
-          <ProgramsTab userId={userId} mentorEnabled={mentorEnabled} />
-        ) : (
-          <TemplatesTab userId={userId} mentorEnabled={mentorEnabled} />
-        )}
+        <ProgramsTab userId={userId} mentorEnabled={mentorEnabled} />
       </div>
     </main>
   );
@@ -167,78 +165,5 @@ async function ProgramsTab({ userId, mentorEnabled }: { userId: string; mentorEn
   );
 }
 
-async function TemplatesTab({
-  userId,
-  mentorEnabled,
-}: {
-  userId: string;
-  mentorEnabled: boolean;
-}) {
-  const templates = await listTemplates(userId);
-
-  return (
-    <div className="space-y-4">
-      <div className="flex gap-2">
-        <form action={createTemplateAction} className="flex-1">
-          <button
-            type="submit"
-            className="w-full rounded-xl bg-foreground text-background py-3.5 font-semibold hover:opacity-90 transition-opacity cursor-pointer shadow-card"
-          >
-            + Nouveau modèle
-          </button>
-        </form>
-        {mentorEnabled && (
-          <Link
-            href="/templates/create-ai"
-            className="shrink-0 rounded-xl bg-accent text-accent-foreground px-5 py-3.5 flex items-center gap-2 hover:bg-accent-hover transition-colors text-sm font-semibold"
-          >
-            <Sparkles className="h-4 w-4" aria-hidden="true" />
-            Générer avec l&rsquo;IA
-          </Link>
-        )}
-      </div>
-
-      {templates.length === 0 ? (
-        <EmptyState
-          icon={ClipboardList}
-          title="Aucun modèle"
-          description="Un modèle est une séance réutilisable — le bloc de base de tes programmes."
-        />
-      ) : (
-        <ul className="space-y-2.5">
-          {templates.map((t) => (
-            <li key={t.id}>
-              <Link
-                href={`/templates/${t.id}`}
-                className="block rounded-2xl bg-surface shadow-card p-4 hover:shadow-hero hover:-translate-y-0.5 transition-all"
-              >
-                <div className="flex items-center justify-between">
-                  <div className="min-w-0 flex-1">
-                    <p className="font-display font-bold text-[15px] truncate">{t.name}</p>
-                    <p className="text-[11px] text-muted mt-0.5">
-                      Modifié le{" "}
-                      {new Intl.DateTimeFormat("fr-FR", {
-                        day: "numeric",
-                        month: "short",
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      }).format(t.updatedAt)}
-                    </p>
-                  </div>
-                  <div className="text-right shrink-0 ml-4">
-                    <p className="font-display font-black text-lg tabular-nums leading-none">
-                      {t.entryCount}
-                    </p>
-                    <p className="text-[10px] uppercase tracking-widest font-semibold text-muted mt-1">
-                      {t.blockCount} bloc{t.blockCount > 1 ? "s" : ""}
-                    </p>
-                  </div>
-                </div>
-              </Link>
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
-  );
-}
+// TemplatesTab removed: the /templates page is the single source of
+// truth for template management. The tab now redirects there.

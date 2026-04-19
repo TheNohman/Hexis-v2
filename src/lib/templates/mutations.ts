@@ -440,6 +440,29 @@ export async function createWorkoutFromTemplate(
   });
   assertOwnership(template, userId);
 
+  // If this template corresponds to the user's current slot in their
+  // active program, wire up `programSlotId` so the resulting session
+  // counts as a program run (summary gets Cycle X · Jour Y context,
+  // cursor advances on finish, progressive overload picks it up).
+  //
+  // We ONLY wire up the CURRENT slot — not any slot referencing this
+  // template. Using a same-template alternate slot from the template
+  // detail page should stay as a free session, since the user didn't
+  // pick "this slot" explicitly. The dashboard "Lancer la séance"
+  // path already handles the programmatic slot wiring.
+  const activeProgram = await prisma.program.findFirst({
+    where: { userId, isActive: true },
+    select: {
+      id: true,
+      currentSlotId: true,
+      currentSlot: { select: { templateId: true } },
+    },
+  });
+  const programSlotId =
+    activeProgram?.currentSlot?.templateId === templateId
+      ? activeProgram.currentSlotId
+      : null;
+
   const now = new Date();
   const defaultName = now.toLocaleDateString("fr-FR", {
     weekday: "long",
@@ -453,6 +476,7 @@ export async function createWorkoutFromTemplate(
       name: `${template.name} — ${defaultName}`,
       startedAt: now,
       templateId,
+      programSlotId,
       blocks: {
         create: template.blocks.map((block) => ({
           name: block.name,

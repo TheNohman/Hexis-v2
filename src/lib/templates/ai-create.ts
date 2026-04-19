@@ -2,6 +2,35 @@ import { prisma } from "@/lib/prisma";
 import type { GeneratedTemplate } from "@/lib/mentor/parser";
 
 /**
+ * Fuzzy resolver that salvages AI-proposed names the strict exact match
+ * would miss ("Squats" → "Squat barre", "Pompes inclinées" → "Pompes").
+ * Mirror of the one in `src/lib/programs/ai-create.ts` — they share the
+ * same strategy: strict → contains → first word.
+ */
+function resolveExercise<T extends { name: string }>(
+  candidates: T[],
+  rawName: string,
+): T | null {
+  const target = rawName.trim().toLowerCase();
+  if (!target) return null;
+  const exact = candidates.find((c) => c.name.toLowerCase() === target);
+  if (exact) return exact;
+  const bidirectional = candidates.find((c) => {
+    const n = c.name.toLowerCase();
+    return n.includes(target) || target.includes(n);
+  });
+  if (bidirectional) return bidirectional;
+  const firstWord = target.split(/\s+/)[0];
+  if (firstWord.length >= 4) {
+    const byWord = candidates.find((c) =>
+      c.name.toLowerCase().split(/\s+/).includes(firstWord),
+    );
+    if (byWord) return byWord;
+  }
+  return null;
+}
+
+/**
  * Materialize an AI-generated template into the database.
  * Creates: WorkoutTemplate + blocks + entries + KPI values, matching
  * exercise names against the user's existing + system exercises.
@@ -22,15 +51,12 @@ export async function materializeAITemplate(
   ]);
 
   const kpiBySlug = new Map(allKpis.map((k) => [k.slug, k]));
-  const exerciseByName = new Map(
-    allExercises.map((e) => [e.name.toLowerCase(), e]),
-  );
 
   // Pre-flight: count how many exercises will match. If zero, bail early.
   let matchedCount = 0;
   for (const block of generated.blocks) {
     for (const ex of block.exercises) {
-      if (exerciseByName.has(ex.name.toLowerCase())) matchedCount++;
+      if (resolveExercise(allExercises, ex.name) != null) matchedCount++;
     }
   }
   if (matchedCount === 0) {
@@ -42,9 +68,7 @@ export async function materializeAITemplate(
   // Filter out blocks where NO exercise matches the user library — avoids
   // persisting empty placeholder blocks that litter the detail view.
   const populatedBlocks = generated.blocks.filter((block) =>
-    block.exercises.some((ex) =>
-      exerciseByName.has(ex.name.toLowerCase()),
-    ),
+    block.exercises.some((ex) => resolveExercise(allExercises, ex.name) != null),
   );
 
   const template = await prisma.workoutTemplate.create({
@@ -58,7 +82,7 @@ export async function materializeAITemplate(
           displayOrder: blockIdx,
           entries: {
             create: block.exercises.flatMap((ex, exIdx) => {
-              const exercise = exerciseByName.get(ex.name.toLowerCase());
+              const exercise = resolveExercise(allExercises, ex.name);
               if (!exercise) return [];
 
               // Build KPI values per exercise type

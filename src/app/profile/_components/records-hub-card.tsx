@@ -31,17 +31,24 @@ export function RecordsHubCard({ prs }: { prs: PR[] }) {
       }
     >
       <div className="grid grid-cols-2 gap-1.5">
-        {prs.map((pr) => (
-          <div
-            key={pr.exerciseId}
-            className="flex items-center justify-between rounded-xl bg-background px-3 py-2"
-          >
-            <span className="text-xs text-muted truncate mr-2">{pr.name}</span>
-            <span className="text-sm font-medium tabular-nums shrink-0">
-              {pr.maxWeight} kg
-            </span>
-          </div>
-        ))}
+        {prs.map((pr) => {
+          // Match Stats/Summary page format: "40 kg × 10 reps" when reps
+          // are known. Summary says "≈ 53 kg 1RM" but the profile tile is
+          // tighter — reps alone is enough context here.
+          const repsLabel =
+            pr.reps != null && pr.reps > 0 ? ` × ${pr.reps}` : "";
+          return (
+            <div
+              key={pr.exerciseId}
+              className="flex items-center justify-between rounded-xl bg-background px-3 py-2"
+            >
+              <span className="text-xs text-muted truncate mr-2">{pr.name}</span>
+              <span className="text-sm font-medium tabular-nums shrink-0">
+                {pr.maxWeight} kg{repsLabel}
+              </span>
+            </div>
+          );
+        })}
       </div>
     </HubCard>
   );

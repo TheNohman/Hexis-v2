@@ -134,9 +134,19 @@ export async function getWorkoutStats(userId: string): Promise<WorkoutStats> {
     weeklyMap.set(key, Number(row.count));
   }
 
+  // Align the cursor on THIS WEEK's Monday then walk 7 weeks back, so
+  // the 8-week window always ends on the current week (the UI reads
+  // index [-1] as "this week"). Previously the cursor anchored on the
+  // Monday of `eightWeeksAgo`, which meant the last bucket was ~7 days
+  // stale — a session completed "today" showed as 0 until next Monday.
   const weeklyActivity: WeekActivity[] = [];
-  const cursor = new Date(eightWeeksAgo);
-  cursor.setDate(cursor.getDate() - ((cursor.getDay() + 6) % 7));
+  const todayAligned = new Date();
+  todayAligned.setHours(0, 0, 0, 0);
+  todayAligned.setDate(
+    todayAligned.getDate() - ((todayAligned.getDay() + 6) % 7),
+  );
+  const cursor = new Date(todayAligned);
+  cursor.setDate(cursor.getDate() - 7 * 7); // 7 weeks before this Monday
   for (let i = 0; i < 8; i++) {
     const key = cursor.toISOString().slice(0, 10);
     weeklyActivity.push({ weekStart: key, count: weeklyMap.get(key) ?? 0 });
@@ -257,9 +267,11 @@ export async function getWorkoutStats(userId: string): Promise<WorkoutStats> {
     volumeMap.set(key, Number(row.volume));
   }
 
+  // Same anchoring as weeklyActivity — align on THIS WEEK's Monday and
+  // walk back 7 weeks. Keeps the [-1] index always == current week.
   const weeklyVolume: WeekVolume[] = [];
-  const volCursor = new Date(eightWeeksAgo);
-  volCursor.setDate(volCursor.getDate() - ((volCursor.getDay() + 6) % 7));
+  const volCursor = new Date(todayAligned);
+  volCursor.setDate(volCursor.getDate() - 7 * 7);
   for (let i = 0; i < 8; i++) {
     const key = volCursor.toISOString().slice(0, 10);
     weeklyVolume.push({ weekStart: key, volume: volumeMap.get(key) ?? 0 });
@@ -291,9 +303,19 @@ export async function getWorkoutStats(userId: string): Promise<WorkoutStats> {
       JOIN   "WorkoutBlock" b ON b."id" = e."blockId"
       JOIN   "Workout" wo ON wo."id" = b."workoutId"
       JOIN   "EntryKpiValue" w_val ON w_val."entryId" = e."id"
-      JOIN   "KpiDefinition" w_kpi ON w_kpi."id" = w_val."kpiDefinitionId" AND w_kpi."slug" = 'weight_kg'
-      LEFT JOIN "EntryKpiValue" r_val ON r_val."entryId" = e."id"
-      LEFT JOIN "KpiDefinition" r_kpi ON r_kpi."id" = r_val."kpiDefinitionId" AND r_kpi."slug" = 'reps'
+      JOIN   "KpiDefinition" w_kpi
+        ON   w_kpi."id" = w_val."kpiDefinitionId"
+        AND  w_kpi."slug" = 'weight_kg'
+      -- CRITICAL: the reps LEFT JOIN must be constrained by the reps
+      -- slug IN THE ON clause. Without this, the join multiplies rows
+      -- (one per kpi value per entry) and r_val can leak the weight
+      -- value into the reps column — producing "40 kg × 40" in the UI
+      -- instead of "40 kg × 10 reps".
+      LEFT JOIN "KpiDefinition" r_kpi
+        ON   r_kpi."slug" = 'reps'
+      LEFT JOIN "EntryKpiValue" r_val
+        ON   r_val."entryId" = e."id"
+        AND  r_val."kpiDefinitionId" = r_kpi."id"
       WHERE  wo."userId" = ${userId}
         AND  e."status" = 'DONE'
         AND  e."isWarmup" = false

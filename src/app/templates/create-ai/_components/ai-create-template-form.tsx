@@ -582,10 +582,23 @@ function VariantDetails({ variant }: { variant: Variant }) {
                   {ex.name}
                 </span>
                 <span className="text-muted tabular-nums shrink-0">
-                  {ex.sets}×{ex.reps ?? "?"}
-                  {ex.weight_kg != null && ` · ${ex.weight_kg} kg`}
-                  {ex.duration_secs != null &&
-                    ` · ${Math.round(ex.duration_secs / 60)} min`}
+                  {/* Render per-type so MOBILITY/CARDIO "30s" holds don't
+                      get forced into the "3×30" STRENGTH template shape. */}
+                  {ex.type === "STRENGTH" || ex.type === "BODYWEIGHT" ? (
+                    <>
+                      {ex.sets}×{ex.reps ?? "?"}
+                      {ex.weight_kg != null && ` · ${ex.weight_kg} kg`}
+                    </>
+                  ) : ex.duration_secs != null ? (
+                    <>
+                      {ex.duration_secs >= 60
+                        ? `${Math.round(ex.duration_secs / 60)} min`
+                        : `${ex.duration_secs} s`}
+                      {ex.distance_km != null && ` · ${ex.distance_km} km`}
+                    </>
+                  ) : (
+                    "?"
+                  )}
                 </span>
               </div>
             ))}

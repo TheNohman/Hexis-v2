@@ -2,6 +2,45 @@ import { prisma } from "@/lib/prisma";
 import type { GeneratedProgram, GeneratedFill } from "@/lib/mentor/parser";
 
 /**
+ * Find the best matching exercise for a name the AI generated, starting
+ * with strict equality and falling back to progressively looser rules
+ * (contains, prefix, substring). Returns null if nothing plausible
+ * matches — callers drop the entry silently in that case.
+ *
+ * Historically the matcher was exact case-insensitive only, which meant
+ * any AI variation ("Squats" vs "Squat barre", "Soulevé de terre sumo"
+ * vs "Soulevé de terre") dropped the entry on the floor, producing
+ * programs with empty templates. This resolver salvages the common
+ * cases without being clever enough to match the wrong exercise.
+ */
+function resolveExercise<T extends { name: string }>(
+  candidates: T[],
+  rawName: string,
+): T | null {
+  const target = rawName.trim().toLowerCase();
+  if (!target) return null;
+  // 1. Exact (case-insensitive).
+  const exact = candidates.find((c) => c.name.toLowerCase() === target);
+  if (exact) return exact;
+  // 2. One contains the other (handles "Squats" ↔ "Squat barre",
+  //    "Soulevé de terre sumo" ↔ "Soulevé de terre").
+  const bidirectional = candidates.find((c) => {
+    const n = c.name.toLowerCase();
+    return n.includes(target) || target.includes(n);
+  });
+  if (bidirectional) return bidirectional;
+  // 3. First word match (fallback for "Pompes inclinées" ↔ "Pompes").
+  const firstWord = target.split(/\s+/)[0];
+  if (firstWord.length >= 4) {
+    const byWord = candidates.find((c) =>
+      c.name.toLowerCase().split(/\s+/).includes(firstWord),
+    );
+    if (byWord) return byWord;
+  }
+  return null;
+}
+
+/**
  * Materialize an AI-generated program into the database.
  * Creates: Program + WorkoutTemplates (with blocks/entries/values) + ProgramSlots.
  */
@@ -37,11 +76,12 @@ export async function materializeAIProgram(
   for (const slot of generated.slots) {
     const tpl = slot.template;
 
-    // Create template with blocks and entries
+    // Create template with blocks and entries. Keep blocks that have at
+    // least one resolvable exercise — dropping fully-unresolvable blocks
+    // (e.g. "Cardio liberte" with no matching exercise) so the detail
+    // view doesn't render empty placeholder cards.
     const populatedBlocks = tpl.blocks.filter((block) =>
-      block.exercises.some((ex) =>
-        allExercises.some((e) => e.name.toLowerCase() === ex.name.toLowerCase()),
-      ),
+      block.exercises.some((ex) => resolveExercise(allExercises, ex.name) != null),
     );
     const template = await prisma.workoutTemplate.create({
       data: {
@@ -54,10 +94,10 @@ export async function materializeAIProgram(
             displayOrder: blockIdx,
             entries: {
               create: block.exercises.flatMap((ex, exIdx) => {
-                // Find matching exercise
-                const exercise = allExercises.find(
-                  (e) => e.name.toLowerCase() === ex.name.toLowerCase(),
-                );
+                // Resolve AI-proposed name against the catalog (strict →
+                // contains → first word). Drops the entry if nothing
+                // matches rather than creating an orphan template row.
+                const exercise = resolveExercise(allExercises, ex.name);
 
                 if (!exercise) return [];
 
@@ -177,9 +217,6 @@ export async function materializeProgramFills(
     prisma.kpiDefinition.findMany(),
   ]);
   const kpiBySlug = new Map(allKpis.map((k) => [k.slug, k]));
-  const exerciseByName = new Map(
-    allExercises.map((e) => [e.name.toLowerCase(), e]),
-  );
 
   // Index empty slots by (cycle, day) — first match wins per pair to keep
   // things deterministic. Multiple empty slots on the same day are possible;
@@ -225,7 +262,7 @@ export async function materializeProgramFills(
     let matched = 0;
     for (const block of fill.template.blocks) {
       for (const ex of block.exercises) {
-        if (exerciseByName.has(ex.name.toLowerCase())) matched++;
+        if (resolveExercise(allExercises, ex.name) != null) matched++;
       }
     }
     if (matched === 0) {
@@ -240,7 +277,7 @@ export async function materializeProgramFills(
     // so the detail view isn't polluted with empty placeholder blocks.
     const populatedBlocks = fill.template.blocks.filter((block) =>
       block.exercises.some((ex) =>
-        exerciseByName.has(ex.name.toLowerCase()),
+        resolveExercise(allExercises, ex.name) != null,
       ),
     );
     const template = await prisma.workoutTemplate.create({
@@ -254,7 +291,7 @@ export async function materializeProgramFills(
             displayOrder: blockIdx,
             entries: {
               create: block.exercises.flatMap((ex, exIdx) => {
-                const exercise = exerciseByName.get(ex.name.toLowerCase());
+                const exercise = resolveExercise(allExercises, ex.name);
                 if (!exercise) return [];
 
                 const values: {

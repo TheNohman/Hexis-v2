@@ -91,6 +91,14 @@ export type MentorContext = {
     /** Average RPE on STRENGTH sets in the last 7 days (null if none). */
     avgRpeLast7: number | null;
   };
+  /**
+   * Exercise catalog available to the user (system seeded + user-created).
+   * CRITICAL: the AI prompts tell the model to use EXCLUSIVELY these names
+   * when proposing exercises — any name outside this list gets silently
+   * dropped at persist time and leaves templates with 0 entries. See
+   * `materializeAIProgram` in `src/lib/programs/ai-create.ts`.
+   */
+  exerciseCatalog: { name: string; type: string }[];
 };
 
 export async function buildMentorContext(userId: string): Promise<MentorContext> {
@@ -104,6 +112,7 @@ export async function buildMentorContext(userId: string): Promise<MentorContext>
     recentWorkouts,
     activeWorkout,
     personalBests,
+    exerciseCatalog,
   ] = await Promise.all([
       prisma.user.findUnique({
         where: { id: userId },
@@ -184,10 +193,14 @@ export async function buildMentorContext(userId: string): Promise<MentorContext>
       }),
       getActiveWorkout(userId),
       listPersonalBests(userId, 5),
+      // Exercise catalog — system seeded + user-created. Passed to the AI
+      // so it picks exact names that `materializeAIProgram` can match on.
+      prisma.exercise.findMany({
+        where: { OR: [{ userId }, { isSystem: true }] },
+        select: { name: true, type: true },
+        orderBy: { name: "asc" },
+      }),
     ]);
-
-  // Destructure the new element added to Promise.all above. TypeScript
-  // will keep us honest if the order drifts.
 
   // Compute strength trends from recent workouts (last 7 days). Mentor
   // uses this to suggest a deload if RPE stays at 9+ across multiple sets.
@@ -343,5 +356,6 @@ export async function buildMentorContext(userId: string): Promise<MentorContext>
       highRpeSetsLast7,
       avgRpeLast7,
     },
+    exerciseCatalog: exerciseCatalog.map((e) => ({ name: e.name, type: e.type })),
   };
 }

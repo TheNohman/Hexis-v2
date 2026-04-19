@@ -383,7 +383,10 @@ export function ProgramEditor({
               <>
                 {" · "}
                 <span className="font-semibold text-signal-ink">{emptySlotCount}</span>
-                {" à remplir"}
+                {/* "jour vide" is what the count really measures: (cycle,
+                    day) positions without an assigned template. Previous
+                    "à remplir" suggested existing-but-empty slots. */}
+                {" jour"}{emptySlotCount > 1 ? "s" : ""}{" vide"}{emptySlotCount > 1 ? "s" : ""}
               </>
             )}
           </p>
@@ -457,7 +460,7 @@ export function ProgramEditor({
             <Sparkles className="w-4 h-4" aria-hidden="true" />
             {filling
               ? "Génération…"
-              : `Remplir ${emptySlotCount} créneau${emptySlotCount > 1 ? "x" : ""} avec l'IA`}
+              : `Remplir ${emptySlotCount} jour${emptySlotCount > 1 ? "s" : ""} avec l'IA`}
           </button>
         )}
 

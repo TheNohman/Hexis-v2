@@ -5,9 +5,13 @@ import { generateAIProgramAction, confirmAIProgramAction } from "@/app/programs/
 import { type GeneratedProgram, parseGeneratedProgram } from "@/lib/mentor/parser";
 import { Card } from "@/app/_components/card";
 
+// Preset prompts intentionally avoid fixing a level ("débutant", "avancé"):
+// the AI already reads the user's real level from `MentorContext.user.sportLevel`
+// and the new SYSTEM_PROMPT rule locks that as source of truth. Hardcoding
+// "pour un débutant" here used to override an intermediate profile.
 const PRESETS = [
   { label: "PPL (Push/Pull/Legs)", prompt: "Crée-moi un programme Push/Pull/Legs sur 4 semaines, 6 jours par semaine." },
-  { label: "Full Body 3j/sem", prompt: "Crée-moi un programme full body 3 jours par semaine pour un débutant." },
+  { label: "Full Body 3j/sem", prompt: "Crée-moi un programme full body 3 jours par semaine." },
   { label: "Upper/Lower 4j/sem", prompt: "Crée-moi un programme Upper/Lower split sur 4 jours par semaine." },
   { label: "Force 5x5", prompt: "Crée-moi un programme de force type 5x5 sur 3 jours par semaine." },
 ];
@@ -19,8 +23,14 @@ type AICreateContext = {
   hasBodyWeight: boolean;
 };
 
-export function AICreateForm({ context }: { context?: AICreateContext }) {
-  const [goals, setGoals] = useState("");
+export function AICreateForm({
+  context,
+  initialGoals = "",
+}: {
+  context?: AICreateContext;
+  initialGoals?: string;
+}) {
+  const [goals, setGoals] = useState(initialGoals);
   const [rawResponse, setRawResponse] = useState<string | null>(null);
   const [preview, setPreview] = useState<GeneratedProgram | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -73,7 +83,10 @@ export function AICreateForm({ context }: { context?: AICreateContext }) {
                   <span className="font-semibold text-foreground">
                     {context.exerciseCount}
                   </span>
-                  <span>exercice{context.exerciseCount > 1 ? "s" : ""} dispo.</span>
+                  {/* "dispo." was confusing for fresh users who'd never
+                      created an exercise — it includes the 25 system
+                      seeded movements. "dans ton catalogue" is honest. */}
+                  <span>exercice{context.exerciseCount > 1 ? "s" : ""} dans ton catalogue</span>
                 </li>
                 <li className="flex items-baseline gap-1.5">
                   <span className="font-semibold text-foreground">
@@ -208,16 +221,48 @@ export function AICreateForm({ context }: { context?: AICreateContext }) {
                   <p className="text-[10px] uppercase tracking-widest font-semibold text-muted">
                     {block.name}
                   </p>
-                  {block.exercises.map((ex, ei) => (
-                    <p key={ei} className="text-xs text-subtle">
-                      {ex.name}
-                      <span className="text-muted ml-1.5 tabular-nums">
-                        {ex.sets}×{ex.reps ?? "?"}
-                        {ex.weight_kg != null && ` @ ${ex.weight_kg}kg`}
-                        {ex.duration_secs != null && ` ${Math.round(ex.duration_secs / 60)}min`}
-                      </span>
-                    </p>
-                  ))}
+                  {block.exercises.map((ex, ei) => {
+                    // Render per-type so MOBILITY/CARDIO show as "30s" or
+                    // "3min / 500m" instead of the STRENGTH default
+                    // "3×? @ ?kg" which was rendering "Planche ×30" for a
+                    // 30-second hold.
+                    let spec = "";
+                    if (ex.type === "STRENGTH") {
+                      const reps = ex.reps ?? "?";
+                      const w = ex.weight_kg != null ? ` @ ${ex.weight_kg}kg` : "";
+                      spec = `${ex.sets}×${reps}${w}`;
+                    } else if (ex.type === "BODYWEIGHT") {
+                      const reps = ex.reps ?? "?";
+                      spec = `${ex.sets}×${reps}`;
+                    } else if (ex.type === "CARDIO") {
+                      const parts: string[] = [];
+                      if (ex.duration_secs != null)
+                        parts.push(
+                          ex.duration_secs >= 60
+                            ? `${Math.round(ex.duration_secs / 60)}min`
+                            : `${ex.duration_secs}s`,
+                        );
+                      if (ex.distance_km != null) parts.push(`${ex.distance_km}km`);
+                      spec = parts.join(" · ") || "?";
+                    } else if (ex.type === "MOBILITY") {
+                      if (ex.duration_secs != null) {
+                        spec =
+                          ex.duration_secs >= 60
+                            ? `${Math.round(ex.duration_secs / 60)}min`
+                            : `${ex.duration_secs}s`;
+                      } else {
+                        spec = "?";
+                      }
+                    }
+                    return (
+                      <p key={ei} className="text-xs text-subtle">
+                        {ex.name}
+                        <span className="text-muted ml-1.5 tabular-nums">
+                          {spec}
+                        </span>
+                      </p>
+                    );
+                  })}
                 </div>
               ))}
             </Card>

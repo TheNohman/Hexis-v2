@@ -27,10 +27,31 @@ export async function createWorkout(
 
 export async function finishWorkout(workoutId: string, userId: string) {
   await assertWorkoutOwnership(workoutId, userId);
-  return prisma.workout.update({
+  const workout = await prisma.workout.update({
     where: { id: workoutId },
     data: { finishedAt: new Date() },
+    select: { id: true, programSlotId: true },
   });
+
+  // If this workout was tied to a program slot (either launched from the
+  // dashboard program CTA, or started from a template whose slot was the
+  // user's current one — see `createWorkoutFromTemplate`), advance the
+  // program cursor now that it's finished. Keeps the cursor in sync
+  // regardless of how the session was launched.
+  if (workout.programSlotId) {
+    const slot = await prisma.programSlot.findUnique({
+      where: { id: workout.programSlotId },
+      select: {
+        program: { select: { id: true, currentSlotId: true } },
+      },
+    });
+    if (slot && slot.program.currentSlotId === workout.programSlotId) {
+      const { advanceCursor } = await import("@/lib/programs/mutations");
+      await advanceCursor(slot.program.id);
+    }
+  }
+
+  return workout;
 }
 
 /**

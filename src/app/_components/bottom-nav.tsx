@@ -98,6 +98,10 @@ export function BottomNav() {
 
   if (pathname.startsWith("/sessions/")) return null;
   if (pathname === "/") return null;
+  // Hide the nav during the onboarding wizard — user hasn't completed
+  // setup yet, the tabs expose surfaces they can't meaningfully use,
+  // and the visual presence conflicts with the 5-step flow.
+  if (pathname.startsWith("/onboarding")) return null;
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-40 border-t border-border bg-background/80 backdrop-blur-lg pb-[env(safe-area-inset-bottom)]">

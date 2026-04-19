@@ -3,6 +3,16 @@
 import { useId } from "react";
 import type { PrimarySport } from "@/generated/prisma/client";
 
+// Placeholder example per sport so the input text doesn't suggest triathlon
+// to a user who just picked Musculation at step 1.
+const PLACEHOLDER_BY_SPORT: Record<PrimarySport, string> = {
+  STRENGTH_TRAINING: "Ex : prendre 5 kg de muscle d'ici 6 mois",
+  POWERLIFTING: "Ex : passer 180 kg au squat avant l'été",
+  ENDURANCE: "Ex : préparer mon premier triathlon en septembre",
+  CROSSFIT_HIIT: "Ex : passer Fran sous 5 minutes",
+  MULTI_SPORT: "Ex : rester en forme toute l'année",
+};
+
 // Suggested objectives by sport — pre-filled chips the user can click.
 const OBJECTIVES_BY_SPORT: Record<PrimarySport, string[]> = {
   STRENGTH_TRAINING: [
@@ -48,6 +58,9 @@ export function StepObjective({
 }) {
   const inputId = useId();
   const suggestions = sport ? OBJECTIVES_BY_SPORT[sport] : [];
+  const placeholder = sport
+    ? PLACEHOLDER_BY_SPORT[sport]
+    : "Ex : prendre 5 kg de muscle d'ici 6 mois";
   return (
     <section className="space-y-5">
       <header className="space-y-2">
@@ -70,7 +83,7 @@ export function StepObjective({
           type="text"
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          placeholder="Ex : préparer mon premier triathlon en septembre"
+          placeholder={placeholder}
           className="w-full rounded-2xl border border-border bg-surface px-4 py-3.5 text-sm shadow-card focus:outline-none focus:border-accent transition-colors"
         />
       </div>

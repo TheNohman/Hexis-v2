@@ -101,7 +101,9 @@ export function StepAvailability({
             {equipment.length} s&eacute;lectionn&eacute;{equipment.length > 1 ? "s" : ""}
           </span>
         </div>
-        <p className="text-xs text-muted">Choisis-en au moins un (plusieurs possibles).</p>
+        {/* This step is soft-gated (there's a "Passer" link at the bottom of
+            the wizard), so don't pretend equipment is mandatory. */}
+        <p className="text-xs text-muted">Sélectionne ce que tu as sous la main (plusieurs possibles).</p>
         <div
           className="grid grid-cols-2 gap-2"
           role="group"

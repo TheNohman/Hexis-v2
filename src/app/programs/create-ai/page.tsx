@@ -20,7 +20,17 @@ export default async function CreateAIProgramPage() {
   ] = await Promise.all([
     prisma.user.findUnique({
       where: { id: userId },
-      select: { mentorEnabled: true, bodyWeightKg: true },
+      select: {
+        mentorEnabled: true,
+        bodyWeightKg: true,
+        sportProfile: {
+          select: {
+            sportObjective: true,
+            weeklySessionTarget: true,
+            sessionDurationMins: true,
+          },
+        },
+      },
     }),
     prisma.workoutTemplate.count({ where: { userId } }),
     prisma.exercise.count({
@@ -80,6 +90,25 @@ export default async function CreateAIProgramPage() {
             hasBodyWeight:
               user.bodyWeightKg != null || bodyWeightEntry != null,
           }}
+          /* Pre-fill the textarea with a sentence built from onboarding
+             so the user doesn't have to re-type everything they just
+             told us. Kept short — the AI reads the full MentorContext
+             anyway, this is just a hint/confirmation. */
+          initialGoals={
+            user.sportProfile?.sportObjective
+              ? [
+                  user.sportProfile.sportObjective,
+                  user.sportProfile.weeklySessionTarget
+                    ? `${user.sportProfile.weeklySessionTarget}×/semaine`
+                    : null,
+                  user.sportProfile.sessionDurationMins
+                    ? `~${user.sportProfile.sessionDurationMins} min/séance`
+                    : null,
+                ]
+                  .filter(Boolean)
+                  .join(", ")
+              : ""
+          }
         />
       </div>
     </main>

@@ -397,8 +397,14 @@ export function TemplatesList({ templates }: { templates: TemplateListItem[] }) 
               {t.entryCount} exercice{t.entryCount > 1 ? "s" : ""}
               {" · "}
               {t.blockCount} bloc{t.blockCount > 1 ? "s" : ""}
-              {" · durée ~"}
-              {durationMin}
+              {/* Skip the duration hint on empty templates — "~1 min" on
+                  a 0-exercise shell is noise. */}
+              {t.entryCount > 0 && (
+                <>
+                  {" · durée ~"}
+                  {durationMin}
+                </>
+              )}
               {t.programUsageCount > 0 && (
                 <>
                   {" · utilisé dans "}

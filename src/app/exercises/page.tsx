@@ -34,7 +34,22 @@ export default async function ExercisesPage() {
               Exercices
             </h1>
             <p className="text-xs text-muted mt-1 tabular-nums">
-              {exercises.length} dans ta bibliothèque
+              {(() => {
+                // Split system (seeded catalog) vs custom (user-created).
+                // A fresh user has 25 system + 0 custom — reading
+                // "25 dans ta bibliothèque" to a new user suggests they
+                // added exercises they didn't. Show the split when it's
+                // meaningful, collapse to a single count otherwise.
+                const customCount = exercises.filter((e) => !e.isSystem).length;
+                const systemCount = exercises.length - customCount;
+                if (customCount === 0) {
+                  return `${systemCount} exercice${systemCount > 1 ? "s" : ""} système`;
+                }
+                if (systemCount === 0) {
+                  return `${customCount} exercice${customCount > 1 ? "s" : ""} personnalisé${customCount > 1 ? "s" : ""}`;
+                }
+                return `${exercises.length} dans ta bibliothèque · ${customCount} perso${customCount > 1 ? "s" : ""}`;
+              })()}
             </p>
           </div>
           <Link

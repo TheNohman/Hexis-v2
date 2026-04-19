@@ -315,7 +315,10 @@ export default async function Dashboard() {
             <div className="rounded-3xl border border-dashed border-border p-8 text-center">
               <p className="text-muted">Aucune séance pour le moment.</p>
               <p className="text-sm text-subtle mt-1">
-                Lance ta première séance avec le bouton ci-dessus.
+                {/* Copy aligned with the actual empty-state CTA above:
+                    brand-new users see "Crée ton premier programme",
+                    returning users see "+ Nouvelle séance libre". */}
+                Crée un programme ou lance une séance libre pour démarrer.
               </p>
             </div>
           ) : (

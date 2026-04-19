@@ -184,10 +184,16 @@ export function TemplateEditor({ template, exercises }: Props) {
     }
   }
 
-  const entryCount = template.blocks.reduce(
+  // Total rows (1 row = 1 planned set) vs distinct movements. "6 séries"
+  // + "2 exercices" is how the French fitness vocabulary expects counts,
+  // and matches the row layout the user sees below.
+  const setCount = template.blocks.reduce(
     (acc, b) => acc + b.entries.length,
     0,
   );
+  const exerciseCount = new Set(
+    template.blocks.flatMap((b) => b.entries.map((e) => e.exercise.id)),
+  ).size;
   const blockCount = template.blocks.length;
   const durationMin = Math.max(1, Math.round(template.estimatedDurationSecs / 60));
   const badge = sourceBadge(template.source);
@@ -369,12 +375,19 @@ export function TemplateEditor({ template, exercises }: Props) {
             </button>
 
             <p className="text-muted">
-              <span className="font-semibold text-foreground">{entryCount}</span>
-              {" exercice"}{entryCount > 1 ? "s" : ""}
+              <span className="font-semibold text-foreground">{exerciseCount}</span>
+              {" exercice"}{exerciseCount > 1 ? "s" : ""}
+              {setCount > 0 && setCount !== exerciseCount && (
+                <>
+                  {" · "}
+                  <span className="font-semibold text-foreground">{setCount}</span>
+                  {" série"}{setCount > 1 ? "s" : ""}
+                </>
+              )}
               {" · "}
               <span className="font-semibold text-foreground">{blockCount}</span>
               {" bloc"}{blockCount > 1 ? "s" : ""}
-              {entryCount > 0 && (
+              {setCount > 0 && (
                 <>
                   {" · durée ~"}
                   <span className="font-semibold text-foreground">

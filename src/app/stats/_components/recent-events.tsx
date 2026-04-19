@@ -76,8 +76,26 @@ function summarizePayload(name: string, payload: Record<string, unknown> | null)
     return `${payload.rounds} rounds`;
   }
   if (name === "onboarding_completed") {
-    const sport = typeof payload.primarySport === "string" ? payload.primarySport : null;
-    const level = typeof payload.sportLevel === "string" ? payload.sportLevel : null;
+    // Translate the Prisma enum values to the same French labels the
+    // onboarding wizard shows. Rendering the raw enum ("STRENGTH_TRAINING
+    // • INTERMEDIATE") is a leak of internal codes.
+    const SPORT_LABEL: Record<string, string> = {
+      STRENGTH_TRAINING: "Musculation",
+      POWERLIFTING: "Powerlifting",
+      ENDURANCE: "Endurance",
+      CROSSFIT_HIIT: "CrossFit / HIIT",
+      MULTI_SPORT: "Multi-activités",
+    };
+    const LEVEL_LABEL: Record<string, string> = {
+      BEGINNER: "Débutant·e",
+      INTERMEDIATE: "Intermédiaire",
+      ADVANCED: "Avancé·e",
+      COMPETITOR: "Compétiteur·ice",
+    };
+    const sportRaw = typeof payload.primarySport === "string" ? payload.primarySport : null;
+    const levelRaw = typeof payload.sportLevel === "string" ? payload.sportLevel : null;
+    const sport = sportRaw ? (SPORT_LABEL[sportRaw] ?? sportRaw) : null;
+    const level = levelRaw ? (LEVEL_LABEL[levelRaw] ?? levelRaw) : null;
     return [sport, level].filter(Boolean).join(" • ") || null;
   }
   return null;
