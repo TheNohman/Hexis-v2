@@ -85,14 +85,18 @@ async function ProgramsTab({ userId, mentorEnabled }: { userId: string; mentorEn
 
   return (
     <div className="space-y-4">
-      {/* Onboarding guide — hero black card for new users */}
+      {/* Onboarding guide — softened from the original black hero so it
+          doesn't compete with the dashboard beginner-tip (also teal-tinted)
+          and doesn't double-stack CTAs with the two buttons below. Keeps
+          the 3-step pedagogy, drops the duplicate "Génère avec l'IA" CTA
+          (those live right below on the button row). */}
       {isNewUser && (
-        <section className="rounded-3xl bg-foreground text-background p-6 shadow-hero space-y-5">
+        <section className="rounded-3xl bg-surface border border-border p-6 shadow-card space-y-4">
           <div>
-            <p className="text-[10px] uppercase tracking-widest font-semibold text-accent">
+            <p className="text-[10px] uppercase tracking-widest font-semibold text-accent-ink">
               Bienvenue
             </p>
-            <h3 className="font-display font-extrabold text-xl tracking-tight mt-1">
+            <h3 className="font-display font-extrabold text-xl tracking-tight mt-1 text-foreground">
               Comment démarrer ?
             </h3>
           </div>
@@ -122,21 +126,12 @@ async function ProgramsTab({ userId, mentorEnabled }: { userId: string; mentorEn
                   {step.n}
                 </span>
                 <div>
-                  <p className="text-sm font-semibold">{step.title}</p>
-                  <p className="text-xs text-background/70 mt-0.5">{step.desc}</p>
+                  <p className="text-sm font-semibold text-foreground">{step.title}</p>
+                  <p className="text-xs text-muted mt-0.5">{step.desc}</p>
                 </div>
               </li>
             ))}
           </ol>
-          {mentorEnabled && (
-            <Link
-              href="/programs/create-ai"
-              className="block w-full rounded-xl bg-accent text-accent-foreground py-3 text-center text-sm font-semibold hover:bg-accent-hover transition-colors"
-            >
-              <Sparkles className="inline h-4 w-4 -mt-0.5 mr-1.5" aria-hidden="true" />
-              Ou génère un programme complet avec l&rsquo;IA
-            </Link>
-          )}
         </section>
       )}
 
