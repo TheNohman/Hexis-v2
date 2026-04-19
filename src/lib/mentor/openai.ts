@@ -14,10 +14,25 @@ import type { MentorContext } from "./context";
  * `availableEquipment` is empty, no filter is applied (original catalog).
  */
 function subsetContextForLLM(context: MentorContext): MentorContext {
-  if (context.availableEquipment.length === 0) return context;
+  console.log(
+    "[subsetContextForLLM] availableEquipment:",
+    JSON.stringify(context.availableEquipment),
+    "catalog size in:",
+    context.exerciseCatalog.length,
+  );
+  if (context.availableEquipment.length === 0) {
+    console.log("[subsetContextForLLM] no filter — availableEquipment empty");
+    return context;
+  }
   const available = new Set(context.availableEquipment);
   const filtered = context.exerciseCatalog.filter((ex) =>
     ex.equipment.every((tag) => available.has(tag)),
+  );
+  console.log(
+    "[subsetContextForLLM] catalog size out:",
+    filtered.length,
+    "kept:",
+    filtered.map((f) => f.name).join(", "),
   );
   return { ...context, exerciseCatalog: filtered };
 }
