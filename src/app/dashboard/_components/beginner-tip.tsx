@@ -4,6 +4,12 @@ import type { PrimarySport } from "@/generated/prisma/client";
 type Props = {
   primarySport: PrimarySport | null;
   hasWorkouts: boolean;
+  /**
+   * Elevate the tip to the dashboard's primary focal point. Adds a
+   * strong CTA to create a first program so there's ONE obvious next
+   * step. Use when the user has no workouts AND no active program.
+   */
+  primary?: boolean;
 };
 
 /**
@@ -11,35 +17,57 @@ type Props = {
  * they've done at least one workout — after that, the dashboard is
  * guidance enough.
  */
-export function BeginnerTip({ primarySport, hasWorkouts }: Props) {
+export function BeginnerTip({ primarySport, hasWorkouts, primary = false }: Props) {
   if (hasWorkouts) return null;
 
   const tips = tipsForSport(primarySport);
 
   return (
-    <div className="rounded-2xl border border-accent/20 bg-accent/5 p-4 space-y-3">
+    <div
+      className={
+        primary
+          ? "rounded-3xl border border-accent/30 bg-accent-light/40 p-5 space-y-4 shadow-card"
+          : "rounded-2xl border border-accent/20 bg-accent/5 p-4 space-y-3"
+      }
+    >
       <div className="flex items-center gap-2">
-        <span className="text-lg">💡</span>
-        <h2 className="text-sm font-semibold text-accent">Pour bien démarrer</h2>
+        <span className="text-lg" aria-hidden="true">💡</span>
+        <h2
+          className={
+            primary
+              ? "font-display font-bold text-base text-accent-ink"
+              : "text-sm font-semibold text-accent-ink"
+          }
+        >
+          Pour bien démarrer
+        </h2>
       </div>
       <ol className="space-y-2 text-sm">
         {tips.map((tip, i) => (
           <li key={i} className="flex items-start gap-3">
-            <span className="shrink-0 w-5 h-5 rounded-full bg-accent/15 text-accent text-[10px] font-bold flex items-center justify-center">
+            <span className="shrink-0 w-5 h-5 rounded-full bg-accent/15 text-accent-ink text-[10px] font-bold flex items-center justify-center">
               {i + 1}
             </span>
-            <span className="text-muted">
+            <span className={primary ? "text-foreground" : "text-muted"}>
               {typeof tip === "string" ? tip : tip.render()}
             </span>
           </li>
         ))}
       </ol>
-      <div className="pt-2 border-t border-accent/10">
+      {primary && (
+        <Link
+          href="/planning"
+          className="block w-full text-center rounded-full bg-foreground text-background py-3 text-sm font-semibold hover:opacity-90 transition-opacity shadow-card"
+        >
+          Créer mon premier programme →
+        </Link>
+      )}
+      <div className={primary ? "pt-1" : "pt-2 border-t border-accent/10"}>
         <Link
           href="/glossary"
-          className="text-xs text-accent hover:underline inline-flex items-center gap-1"
+          className="text-xs text-accent-ink hover:underline inline-flex items-center gap-1"
         >
-          📖 Glossaire — tout le jargon expliqué simplement
+          <span aria-hidden="true">📖</span> Glossaire — tout le jargon expliqué simplement
         </Link>
       </div>
     </div>

@@ -35,6 +35,8 @@ export function OnboardingWizard() {
   const stepIndex = STEPS.indexOf(step);
   const totalSteps = STEPS.length;
 
+  // Only the first two steps (sport, level) truly gate progression —
+  // the rest are soft and users can skip with the "Passer" button.
   const canContinue = useMemo(() => {
     switch (step) {
       case "sport":
@@ -42,13 +44,15 @@ export function OnboardingWizard() {
       case "level":
         return level !== null;
       case "objective":
-        return objective.trim().length > 0;
       case "availability":
-        return weeklyTarget > 0 && sessionDuration > 0 && equipment.length > 0;
       case "confirm":
         return true;
     }
-  }, [step, sport, level, objective, weeklyTarget, sessionDuration, equipment]);
+  }, [step, sport, level]);
+
+  // Soft steps (no gating) — show a "Passer" affordance so users
+  // understand they can defer without dead-ending.
+  const isSoftStep = step === "objective" || step === "availability";
 
   function next() {
     const i = STEPS.indexOf(step);
@@ -57,6 +61,22 @@ export function OnboardingWizard() {
   function back() {
     const i = STEPS.indexOf(step);
     if (i > 0) setStep(STEPS[i - 1]);
+  }
+
+  function skip() {
+    // Reset the current step's fields to neutral defaults so that when
+    // we submit, they're saved as "not set" rather than the slider's
+    // initial value (e.g. 3 sessions / 60 min) which the user never
+    // actually chose.
+    if (step === "objective") {
+      setObjective("");
+    } else if (step === "availability") {
+      setWeeklyTarget(0);
+      setSessionDuration(0);
+      setEquipment([]);
+      setMedicalNotes("");
+    }
+    next();
   }
 
   function toggleEquipment(value: string) {
@@ -171,7 +191,7 @@ export function OnboardingWizard() {
         )}
 
         {/* Footer */}
-        <div className="pt-2">
+        <div className="pt-2 space-y-2">
           {step === "confirm" ? (
             <button
               type="button"
@@ -190,6 +210,15 @@ export function OnboardingWizard() {
             >
               Continuer
               <ChevronRight className="h-4 w-4" aria-hidden="true" />
+            </button>
+          )}
+          {isSoftStep && (
+            <button
+              type="button"
+              onClick={skip}
+              className="w-full rounded-full py-2.5 text-xs font-semibold text-muted hover:text-foreground transition-colors cursor-pointer"
+            >
+              Passer — je verrai plus tard
             </button>
           )}
         </div>

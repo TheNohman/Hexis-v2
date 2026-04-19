@@ -83,7 +83,7 @@ export function NextWorkoutCard({ info }: Props) {
               {info.programName}
             </p>
             {todayMarker && (
-              <span className="inline-flex items-center rounded-full bg-signal px-2 py-0.5 text-[9px] font-bold uppercase tracking-widest text-foreground">
+              <span className="inline-flex items-center rounded-full bg-accent text-accent-foreground px-2 py-0.5 text-[9px] font-bold uppercase tracking-widest">
                 Aujourd&apos;hui
               </span>
             )}
@@ -204,12 +204,12 @@ function SlotPickerDialog({
                         {s.templateName ?? "(sans modèle)"}
                       </span>
                       {today && (
-                        <span className="inline-flex items-center rounded-full bg-signal px-2 py-0.5 text-[9px] font-bold uppercase tracking-widest text-foreground">
+                        <span className="inline-flex items-center rounded-full bg-accent text-accent-foreground px-2 py-0.5 text-[9px] font-bold uppercase tracking-widest">
                           Aujourd&apos;hui
                         </span>
                       )}
                       {isCurrent && !today && (
-                        <span className="inline-flex items-center rounded-full bg-accent px-2 py-0.5 text-[9px] font-bold uppercase tracking-widest text-accent-foreground">
+                        <span className="inline-flex items-center rounded-full border border-accent/40 text-accent-ink px-2 py-0.5 text-[9px] font-bold uppercase tracking-widest">
                           Prévue
                         </span>
                       )}

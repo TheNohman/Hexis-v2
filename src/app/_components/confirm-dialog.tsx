@@ -45,7 +45,7 @@ export function ConfirmDialog({
           </button>
           <button type="button" onClick={onConfirm}
             className={`flex-1 rounded-xl py-2.5 text-sm font-medium cursor-pointer transition-colors ${
-              destructive ? "bg-danger text-white hover:bg-danger/90" : "bg-accent text-white hover:bg-accent-hover"
+              destructive ? "bg-danger text-white hover:bg-danger/90" : "bg-accent text-accent-foreground hover:bg-accent-hover"
             }`}>
             {confirmLabel}
           </button>

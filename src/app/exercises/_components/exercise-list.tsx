@@ -1,10 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import Link from "next/link";
 import { Dumbbell, Search } from "lucide-react";
 import { formatExerciseType } from "@/lib/format";
 import { EmptyState } from "@/app/_components/empty-state";
+import { ConfirmDialog } from "@/app/_components/confirm-dialog";
+import { useToast } from "@/app/_components/toast";
 import { deleteExerciseAction } from "../actions";
 import type { ExerciseType } from "@/generated/prisma/enums";
 
@@ -17,6 +19,11 @@ type Exercise = {
   description: string | null;
   kpis: { name: string }[];
 };
+
+type UsageMap = Record<
+  string,
+  { workoutEntries: number; templateEntries: number }
+>;
 
 const TYPE_ORDER: ExerciseType[] = ["STRENGTH", "BODYWEIGHT", "CARDIO", "MOBILITY", "REST"];
 
@@ -51,9 +58,58 @@ function exerciseInitials(name: string): string {
   return (parts[0][0] + parts[1][0]).toUpperCase();
 }
 
-export function ExerciseList({ exercises }: { exercises: Exercise[] }) {
+export function ExerciseList({
+  exercises,
+  usageMap,
+}: {
+  exercises: Exercise[];
+  usageMap: UsageMap;
+}) {
+  const toast = useToast();
+  const [isPending, startTransition] = useTransition();
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState<ExerciseType | "ALL">("ALL");
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+
+  const pendingDelete = pendingDeleteId
+    ? exercises.find((e) => e.id === pendingDeleteId) ?? null
+    : null;
+  const pendingUsage = pendingDeleteId ? usageMap[pendingDeleteId] : null;
+
+  function confirmDelete() {
+    if (!pendingDeleteId) return;
+    const id = pendingDeleteId;
+    setPendingDeleteId(null);
+    startTransition(async () => {
+      try {
+        await deleteExerciseAction(id);
+        toast.show("Exercice supprimé", { kind: "success" });
+      } catch (err) {
+        toast.show(
+          err instanceof Error ? err.message : "Impossible de supprimer",
+          { kind: "error" },
+        );
+      }
+    });
+  }
+
+  function buildDeleteMessage(
+    name: string,
+    usage: { workoutEntries: number; templateEntries: number } | null | undefined,
+  ): string {
+    const w = usage?.workoutEntries ?? 0;
+    const t = usage?.templateEntries ?? 0;
+    if (w === 0 && t === 0) {
+      return `Supprimer « ${name} » ? Il n'est utilisé nulle part.`;
+    }
+    if (w > 0 && t > 0) {
+      return `« ${name} » est utilisé dans ${t} modèle${t > 1 ? "s" : ""} et ${w} séance${w > 1 ? "s" : ""}. La suppression sera bloquée tant qu'il est référencé.`;
+    }
+    if (t > 0) {
+      return `« ${name} » est utilisé dans ${t} modèle${t > 1 ? "s" : ""}. La suppression sera bloquée tant qu'il est référencé.`;
+    }
+    return `« ${name} » est utilisé dans ${w} séance${w > 1 ? "s" : ""}. La suppression sera bloquée tant qu'il est référencé.`;
+  }
 
   const filtered = exercises.filter((e) => {
     if (typeFilter !== "ALL" && e.type !== typeFilter) return false;
@@ -175,7 +231,19 @@ export function ExerciseList({ exercises }: { exercises: Exercise[] }) {
                   </Link>
                   {!exercise.isSystem && (
                     <div className="absolute top-2 right-2">
-                      <DeleteButton exerciseId={exercise.id} />
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setPendingDeleteId(exercise.id);
+                        }}
+                        disabled={isPending}
+                        aria-label={`Supprimer l'exercice ${exercise.name}`}
+                        className="text-[10px] font-semibold text-subtle hover:text-danger hover:bg-danger-soft transition-colors px-2 py-1 rounded-md cursor-pointer disabled:opacity-50"
+                      >
+                        Suppr.
+                      </button>
                     </div>
                   )}
                 </li>
@@ -189,21 +257,21 @@ export function ExerciseList({ exercises }: { exercises: Exercise[] }) {
         {filtered.length} exercice{filtered.length > 1 ? "s" : ""} trouvé
         {filtered.length > 1 ? "s" : ""}
       </p>
-    </div>
-  );
-}
 
-function DeleteButton({ exerciseId }: { exerciseId: string }) {
-  const deleteWithId = deleteExerciseAction.bind(null, exerciseId);
-  return (
-    <form action={deleteWithId} onClick={(e) => e.stopPropagation()}>
-      <button
-        type="submit"
-        aria-label="Supprimer cet exercice"
-        className="text-[10px] font-semibold text-subtle hover:text-danger hover:bg-danger-soft transition-colors px-2 py-1 rounded-md cursor-pointer"
-      >
-        Suppr.
-      </button>
-    </form>
+      <ConfirmDialog
+        open={pendingDelete !== null}
+        title="Supprimer cet exercice ?"
+        message={
+          pendingDelete
+            ? buildDeleteMessage(pendingDelete.name, pendingUsage)
+            : ""
+        }
+        confirmLabel="Supprimer"
+        cancelLabel="Annuler"
+        destructive
+        onConfirm={confirmDelete}
+        onCancel={() => setPendingDeleteId(null)}
+      />
+    </div>
   );
 }
