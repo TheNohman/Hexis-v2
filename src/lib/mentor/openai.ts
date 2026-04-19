@@ -1,6 +1,27 @@
 import OpenAI from "openai";
 import type { MentorContext } from "./context";
 
+/**
+ * Hard-filter the context before sending to the LLM.
+ *
+ * gpt-4o-mini follows soft constraints inconsistently: even with a clear
+ * "only propose exercises whose equipment is a subset of availableEquipment"
+ * rule, it still happily suggests Squat barre to a user whose
+ * `availableEquipment` = ["Haltères", "Barre de traction", "Tapis de sol"].
+ *
+ * The deterministic fix is to remove incompatible exercises from the
+ * `exerciseCatalog` entirely before the LLM sees them. When
+ * `availableEquipment` is empty, no filter is applied (original catalog).
+ */
+function subsetContextForLLM(context: MentorContext): MentorContext {
+  if (context.availableEquipment.length === 0) return context;
+  const available = new Set(context.availableEquipment);
+  const filtered = context.exerciseCatalog.filter((ex) =>
+    ex.equipment.every((tag) => available.has(tag)),
+  );
+  return { ...context, exerciseCatalog: filtered };
+}
+
 function getOpenAI() {
   return new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 }
@@ -58,7 +79,7 @@ export async function generateProgram(
   context: MentorContext,
   userGoals: string,
 ): Promise<string> {
-  const contextSummary = JSON.stringify(context, null, 0);
+  const contextSummary = JSON.stringify(subsetContextForLLM(context), null, 0);
 
   const response = await getOpenAI().chat.completions.create({
     model: "gpt-4o-mini",
@@ -181,7 +202,7 @@ export async function generateFillForProgram(
     emptySlots: Array<{ cycle: number; day: number }>;
   },
 ): Promise<string> {
-  const contextSummary = JSON.stringify(context, null, 0);
+  const contextSummary = JSON.stringify(subsetContextForLLM(context), null, 0);
   const programJson = JSON.stringify(
     {
       name: programMeta.name,
@@ -261,7 +282,7 @@ export async function generateTemplate(
   params: TemplateGenerationParams,
   temperature: number = 0.7,
 ): Promise<string> {
-  const contextSummary = JSON.stringify(context, null, 0);
+  const contextSummary = JSON.stringify(subsetContextForLLM(context), null, 0);
 
   const response = await getOpenAI().chat.completions.create({
     model: "gpt-4o-mini",
