@@ -68,7 +68,7 @@ export async function listTemplates(
   return templates.map((t) => ({
     id: t.id,
     name: t.name,
-    description: t.description,
+    objective: t.objective,
     tags: t.tags,
     source: t.source,
     isFavorite: t.isFavorite,
@@ -161,7 +161,7 @@ export async function getTemplateById(
     id: template.id,
     userId: template.userId,
     name: template.name,
-    description: template.description,
+    objective: template.objective,
     tags: template.tags,
     source: template.source,
     isFavorite: template.isFavorite,

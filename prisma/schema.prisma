@@ -418,7 +418,7 @@ model WorkoutTemplate {
   id          String         @id @default(cuid())
   userId      String
   name        String
-  description String?        @db.Text // intention libre du modèle (alimente l'IA)
+  objective   String?        @db.Text // objectif libre du modèle (alimente l'IA)
   tags        String[]       @default([]) // ex: ["push", "upper", "strength"]
   source      TemplateSource @default(MANUAL) // provenance — manuel, IA, clone
   isFavorite  Boolean        @default(false)
@@ -507,7 +507,7 @@ model Program {
   id            String    @id @default(cuid())
   userId        String
   name          String
-  description   String?   @db.Text // intention libre du programme (alimente l'IA)
+  objective     String?   @db.Text // objectif libre du programme (alimente l'IA)
   cycleCount    Int       @default(1) // nombre de cycles dans le programme
   cycleDays     Int       @default(7) // nombre de jours par cycle (7 = semaine, 8+ = cycle custom)
   isActive      Boolean   @default(false)

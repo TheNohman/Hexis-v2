@@ -20,7 +20,7 @@ import {
   reorderTemplateBlocks,
   reorderTemplateEntries,
   toggleTemplateFavorite,
-  updateTemplateDescription,
+  updateTemplateObjective,
   updateTemplateEntryRest,
   updateTemplateEntryValues,
 } from "@/lib/templates/mutations";
@@ -68,14 +68,14 @@ export async function renameTemplateAction(templateId: string, name: string) {
   revalidatePath("/templates/" + templateId);
 }
 
-export async function updateTemplateDescriptionAction(
+export async function updateTemplateObjectiveAction(
   templateId: string,
-  description: string | null,
+  objective: string | null,
 ) {
   assertValid(idSchema, templateId);
-  assertValid(z.string().max(2000).nullable(), description);
+  assertValid(z.string().max(2000).nullable(), objective);
   const userId = await getCurrentUserId();
-  await updateTemplateDescription(templateId, userId, description);
+  await updateTemplateObjective(templateId, userId, objective);
   revalidatePath("/templates/" + templateId);
   revalidatePath("/templates");
 }

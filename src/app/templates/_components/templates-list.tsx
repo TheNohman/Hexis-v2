@@ -346,9 +346,9 @@ export function TemplatesList({ templates }: { templates: TemplateListItem[] }) 
             <p className="font-display font-bold text-[15px] truncate mt-0.5">
               {t.name}
             </p>
-            {t.description && (
+            {t.objective && (
               <p className="text-xs text-muted truncate mt-0.5">
-                {t.description}
+                {t.objective}
               </p>
             )}
 

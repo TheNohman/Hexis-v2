@@ -76,20 +76,20 @@ export async function renameTemplate(
   });
 }
 
-export async function updateTemplateDescription(
+export async function updateTemplateObjective(
   templateId: string,
   userId: string,
-  description: string | null,
+  objective: string | null,
 ) {
   const template = await prisma.workoutTemplate.findUnique({
     where: { id: templateId },
     select: { id: true, userId: true },
   });
   assertOwnership(template, userId);
-  const normalized = description?.trim() || null;
+  const normalized = objective?.trim() || null;
   return prisma.workoutTemplate.update({
     where: { id: templateId },
-    data: { description: normalized },
+    data: { objective: normalized },
   });
 }
 

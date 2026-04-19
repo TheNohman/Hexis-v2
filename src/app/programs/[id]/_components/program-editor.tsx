@@ -12,7 +12,7 @@ import {
   updateSlotAction,
   deleteSlotAction,
   updateStartDateAction,
-  updateProgramDescriptionAction,
+  updateProgramObjectiveAction,
   fillProgramCyclesAction,
   cloneCycleAction,
 } from "@/app/programs/actions";
@@ -46,7 +46,7 @@ export function ProgramEditor({
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [editingName, setEditingName] = useState(false);
-  const [editingDesc, setEditingDesc] = useState(false);
+  const [editingObjective, setEditingObjective] = useState(false);
   const [filling, setFilling] = useState(false);
 
   function handleRename(e: React.FocusEvent<HTMLInputElement>) {
@@ -80,11 +80,11 @@ export function ProgramEditor({
     startTransition(() => updateSlotAction(slotId, data));
   }
 
-  function handleDescriptionBlur(e: React.FocusEvent<HTMLTextAreaElement>) {
+  function handleObjectiveBlur(e: React.FocusEvent<HTMLTextAreaElement>) {
     const val = e.target.value.trim() || null;
-    setEditingDesc(false);
-    if (val !== (program.description ?? null)) {
-      startTransition(() => updateProgramDescriptionAction(program.id, val));
+    setEditingObjective(false);
+    if (val !== (program.objective ?? null)) {
+      startTransition(() => updateProgramObjectiveAction(program.id, val));
     }
   }
 
@@ -162,8 +162,8 @@ export function ProgramEditor({
     ? "Active le Mentor IA dans ton profil"
     : emptySlotCount === 0
       ? "Tous les créneaux ont déjà un modèle"
-      : !program.description
-        ? "Ajoute une description pour guider l'IA"
+      : !program.objective
+        ? "Définis l'objectif du programme pour guider l'IA"
         : "";
 
   return (
@@ -199,38 +199,38 @@ export function ProgramEditor({
               </button>
             )}
 
-            {/* Description — inline editable, feeds the AI */}
+            {/* Objectif — inline editable, feeds the AI */}
             <div className="mt-2.5">
-              {editingDesc ? (
+              {editingObjective ? (
                 <textarea
                   autoFocus
-                  defaultValue={program.description ?? ""}
-                  onBlur={handleDescriptionBlur}
+                  defaultValue={program.objective ?? ""}
+                  onBlur={handleObjectiveBlur}
                   onKeyDown={(e) => {
-                    if (e.key === "Escape") setEditingDesc(false);
+                    if (e.key === "Escape") setEditingObjective(false);
                     if (e.key === "Enter" && (e.metaKey || e.ctrlKey))
                       (e.target as HTMLTextAreaElement).blur();
                   }}
-                  placeholder="Décris ton objectif, ton niveau, tes contraintes, ta fréquence… (alimente l'IA)"
+                  placeholder="Décris ton objectif et tes contraintes (niveau, fréquence, équipement, durée cible)…"
                   rows={3}
                   className="w-full bg-surface rounded-xl border border-border px-3 py-2 text-sm text-muted leading-relaxed focus:outline-none focus:border-accent-ink transition-colors resize-none"
-                  aria-label="Description du programme"
+                  aria-label="Objectif du programme"
                 />
-              ) : program.description ? (
+              ) : program.objective ? (
                 <button
                   type="button"
-                  onClick={() => setEditingDesc(true)}
+                  onClick={() => setEditingObjective(true)}
                   className="text-left text-[15px] font-display font-medium text-ink-strong leading-snug hover:text-foreground transition-colors cursor-text block max-w-[60ch]"
                 >
-                  {program.description}
+                  {program.objective}
                 </button>
               ) : (
                 <button
                   type="button"
-                  onClick={() => setEditingDesc(true)}
+                  onClick={() => setEditingObjective(true)}
                   className="text-left text-sm text-subtle italic hover:text-accent-ink transition-colors cursor-text"
                 >
-                  + Ajouter une description (objectif, niveau, contraintes…)
+                  + Définir l&apos;objectif du programme
                 </button>
               )}
             </div>
@@ -340,7 +340,7 @@ export function ProgramEditor({
           <button
             type="button"
             onClick={handleFillCycles}
-            disabled={filling || isPending || !canFillWithAI || !program.description}
+            disabled={filling || isPending || !canFillWithAI || !program.objective}
             title={fillTooltip}
             className="inline-flex items-center gap-2 rounded-xl bg-accent text-accent-foreground px-4 py-2.5 text-sm font-bold shadow-card hover:bg-accent-hover transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           >
@@ -482,14 +482,14 @@ export function ProgramEditor({
         </button>
       )}
 
-      {/* Onboarding nudge — brand-new program with no slots and no description */}
-      {program.slots.length === 0 && !program.description && (
+      {/* Onboarding nudge — brand-new program with no slots and no objective */}
+      {program.slots.length === 0 && !program.objective && (
         <Card rounded="2xl" padding="lg" className="bg-accent-light/40 border-accent/30 space-y-2 animate-fade-in-up">
           <p className="text-[10px] uppercase tracking-widest font-bold text-accent-ink">
             Pour commencer
           </p>
           <p className="text-sm text-foreground leading-relaxed">
-            Décris ton objectif dans la description ci-dessus (ex. « prise de masse 3×/sem, 1h max, pas de barre »), puis laisse l&apos;IA générer {emptySlotCount} séance{emptySlotCount > 1 ? "s" : ""} — ou ajoute-les manuellement dans le cycle ci-dessous.
+            Définis l&apos;objectif ci-dessus (ex. « prise de masse 3×/sem, 1h max, pas de barre »), puis laisse l&apos;IA générer {emptySlotCount} séance{emptySlotCount > 1 ? "s" : ""} — ou ajoute-les manuellement dans le cycle ci-dessous.
           </p>
         </Card>
       )}

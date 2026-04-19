@@ -42,7 +42,7 @@ export async function getProgramById(programId: string, userId: string): Promise
   return {
     id: program.id,
     name: program.name,
-    description: program.description,
+    objective: program.objective,
     cycleCount: program.cycleCount,
     cycleDays: program.cycleDays,
     isActive: program.isActive,

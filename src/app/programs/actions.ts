@@ -19,7 +19,7 @@ import {
   createWorkoutFromSpecificSlot,
   skipCurrentSlot,
   updateStartDate,
-  updateProgramDescription,
+  updateProgramObjective,
 } from "@/lib/programs/mutations";
 import {
   materializeProgramFills,
@@ -65,19 +65,19 @@ export async function renameProgramAction(programId: string, name: string) {
   revalidatePath("/planning");
 }
 
-export async function updateProgramDescriptionAction(
+export async function updateProgramObjectiveAction(
   programId: string,
-  description: string | null,
+  objective: string | null,
 ) {
   assertValid(idSchema, programId);
-  assertValid(z.string().max(2000).nullable(), description);
+  assertValid(z.string().max(2000).nullable(), objective);
   const userId = await getCurrentUserId();
-  await updateProgramDescription(programId, userId, description);
+  await updateProgramObjective(programId, userId, objective);
   revalidatePath(`/programs/${programId}`);
 }
 
 /**
- * Fill empty slots of a program via AI — uses the program description, the
+ * Fill empty slots of a program via AI — uses the program objective, the
  * already-assigned slots as context, the user's exercise library, and the
  * user's sport/bien-être context.
  */
@@ -155,7 +155,7 @@ export async function fillProgramCyclesAction(programId: string): Promise<{
     }));
 
   const context = await buildMentorContext(userId);
-  const raw = await generateFillForProgram(context, program.description, {
+  const raw = await generateFillForProgram(context, program.objective, {
     name: program.name,
     cycleCount: program.cycleCount,
     cycleDays: program.cycleDays,

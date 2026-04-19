@@ -31,17 +31,17 @@ export async function renameProgram(programId: string, userId: string, name: str
   return prisma.program.update({ where: { id: programId }, data: { name } });
 }
 
-export async function updateProgramDescription(
+export async function updateProgramObjective(
   programId: string,
   userId: string,
-  description: string | null,
+  objective: string | null,
 ) {
   const program = await prisma.program.findUnique({ where: { id: programId } });
   if (!program || program.userId !== userId) throw new Error("Forbidden");
-  const normalized = description?.trim() || null;
+  const normalized = objective?.trim() || null;
   return prisma.program.update({
     where: { id: programId },
-    data: { description: normalized },
+    data: { objective: normalized },
   });
 }
 

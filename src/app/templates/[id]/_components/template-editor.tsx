@@ -28,7 +28,7 @@ import {
   reorderTemplateBlocksAction,
   startSessionFromTemplateAction,
   toggleTemplateFavoriteAction,
-  updateTemplateDescriptionAction,
+  updateTemplateObjectiveAction,
   updateTemplateTagsAction,
 } from "@/app/templates/actions";
 import { TemplateBlockCard } from "./template-block-card";
@@ -73,7 +73,7 @@ function sourceBadge(source: TemplateDetail["source"]) {
 
 export function TemplateEditor({ template, exercises }: Props) {
   const [isEditingName, setIsEditingName] = useState(false);
-  const [isEditingDesc, setIsEditingDesc] = useState(false);
+  const [isEditingObjective, setIsEditingObjective] = useState(false);
   const [newBlockName, setNewBlockName] = useState("");
   const [showNewBlockInput, setShowNewBlockInput] = useState(false);
   const [showHiitDialog, setShowHiitDialog] = useState(false);
@@ -174,12 +174,12 @@ export function TemplateEditor({ template, exercises }: Props) {
     startTransition(() => startSessionFromTemplateAction(template.id));
   }
 
-  function handleDescriptionBlur(e: React.FocusEvent<HTMLTextAreaElement>) {
+  function handleObjectiveBlur(e: React.FocusEvent<HTMLTextAreaElement>) {
     const val = e.target.value.trim() || null;
-    setIsEditingDesc(false);
-    if (val !== (template.description ?? null)) {
+    setIsEditingObjective(false);
+    if (val !== (template.objective ?? null)) {
       startTransition(() =>
-        updateTemplateDescriptionAction(template.id, val),
+        updateTemplateObjectiveAction(template.id, val),
       );
     }
   }
@@ -243,35 +243,35 @@ export function TemplateEditor({ template, exercises }: Props) {
                 </button>
               )}
 
-              {/* Description — inline editable */}
+              {/* Objectif — inline editable */}
               <div className="mt-2.5">
-                {isEditingDesc ? (
+                {isEditingObjective ? (
                   <textarea
                     autoFocus
-                    defaultValue={template.description ?? ""}
-                    onBlur={handleDescriptionBlur}
+                    defaultValue={template.objective ?? ""}
+                    onBlur={handleObjectiveBlur}
                     onKeyDown={(e) => {
-                      if (e.key === "Escape") setIsEditingDesc(false);
+                      if (e.key === "Escape") setIsEditingObjective(false);
                       if (e.key === "Enter" && (e.metaKey || e.ctrlKey))
                         (e.target as HTMLTextAreaElement).blur();
                     }}
                     placeholder="Décris l'objectif de cette séance, quand l'utiliser, les cues de forme…"
                     rows={3}
                     className="w-full bg-surface rounded-xl border border-border px-3 py-2 text-sm text-muted leading-relaxed focus:outline-none focus:border-accent-ink transition-colors resize-none"
-                    aria-label="Description du modèle"
+                    aria-label="Objectif du modèle"
                   />
-                ) : template.description ? (
+                ) : template.objective ? (
                   <button
                     type="button"
-                    onClick={() => setIsEditingDesc(true)}
+                    onClick={() => setIsEditingObjective(true)}
                     className="text-left text-[15px] font-display font-medium text-ink-strong leading-snug hover:text-foreground transition-colors cursor-text block max-w-[60ch]"
                   >
-                    {template.description}
+                    {template.objective}
                   </button>
                 ) : (
                   <button
                     type="button"
-                    onClick={() => setIsEditingDesc(true)}
+                    onClick={() => setIsEditingObjective(true)}
                     className="text-left text-sm text-subtle italic hover:text-accent-ink transition-colors cursor-text"
                   >
                     + Décris l&apos;objectif de cette séance, quand l&apos;utiliser, les cues de forme…

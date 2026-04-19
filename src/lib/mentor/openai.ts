@@ -124,7 +124,7 @@ Règles :
 
 // ─── Fill empty program slots ──────────────────────────────────────
 
-const FILL_SYSTEM_PROMPT = `Tu es un coach sportif expert. L'utilisateur a un programme partiellement défini (description + certains slots déjà assignés à des modèles). Tu dois compléter les SLOTS VIDES (slots sans templateId) en générant pour chacun un modèle de séance.
+const FILL_SYSTEM_PROMPT = `Tu es un coach sportif expert. L'utilisateur a un programme partiellement défini (objectif + certains slots déjà assignés à des modèles). Tu dois compléter les SLOTS VIDES (slots sans templateId) en générant pour chacun un modèle de séance.
 
 Tu DOIS répondre UNIQUEMENT avec un bloc JSON au format :
 
@@ -155,7 +155,7 @@ Règles strictes :
 - Ne remplis QUE les slots fournis dans la liste emptySlots du contexte. Ne crée pas de nouveaux créneaux, ne modifie pas les slots existants.
 - Chaque fill doit avoir cycle + day qui matchent EXACTEMENT un emptySlot.
 - Privilégie STRICTEMENT les exercices existants dans la bibliothèque de l'utilisateur. Si un exercice n'existe pas dans la liste, ne le suggère PAS.
-- Utilise la description du programme pour guider le choix (ex. "prise de masse" → sets lourds STRENGTH, "endurance" → cardio long, etc.).
+- Utilise l'objectif du programme pour guider le choix (ex. "prise de masse" → sets lourds STRENGTH, "endurance" → cardio long, etc.).
 - Équilibre la semaine : évite de mettre 2 séances "jambes" consécutives si possible.
 - Adapte au niveau de l'utilisateur et à son bien-être récent.
 - type: "STRENGTH" / "BODYWEIGHT" / "CARDIO" / "MOBILITY".
@@ -164,7 +164,7 @@ Règles strictes :
 
 export async function generateFillForProgram(
   context: MentorContext,
-  programDescription: string | null,
+  programObjective: string | null,
   programMeta: {
     name: string;
     cycleCount: number;
@@ -182,7 +182,7 @@ export async function generateFillForProgram(
   const programJson = JSON.stringify(
     {
       name: programMeta.name,
-      description: programDescription ?? "(pas de description)",
+      objective: programObjective ?? "(pas d'objectif défini)",
       cycleCount: programMeta.cycleCount,
       cycleDays: programMeta.cycleDays,
       existingSlots: programMeta.existingSlots,
@@ -200,7 +200,7 @@ export async function generateFillForProgram(
       { role: "system", content: `Programme à compléter :\n${programJson}` },
       {
         role: "user",
-        content: `Complète les ${programMeta.emptySlots.length} slots vides en respectant la description et l'équilibre de la semaine.`,
+        content: `Complète les ${programMeta.emptySlots.length} slots vides en respectant l'objectif du programme et l'équilibre de la semaine.`,
       },
     ],
     temperature: 0.6,

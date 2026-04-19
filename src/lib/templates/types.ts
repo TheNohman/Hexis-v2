@@ -10,7 +10,7 @@ import type {
 export type TemplateListItem = {
   id: string;
   name: string;
-  description: string | null;
+  objective: string | null;
   tags: string[];
   source: TemplateSource;
   isFavorite: boolean;
@@ -27,7 +27,7 @@ export type TemplateDetail = {
   id: string;
   userId: string;
   name: string;
-  description: string | null;
+  objective: string | null;
   tags: string[];
   source: TemplateSource;
   isFavorite: boolean;
