@@ -17,6 +17,7 @@ type Exercise = {
   type: ExerciseType;
   isSystem: boolean;
   description: string | null;
+  equipment: string[];
   kpis: { name: string }[];
 };
 
@@ -219,6 +220,16 @@ export function ExerciseList({
                       {exercise.kpis.length > 0 && (
                         <p className="text-[10px] text-subtle mt-1 truncate">
                           {exercise.kpis.map((k) => k.name).join(" · ")}
+                        </p>
+                      )}
+                      {exercise.equipment.length > 0 && (
+                        <p
+                          className="text-[10px] text-muted mt-0.5 truncate"
+                          title={exercise.equipment.join(", ")}
+                        >
+                          <span aria-hidden="true">🏋️ </span>
+                          {exercise.equipment.slice(0, 3).join(" · ")}
+                          {exercise.equipment.length > 3 ? " …" : ""}
                         </p>
                       )}
                     </div>

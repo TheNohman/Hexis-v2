@@ -225,6 +225,10 @@ model Exercise {
   name        String
   description String?      @db.Text
   type        ExerciseType
+  /// Granular equipment tags (e.g. ["Barre", "Banc", "Disques"]). Optional,
+  /// purely informative — the mentor AI reads these to filter exercises
+  /// against the user's `sportProfile.equipmentAccess` bundles.
+  equipment   String[]     @default([])
   isSystem    Boolean      @default(false)
   userId      String? // null => exercice système du catalogue
 

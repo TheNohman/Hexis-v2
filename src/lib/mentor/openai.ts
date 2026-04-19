@@ -46,7 +46,8 @@ Règles :
 - Pour BODYWEIGHT: inclure reps uniquement
 - Pour CARDIO: inclure duration_secs et optionnellement distance_km
 - Pour MOBILITY: inclure duration_secs
-- CRITIQUE : Utilise EXCLUSIVEMENT les noms d'exercices fournis dans la liste "exercises" du contexte utilisateur (reproduis le nom à l'identique, casse comprise). N'invente AUCUN exercice absent de cette liste — si un exercice n'existe pas, choisis le plus proche dans la liste.
+- CRITIQUE : Utilise EXCLUSIVEMENT les noms d'exercices fournis dans la liste "exerciseCatalog" du contexte utilisateur (reproduis le nom à l'identique, casse comprise). N'invente AUCUN exercice absent de cette liste — si un exercice n'existe pas, choisis le plus proche dans la liste.
+- FILTRE ÉQUIPEMENT : si le contexte fournit un champ non-vide "availableEquipment", ne propose QUE les exercices dont TOUS les tags "equipment" sont contenus dans "availableEquipment". Un exercice avec "equipment: []" est toujours autorisé. Si "availableEquipment" est vide ou absent, n'applique aucun filtre.
 - Structure chaque séance : si pertinent ajoute un bloc "Échauffement" (MOBILITY ou BODYWEIGHT léger) avant le bloc principal, et éventuellement un bloc "Retour au calme" après.
 - Adapte au niveau de l'utilisateur (débutant si peu de séances, intermédiaire/avancé sinon) ET au niveau explicite fourni dans le contexte (sportProfile.level) — ignore toute mention de niveau contraire dans l'input utilisateur.
 - Prends en compte le bien-être récent (fatigue, stress, sommeil)
@@ -113,13 +114,13 @@ Règles :
 - Pour BODYWEIGHT : inclure reps uniquement
 - Pour CARDIO : inclure duration_secs et optionnellement distance_km
 - Pour MOBILITY : inclure duration_secs
-- Privilégie STRICTEMENT les exercices existants dans la bibliothèque de l'utilisateur (liste fournie dans le contexte). Si un exercice n'existe pas dans la liste, ne le suggère PAS.
+- Privilégie STRICTEMENT les exercices existants dans la bibliothèque de l'utilisateur (liste fournie dans le contexte "exerciseCatalog"). Si un exercice n'existe pas dans la liste, ne le suggère PAS.
+- FILTRE ÉQUIPEMENT : si le contexte fournit un champ non-vide "availableEquipment", ne propose QUE les exercices dont TOUS les tags "equipment" sont contenus dans "availableEquipment". Un exercice avec "equipment: []" est toujours autorisé. Si "availableEquipment" est vide ou absent, n'applique aucun filtre.
 - Adapte au niveau de l'utilisateur (débutant si peu de séances, intermédiaire/avancé sinon)
 - Prends en compte le bien-être récent (fatigue, stress, sommeil)
 - Structure claire : échauffement → bloc principal → accessoires/finisher → retour au calme (selon pertinence)
 - Respecte STRICTEMENT la durée cible demandée par l'utilisateur (compte ~1-2 min de repos entre séries STRENGTH, ~30-60s entre séries BODYWEIGHT). Adapte le nombre d'exercices en conséquence.
 - Respecte l'intensité demandée (Léger = charges/volume modérés, Modéré = standard, Intense = charges lourdes / volume élevé).
-- Si l'utilisateur restreint l'équipement, n'utilise QUE les exercices compatibles avec cet équipement.
 - Si des zones cibles sont imposées, focalise les blocs principaux sur ces zones (autorise échauffement / mobilité complémentaire).
 - Noms en français. Nombre de sets réaliste (2-5).`;
 
@@ -155,7 +156,8 @@ Tu DOIS répondre UNIQUEMENT avec un bloc JSON au format :
 Règles strictes :
 - Ne remplis QUE les slots fournis dans la liste emptySlots du contexte. Ne crée pas de nouveaux créneaux, ne modifie pas les slots existants.
 - Chaque fill doit avoir cycle + day qui matchent EXACTEMENT un emptySlot.
-- Privilégie STRICTEMENT les exercices existants dans la bibliothèque de l'utilisateur. Si un exercice n'existe pas dans la liste, ne le suggère PAS.
+- Privilégie STRICTEMENT les exercices existants dans la bibliothèque de l'utilisateur (liste "exerciseCatalog"). Si un exercice n'existe pas dans la liste, ne le suggère PAS.
+- FILTRE ÉQUIPEMENT : si le contexte fournit un champ non-vide "availableEquipment", ne propose QUE les exercices dont TOUS les tags "equipment" sont contenus dans "availableEquipment". Un exercice avec "equipment: []" est toujours autorisé. Si "availableEquipment" est vide ou absent, n'applique aucun filtre.
 - Utilise l'objectif du programme pour guider le choix (ex. "prise de masse" → sets lourds STRENGTH, "endurance" → cardio long, etc.).
 - Équilibre la semaine : évite de mettre 2 séances "jambes" consécutives si possible.
 - Adapte au niveau de l'utilisateur et à son bien-être récent.

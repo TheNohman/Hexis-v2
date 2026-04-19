@@ -34,6 +34,7 @@ export async function listExercisesForUser(
     type: ex.type,
     isSystem: ex.isSystem,
     description: ex.description,
+    equipment: ex.equipment,
     kpis: ex.exerciseKpis.map((ek) => ({
       id: ek.id,
       kpiDefinitionId: ek.kpiDefinitionId,

@@ -67,6 +67,24 @@ export default async function ExerciseDetailPage({
             {exercise.description && (
               <p className="text-xs text-muted mt-1.5">{exercise.description}</p>
             )}
+            {exercise.equipment.length > 0 && (
+              <div className="mt-2.5 flex items-center gap-1.5 flex-wrap">
+                <span
+                  aria-hidden="true"
+                  className="text-[10px] uppercase tracking-widest font-semibold text-accent-ink"
+                >
+                  Matériel
+                </span>
+                {exercise.equipment.map((tag) => (
+                  <span
+                    key={tag}
+                    className="inline-flex items-center rounded-full bg-surface border border-border px-2 py-0.5 text-[11px] font-medium text-foreground"
+                  >
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
           <Link
             href="/exercises"

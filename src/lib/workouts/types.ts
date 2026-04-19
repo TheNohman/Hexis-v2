@@ -20,6 +20,8 @@ export type ExerciseListItem = {
   type: ExerciseType;
   isSystem: boolean;
   description: string | null;
+  /** Granular gear tags. Empty array when none declared. */
+  equipment: string[];
   kpis: {
     id: string;
     kpiDefinitionId: string;

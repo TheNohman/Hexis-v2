@@ -48,7 +48,12 @@ const DEFAULT_KPIS: Record<ExerciseType, { slug: string; required: boolean }[]> 
  */
 export async function createExercise(
   userId: string,
-  data: { name: string; description?: string; type: ExerciseType },
+  data: {
+    name: string;
+    description?: string;
+    type: ExerciseType;
+    equipment?: string[];
+  },
 ) {
   const slug = slugify(data.name);
 
@@ -68,6 +73,7 @@ export async function createExercise(
       name: data.name,
       description: data.description ?? null,
       type: data.type,
+      equipment: data.equipment ?? [],
       isSystem: false,
       userId,
       exerciseKpis: {
@@ -144,7 +150,12 @@ export async function deleteExercise(
 export async function updateExercise(
   exerciseId: string,
   userId: string,
-  data: { name?: string; description?: string | null; type?: ExerciseType },
+  data: {
+    name?: string;
+    description?: string | null;
+    type?: ExerciseType;
+    equipment?: string[];
+  },
 ): Promise<void> {
   const exercise = await prisma.exercise.findUnique({
     where: { id: exerciseId },
@@ -161,6 +172,7 @@ export async function updateExercise(
       ...(data.name !== undefined && { name: data.name }),
       ...(data.description !== undefined && { description: data.description }),
       ...(data.type !== undefined && { type: data.type }),
+      ...(data.equipment !== undefined && { equipment: data.equipment }),
     },
   });
 }

@@ -6,6 +6,7 @@ import { formatExerciseType } from "@/lib/format";
 import { createExerciseAction } from "./actions";
 import type { ExerciseType } from "@/generated/prisma/enums";
 import { ExerciseList } from "./_components/exercise-list";
+import { EquipmentChipPicker } from "@/app/_components/equipment-chip-picker";
 
 export const dynamic = "force-dynamic";
 
@@ -98,6 +99,7 @@ export default async function ExercisesPage() {
             aria-label="Description"
             className="w-full rounded-xl bg-surface shadow-card px-3 py-2.5 text-sm placeholder:text-subtle focus:outline-none focus:ring-2 focus:ring-accent/60 transition-shadow"
           />
+          <EquipmentChipPicker />
           <button
             type="submit"
             className="w-full rounded-full bg-foreground text-background py-3 text-sm font-semibold hover:bg-foreground/90 transition-colors cursor-pointer shadow-card"

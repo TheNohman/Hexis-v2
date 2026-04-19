@@ -45,6 +45,8 @@ type ExerciseSpec = {
   description?: string;
   type: "STRENGTH" | "BODYWEIGHT" | "CARDIO" | "MOBILITY" | "REST";
   kpis: ExerciseKpiSpec[];
+  /** Granular gear tags. Optional — see `src/lib/exercises/equipment.ts`. */
+  equipment?: string[];
 };
 
 /**
@@ -61,6 +63,7 @@ const EXERCISES: ExerciseSpec[] = [
     name: "Squat barre",
     type: "STRENGTH",
     description: "Flexion des jambes avec une barre chargée sur les trapèzes.",
+    equipment: ["Barre", "Disques", "Rack"],
     kpis: [
       { slug: "weight_kg", required: true },
       { slug: "reps", required: true },
@@ -72,6 +75,7 @@ const EXERCISES: ExerciseSpec[] = [
     name: "Développé couché",
     type: "STRENGTH",
     description: "Poussée de la barre depuis la poitrine, allongé sur un banc.",
+    equipment: ["Barre", "Disques", "Banc"],
     kpis: [
       { slug: "weight_kg", required: true },
       { slug: "reps", required: true },
@@ -83,6 +87,7 @@ const EXERCISES: ExerciseSpec[] = [
     name: "Soulevé de terre",
     type: "STRENGTH",
     description: "Décollage d'une barre du sol jusqu'à l'extension complète.",
+    equipment: ["Barre", "Disques"],
     kpis: [
       { slug: "weight_kg", required: true },
       { slug: "reps", required: true },
@@ -94,6 +99,7 @@ const EXERCISES: ExerciseSpec[] = [
     name: "Développé militaire",
     type: "STRENGTH",
     description: "Poussée verticale de la barre au-dessus de la tête, debout.",
+    equipment: ["Barre", "Disques"],
     kpis: [
       { slug: "weight_kg", required: true },
       { slug: "reps", required: true },
@@ -105,6 +111,7 @@ const EXERCISES: ExerciseSpec[] = [
     name: "Rowing barre",
     type: "STRENGTH",
     description: "Tirage horizontal de la barre vers le nombril, buste penché.",
+    equipment: ["Barre", "Disques"],
     kpis: [
       { slug: "weight_kg", required: true },
       { slug: "reps", required: true },
@@ -116,6 +123,7 @@ const EXERCISES: ExerciseSpec[] = [
     name: "Tractions",
     type: "BODYWEIGHT",
     description: "Traction du corps vers le haut à une barre fixe, prise pronation.",
+    equipment: ["Barre de traction"],
     kpis: [
       { slug: "reps", required: true },
       { slug: "weight_kg", required: false },
@@ -127,6 +135,7 @@ const EXERCISES: ExerciseSpec[] = [
     name: "Dips",
     type: "BODYWEIGHT",
     description: "Flexion des bras aux barres parallèles, corps suspendu.",
+    equipment: ["Barres parallèles"],
     kpis: [
       { slug: "reps", required: true },
       { slug: "weight_kg", required: false },
@@ -138,6 +147,7 @@ const EXERCISES: ExerciseSpec[] = [
     name: "Pompes",
     type: "BODYWEIGHT",
     description: "Flexion des bras au sol, corps gainé.",
+    equipment: [],
     kpis: [
       { slug: "reps", required: true },
       { slug: "rpe", required: false },
@@ -148,6 +158,7 @@ const EXERCISES: ExerciseSpec[] = [
     name: "Fentes",
     type: "STRENGTH",
     description: "Pas avant avec flexion du genou arrière.",
+    equipment: [],
     kpis: [
       { slug: "weight_kg", required: false },
       { slug: "reps", required: true },
@@ -159,6 +170,7 @@ const EXERCISES: ExerciseSpec[] = [
     name: "Leg press",
     type: "STRENGTH",
     description: "Poussée d'une charge à la presse à cuisses.",
+    equipment: ["Presse à cuisses"],
     kpis: [
       { slug: "weight_kg", required: true },
       { slug: "reps", required: true },
@@ -170,6 +182,7 @@ const EXERCISES: ExerciseSpec[] = [
     name: "Hip thrust",
     type: "STRENGTH",
     description: "Poussée des hanches avec une barre chargée, dos sur un banc.",
+    equipment: ["Barre", "Disques", "Banc"],
     kpis: [
       { slug: "weight_kg", required: true },
       { slug: "reps", required: true },
@@ -181,6 +194,7 @@ const EXERCISES: ExerciseSpec[] = [
     name: "Curl biceps haltères",
     type: "STRENGTH",
     description: "Flexion des avant-bras avec des haltères.",
+    equipment: ["Haltères"],
     kpis: [
       { slug: "weight_kg", required: true },
       { slug: "reps", required: true },
@@ -191,6 +205,7 @@ const EXERCISES: ExerciseSpec[] = [
     name: "Extension triceps",
     type: "STRENGTH",
     description: "Extension des avant-bras à la poulie ou aux haltères.",
+    equipment: ["Haltères"],
     kpis: [
       { slug: "weight_kg", required: true },
       { slug: "reps", required: true },
@@ -201,6 +216,7 @@ const EXERCISES: ExerciseSpec[] = [
     name: "Élévations latérales",
     type: "STRENGTH",
     description: "Élévation latérale des bras avec haltères pour les deltoïdes.",
+    equipment: ["Haltères"],
     kpis: [
       { slug: "weight_kg", required: true },
       { slug: "reps", required: true },
@@ -211,6 +227,7 @@ const EXERCISES: ExerciseSpec[] = [
     name: "Gainage planche",
     type: "MOBILITY",
     description: "Maintien de la position de planche sur les avant-bras.",
+    equipment: ["Tapis de sol"],
     kpis: [
       { slug: "duration_sec", required: true },
     ],
@@ -222,6 +239,7 @@ const EXERCISES: ExerciseSpec[] = [
     name: "Run endurance",
     type: "CARDIO",
     description: "Course à allure endurance.",
+    equipment: [],
     kpis: [
       { slug: "duration_sec", required: true },
       { slug: "distance_m", required: false },
@@ -235,6 +253,7 @@ const EXERCISES: ExerciseSpec[] = [
     name: "Run fractionné",
     type: "CARDIO",
     description: "Intervalle de course à intensité cible (% VMA).",
+    equipment: [],
     kpis: [
       { slug: "duration_sec", required: true },
       { slug: "vma_percent", required: true },
@@ -246,6 +265,7 @@ const EXERCISES: ExerciseSpec[] = [
     name: "Vélo route",
     type: "CARDIO",
     description: "Sortie vélo sur route.",
+    equipment: ["Vélo"],
     kpis: [
       { slug: "duration_sec", required: true },
       { slug: "distance_m", required: false },
@@ -259,6 +279,7 @@ const EXERCISES: ExerciseSpec[] = [
     name: "Vélo home-trainer",
     type: "CARDIO",
     description: "Séance de vélo indoor sur home-trainer.",
+    equipment: ["Vélo d'appartement"],
     kpis: [
       { slug: "duration_sec", required: true },
       { slug: "pma_percent", required: false },
@@ -271,6 +292,7 @@ const EXERCISES: ExerciseSpec[] = [
     name: "Natation crawl",
     type: "CARDIO",
     description: "Séance de natation en crawl.",
+    equipment: ["Piscine"],
     kpis: [
       { slug: "duration_sec", required: true },
       { slug: "distance_m", required: true },
@@ -282,6 +304,7 @@ const EXERCISES: ExerciseSpec[] = [
     name: "Natation endurance",
     type: "CARDIO",
     description: "Nage continue à allure endurance, nage libre.",
+    equipment: ["Piscine"],
     kpis: [
       { slug: "duration_sec", required: true },
       { slug: "distance_m", required: true },
@@ -293,6 +316,7 @@ const EXERCISES: ExerciseSpec[] = [
     name: "Rameur",
     type: "CARDIO",
     description: "Séance d'aviron indoor.",
+    equipment: ["Rameur"],
     kpis: [
       { slug: "duration_sec", required: true },
       { slug: "distance_m", required: false },
@@ -304,6 +328,7 @@ const EXERCISES: ExerciseSpec[] = [
     name: "Marche rapide",
     type: "CARDIO",
     description: "Marche soutenue en extérieur.",
+    equipment: [],
     kpis: [
       { slug: "duration_sec", required: true },
       { slug: "distance_m", required: false },
@@ -317,6 +342,7 @@ const EXERCISES: ExerciseSpec[] = [
     name: "Étirement",
     type: "MOBILITY",
     description: "Étirement statique ou dynamique.",
+    equipment: ["Tapis de sol"],
     kpis: [
       { slug: "duration_sec", required: true },
       { slug: "side", required: false },
@@ -327,6 +353,7 @@ const EXERCISES: ExerciseSpec[] = [
     name: "Repos",
     type: "REST",
     description: "Temps de repos entre deux entrées (séries, intervalles).",
+    equipment: [],
     kpis: [{ slug: "duration_sec", required: true }],
   },
 ];
@@ -360,6 +387,7 @@ async function main() {
             name: ex.name,
             description: ex.description,
             type: ex.type,
+            equipment: ex.equipment ?? [],
             isSystem: true,
           },
         })
@@ -369,6 +397,7 @@ async function main() {
             name: ex.name,
             description: ex.description,
             type: ex.type,
+            equipment: ex.equipment ?? [],
             isSystem: true,
             userId: null,
           },

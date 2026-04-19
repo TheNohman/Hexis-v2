@@ -6,6 +6,7 @@ import { getActiveWorkout } from "@/lib/workouts/queries";
 import { listPersonalBests } from "@/lib/prs/detect";
 import { sanitiseForPrompt } from "@/lib/mentor/sanitize";
 import { computeDurationMins } from "@/lib/format";
+import { expandEquipmentBundles } from "@/lib/exercises/equipment";
 
 export type MentorContext = {
   user: {
@@ -97,8 +98,19 @@ export type MentorContext = {
    * when proposing exercises — any name outside this list gets silently
    * dropped at persist time and leaves templates with 0 entries. See
    * `materializeAIProgram` in `src/lib/programs/ai-create.ts`.
+   *
+   * `equipment` lists the granular gear tags required by the exercise
+   * ("Barre", "Banc", ...). The AI should intersect them with
+   * `availableEquipment` to filter. Empty array = no equipment needed.
    */
-  exerciseCatalog: { name: string; type: string }[];
+  exerciseCatalog: { name: string; type: string; equipment: string[] }[];
+  /**
+   * Granular equipment tags the user has access to, expanded from the
+   * bundles they declared at onboarding (`sportProfile.equipmentAccess`).
+   * Empty array = user hasn't declared anything — the AI should NOT filter
+   * and assume everything is fair game.
+   */
+  availableEquipment: string[];
 };
 
 export async function buildMentorContext(userId: string): Promise<MentorContext> {
@@ -195,9 +207,10 @@ export async function buildMentorContext(userId: string): Promise<MentorContext>
       listPersonalBests(userId, 5),
       // Exercise catalog — system seeded + user-created. Passed to the AI
       // so it picks exact names that `materializeAIProgram` can match on.
+      // `equipment` joins so the AI can filter by available gear.
       prisma.exercise.findMany({
         where: { OR: [{ userId }, { isSystem: true }] },
-        select: { name: true, type: true },
+        select: { name: true, type: true, equipment: true },
         orderBy: { name: "asc" },
       }),
     ]);
@@ -356,6 +369,13 @@ export async function buildMentorContext(userId: string): Promise<MentorContext>
       highRpeSetsLast7,
       avgRpeLast7,
     },
-    exerciseCatalog: exerciseCatalog.map((e) => ({ name: e.name, type: e.type })),
+    exerciseCatalog: exerciseCatalog.map((e) => ({
+      name: e.name,
+      type: e.type,
+      equipment: e.equipment,
+    })),
+    availableEquipment: expandEquipmentBundles(
+      user?.sportProfile?.equipmentAccess ?? [],
+    ),
   };
 }
